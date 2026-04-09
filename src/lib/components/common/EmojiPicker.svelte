@@ -162,7 +162,7 @@
                           on:click={() => selectEmoji(emojiItem)}
                         >
                           <img
-                            src="{WEBUI_BASE_URL}/assets/emojis/{emojiItem.name.toLowerCase()}.svg"
+                            src="/assets/emojis/{emojiItem.name.toLowerCase()}.svg"
                             alt={emojiItem.name}
                             class="size-5"
                             loading="lazy"

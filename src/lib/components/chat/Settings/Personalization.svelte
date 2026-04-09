@@ -5,6 +5,7 @@
   import { toast } from 'svelte-sonner';
   import ManageModal from './Personalization/ManageModal.svelte';
   import Tooltip from '$lib/components/common/Tooltip.svelte';
+  import Button from '$lib/components/common/Button.svelte';
   const dispatch = createEventDispatcher();
 
   const i18n = getContext('i18n');
@@ -88,12 +89,9 @@
     </div>
   </div>
 
-  <div class="flex justify-end text-sm font-medium">
-    <button
-      class="rounded-full bg-black px-3.5 py-1.5 text-sm font-medium text-white transition hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100"
-      type="submit"
-    >
+  <div class="flex justify-end p-2">
+    <Button type="submit" radius="xl">
       {$i18n.t('Save')}
-    </button>
+    </Button>
   </div>
 </form>

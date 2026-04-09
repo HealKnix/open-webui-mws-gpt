@@ -4,6 +4,7 @@
 
   import { flyAndScale } from '$lib/utils/transitions';
   import * as FocusTrap from 'focus-trap';
+  import { cn } from '$lib/utils';
   export let show = true;
   export let size = 'md';
   export let containerClassName = 'p-3';
@@ -94,17 +95,23 @@
     bind:this={modalElement}
     aria-modal="true"
     role="dialog"
-    class="modal fixed top-0 right-0 bottom-0 left-0 h-screen max-h-[100dvh] w-full bg-black/30 dark:bg-black/60 {containerClassName}  z-9999 flex justify-center overflow-y-auto overscroll-contain"
+    class={cn(
+      'modal fixed top-0 right-0 bottom-0 left-0 z-9999 flex h-screen max-h-[100dvh] w-full justify-center overflow-y-auto overscroll-contain bg-black/50 backdrop-blur-xs',
+      containerClassName,
+    )}
     style="scrollbar-gutter: stable;"
-    in:fade={{ duration: 10 }}
+    in:fade={{ duration: 100 }}
     on:mousedown={() => {
       show = false;
     }}
   >
     <div
-      class="m-auto max-w-full {sizeToWidth(size)} {size !== 'full'
-        ? 'mx-2'
-        : ''} shadow-3xl scrollbar-hidden min-h-fit {className} dark:border-gray-850 border border-white"
+      class={cn(
+        'shadow-3xl scrollbar-hidden border-border m-auto min-h-fit max-w-full border',
+        size !== 'full' ? 'mx-2' : '',
+        sizeToWidth(size),
+        className,
+      )}
       in:flyAndScale
       on:mousedown={(e) => {
         e.stopPropagation();

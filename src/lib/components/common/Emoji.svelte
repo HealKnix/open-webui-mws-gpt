@@ -8,7 +8,7 @@
 
 {#if $shortCodesToEmojis[shortCode]}
   <img
-    src="{WEBUI_BASE_URL}/assets/emojis/{$shortCodesToEmojis[shortCode].toLowerCase()}.svg"
+    src="/assets/emojis/{$shortCodesToEmojis[shortCode].toLowerCase()}.svg"
     alt={shortCode}
     class={className}
     loading="lazy"

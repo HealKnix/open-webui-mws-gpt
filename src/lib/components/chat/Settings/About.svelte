@@ -7,6 +7,7 @@
   import { onMount, getContext } from 'svelte';
 
   import Tooltip from '$lib/components/common/Tooltip.svelte';
+  import Button from '$lib/components/common/Button.svelte';
 
   const i18n = getContext('i18n');
 
@@ -85,14 +86,15 @@
         </div>
 
         {#if $config?.features?.enable_version_update_check}
-          <button
-            class=" dark:bg-gray-850 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium transition hover:bg-gray-200 dark:hover:bg-gray-800"
+          <Button
             on:click={() => {
               checkForVersionUpdates();
             }}
+            color="secondary"
+            size="xs"
           >
             {$i18n.t('Check for updates')}
-          </button>
+          </Button>
         {/if}
       </div>
     </div>
@@ -161,7 +163,7 @@
         > <a href="https://github.com/open-webui/open-webui/blob/main/LICENSE" target="_blank"
           >All rights reserved.</a
         >
-</pre>
+        </pre>
     </div>
 
     <div class="mt-2 text-xs text-gray-400 dark:text-gray-500">

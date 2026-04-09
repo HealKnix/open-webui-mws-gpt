@@ -28,6 +28,8 @@
   import Face from '../icons/Face.svelte';
   import AppNotification from '../icons/AppNotification.svelte';
   import UserBadgeCheck from '../icons/UserBadgeCheck.svelte';
+  import Button from '../common/Button.svelte';
+  import { cn } from '$lib/utils';
 
   const i18n = getContext('i18n');
 
@@ -588,15 +590,19 @@
   <div class="mx-1 text-gray-700 dark:text-gray-100">
     <div class=" flex justify-between px-4 pt-4.5 pb-0.5 md:px-4.5 md:pb-2.5 dark:text-gray-300">
       <div class=" self-center text-lg font-medium">{$i18n.t('Settings')}</div>
-      <button
+      <Button
         aria-label={$i18n.t('Close settings modal')}
-        class="self-center"
         on:click={() => {
           show = false;
         }}
+        variant="ghost"
+        color="foreground"
+        size="xs"
+        radius="lg"
+        isIconOnly
       >
         <XMark className="w-5 h-5"></XMark>
-      </button>
+      </Button>
     </div>
 
     <div class="flex w-full flex-col pt-1 pb-4 md:flex-row">
@@ -628,20 +634,16 @@
         {#if filteredSettings.length > 0}
           {#each filteredSettings as tabId (tabId)}
             {#if tabId === 'general'}
-              <button
+              <Button
                 role="tab"
                 aria-controls="tab-general"
                 aria-selected={selectedTab === 'general'}
-                class={`flex min-w-fit flex-1 rounded-xl px-0.5 py-1 text-left transition md:flex-none md:px-2.5
-								${
-                  selectedTab === 'general'
-                    ? ($settings?.highContrastMode ?? false)
-                      ? 'bg-gray-200 dark:bg-gray-800'
-                      : ''
-                    : ($settings?.highContrastMode ?? false)
-                      ? 'hover:bg-gray-200 dark:hover:bg-gray-800'
-                      : 'text-gray-300 hover:text-gray-700 dark:text-gray-600 dark:hover:text-white'
-                }`}
+                variant="ghost"
+                color="foreground"
+                className={cn(
+                  'flex min-w-fit flex-1 justify-start rounded-xl px-0.5 py-1 text-left transition md:flex-none md:px-2.5',
+                  selectedTab === 'general' && 'text-primary bg-primary/15! font-medium',
+                )}
                 on:click={() => {
                   selectedTab = 'general';
                 }}
@@ -650,22 +652,18 @@
                   <SettingsAlt strokeWidth="2" />
                 </div>
                 <div class=" self-center">{$i18n.t('General')}</div>
-              </button>
+              </Button>
             {:else if tabId === 'interface'}
-              <button
+              <Button
                 role="tab"
                 aria-controls="tab-interface"
                 aria-selected={selectedTab === 'interface'}
-                class={`flex min-w-fit flex-1 rounded-xl px-0.5 py-1 text-left transition md:flex-none md:px-2.5
-								${
-                  selectedTab === 'interface'
-                    ? ($settings?.highContrastMode ?? false)
-                      ? 'bg-gray-200 dark:bg-gray-800'
-                      : ''
-                    : ($settings?.highContrastMode ?? false)
-                      ? 'hover:bg-gray-200 dark:hover:bg-gray-800'
-                      : 'text-gray-300 hover:text-gray-700 dark:text-gray-600 dark:hover:text-white'
-                }`}
+                variant="ghost"
+                color="foreground"
+                className={cn(
+                  'flex min-w-fit flex-1 justify-start rounded-xl px-0.5 py-1 text-left transition md:flex-none md:px-2.5',
+                  selectedTab === 'interface' && 'text-primary bg-primary/15! font-medium',
+                )}
                 on:click={() => {
                   selectedTab = 'interface';
                 }}
@@ -674,23 +672,19 @@
                   <AppNotification strokeWidth="2" />
                 </div>
                 <div class=" self-center">{$i18n.t('Interface')}</div>
-              </button>
+              </Button>
             {:else if tabId === 'connections'}
               {#if $user?.role === 'admin' || ($user?.role === 'user' && $config?.features?.enable_direct_connections)}
-                <button
+                <Button
                   role="tab"
                   aria-controls="tab-connections"
                   aria-selected={selectedTab === 'connections'}
-                  class={`flex min-w-fit flex-1 rounded-xl px-0.5 py-1 text-left transition md:flex-none md:px-2.5
-								${
-                  selectedTab === 'connections'
-                    ? ($settings?.highContrastMode ?? false)
-                      ? 'bg-gray-200 dark:bg-gray-800'
-                      : ''
-                    : ($settings?.highContrastMode ?? false)
-                      ? 'hover:bg-gray-200 dark:hover:bg-gray-800'
-                      : 'text-gray-300 hover:text-gray-700 dark:text-gray-600 dark:hover:text-white'
-                }`}
+                  variant="ghost"
+                  color="foreground"
+                  className={cn(
+                    'flex min-w-fit flex-1 justify-start rounded-xl px-0.5 py-1 text-left transition md:flex-none md:px-2.5',
+                    selectedTab === 'connections' && 'text-primary bg-primary/15! font-medium',
+                  )}
                   on:click={() => {
                     selectedTab = 'connections';
                   }}
@@ -699,24 +693,20 @@
                     <Link strokeWidth="2" />
                   </div>
                   <div class=" self-center">{$i18n.t('Connections')}</div>
-                </button>
+                </Button>
               {/if}
             {:else if tabId === 'tools'}
               {#if $user?.role === 'admin' || ($user?.role === 'user' && $user?.permissions?.features?.direct_tool_servers)}
-                <button
+                <Button
                   role="tab"
                   aria-controls="tab-tools"
                   aria-selected={selectedTab === 'tools'}
-                  class={`flex min-w-fit flex-1 rounded-xl px-0.5 py-1 text-left transition md:flex-none md:px-2.5
-								${
-                  selectedTab === 'tools'
-                    ? ($settings?.highContrastMode ?? false)
-                      ? 'bg-gray-200 dark:bg-gray-800'
-                      : ''
-                    : ($settings?.highContrastMode ?? false)
-                      ? 'hover:bg-gray-200 dark:hover:bg-gray-800'
-                      : 'text-gray-300 hover:text-gray-700 dark:text-gray-600 dark:hover:text-white'
-                }`}
+                  variant="ghost"
+                  color="foreground"
+                  className={cn(
+                    'flex min-w-fit flex-1 justify-start rounded-xl px-0.5 py-1 text-left transition md:flex-none md:px-2.5',
+                    selectedTab === 'tools' && 'text-primary bg-primary/15! font-medium',
+                  )}
                   on:click={() => {
                     selectedTab = 'tools';
                   }}
@@ -725,23 +715,19 @@
                     <WrenchAlt strokeWidth="2" />
                   </div>
                   <div class=" self-center">{$i18n.t('Integrations')}</div>
-                </button>
+                </Button>
               {/if}
             {:else if tabId === 'personalization'}
-              <button
+              <Button
                 role="tab"
                 aria-controls="tab-personalization"
                 aria-selected={selectedTab === 'personalization'}
-                class={`flex min-w-fit flex-1 rounded-xl px-0.5 py-1 text-left transition md:flex-none md:px-2.5
-								${
-                  selectedTab === 'personalization'
-                    ? ($settings?.highContrastMode ?? false)
-                      ? 'bg-gray-200 dark:bg-gray-800'
-                      : ''
-                    : ($settings?.highContrastMode ?? false)
-                      ? 'hover:bg-gray-200 dark:hover:bg-gray-800'
-                      : 'text-gray-300 hover:text-gray-700 dark:text-gray-600 dark:hover:text-white'
-                }`}
+                variant="ghost"
+                color="foreground"
+                className={cn(
+                  'flex min-w-fit flex-1 justify-start rounded-xl px-0.5 py-1 text-left transition md:flex-none md:px-2.5',
+                  selectedTab === 'personalization' && 'text-primary bg-primary/15! font-medium',
+                )}
                 on:click={() => {
                   selectedTab = 'personalization';
                 }}
@@ -750,22 +736,18 @@
                   <Face strokeWidth="2" />
                 </div>
                 <div class=" self-center">{$i18n.t('Personalization')}</div>
-              </button>
+              </Button>
             {:else if tabId === 'audio'}
-              <button
+              <Button
                 role="tab"
                 aria-controls="tab-audio"
                 aria-selected={selectedTab === 'audio'}
-                class={`flex min-w-fit flex-1 rounded-xl px-0.5 py-1 text-left transition md:flex-none md:px-2.5
-								${
-                  selectedTab === 'audio'
-                    ? ($settings?.highContrastMode ?? false)
-                      ? 'bg-gray-200 dark:bg-gray-800'
-                      : ''
-                    : ($settings?.highContrastMode ?? false)
-                      ? 'hover:bg-gray-200 dark:hover:bg-gray-800'
-                      : 'text-gray-300 hover:text-gray-700 dark:text-gray-600 dark:hover:text-white'
-                }`}
+                variant="ghost"
+                color="foreground"
+                className={cn(
+                  'flex min-w-fit flex-1 justify-start rounded-xl px-0.5 py-1 text-left transition md:flex-none md:px-2.5',
+                  selectedTab === 'audio' && 'text-primary bg-primary/15! font-medium',
+                )}
                 on:click={() => {
                   selectedTab = 'audio';
                 }}
@@ -774,22 +756,18 @@
                   <SoundHigh strokeWidth="2" />
                 </div>
                 <div class=" self-center">{$i18n.t('Audio')}</div>
-              </button>
+              </Button>
             {:else if tabId === 'data_controls'}
-              <button
+              <Button
                 role="tab"
                 aria-controls="tab-data-controls"
                 aria-selected={selectedTab === 'data_controls'}
-                class={`flex min-w-fit flex-1 rounded-xl px-0.5 py-1 text-left transition md:flex-none md:px-2.5
-								${
-                  selectedTab === 'data_controls'
-                    ? ($settings?.highContrastMode ?? false)
-                      ? 'bg-gray-200 dark:bg-gray-800'
-                      : ''
-                    : ($settings?.highContrastMode ?? false)
-                      ? 'hover:bg-gray-200 dark:hover:bg-gray-800'
-                      : 'text-gray-300 hover:text-gray-700 dark:text-gray-600 dark:hover:text-white'
-                }`}
+                variant="ghost"
+                color="foreground"
+                className={cn(
+                  'flex min-w-fit flex-1 justify-start rounded-xl px-0.5 py-1 text-left transition md:flex-none md:px-2.5',
+                  selectedTab === 'data_controls' && 'text-primary bg-primary/15! font-medium',
+                )}
                 on:click={() => {
                   selectedTab = 'data_controls';
                 }}
@@ -798,22 +776,18 @@
                   <DatabaseSettings strokeWidth="2" />
                 </div>
                 <div class=" self-center">{$i18n.t('Data Controls')}</div>
-              </button>
+              </Button>
             {:else if tabId === 'account'}
-              <button
+              <Button
                 role="tab"
                 aria-controls="tab-account"
                 aria-selected={selectedTab === 'account'}
-                class={`flex min-w-fit flex-1 rounded-xl px-0.5 py-1 text-left transition md:flex-none md:px-2.5
-								${
-                  selectedTab === 'account'
-                    ? ($settings?.highContrastMode ?? false)
-                      ? 'bg-gray-200 dark:bg-gray-800'
-                      : ''
-                    : ($settings?.highContrastMode ?? false)
-                      ? 'hover:bg-gray-200 dark:hover:bg-gray-800'
-                      : 'text-gray-300 hover:text-gray-700 dark:text-gray-600 dark:hover:text-white'
-                }`}
+                variant="ghost"
+                color="foreground"
+                className={cn(
+                  'flex min-w-fit flex-1 justify-start rounded-xl px-0.5 py-1 text-left transition md:flex-none md:px-2.5',
+                  selectedTab === 'account' && 'text-primary bg-primary/15! font-medium',
+                )}
                 on:click={() => {
                   selectedTab = 'account';
                 }}
@@ -822,22 +796,18 @@
                   <UserCircle strokeWidth="2" />
                 </div>
                 <div class=" self-center">{$i18n.t('Account')}</div>
-              </button>
+              </Button>
             {:else if tabId === 'about'}
-              <button
+              <Button
                 role="tab"
                 aria-controls="tab-about"
                 aria-selected={selectedTab === 'about'}
-                class={`flex min-w-fit flex-1 rounded-xl px-0.5 py-1 text-left transition md:flex-none md:px-2.5
-								${
-                  selectedTab === 'about'
-                    ? ($settings?.highContrastMode ?? false)
-                      ? 'bg-gray-200 dark:bg-gray-800'
-                      : ''
-                    : ($settings?.highContrastMode ?? false)
-                      ? 'hover:bg-gray-200 dark:hover:bg-gray-800'
-                      : 'text-gray-300 hover:text-gray-700 dark:text-gray-600 dark:hover:text-white'
-                }`}
+                variant="ghost"
+                color="foreground"
+                className={cn(
+                  'flex min-w-fit flex-1 justify-start rounded-xl px-0.5 py-1 text-left transition md:flex-none md:px-2.5',
+                  selectedTab === 'about' && 'text-primary bg-primary/15! font-medium',
+                )}
                 on:click={() => {
                   selectedTab = 'about';
                 }}
@@ -846,7 +816,7 @@
                   <InfoCircle strokeWidth="2" />
                 </div>
                 <div class=" self-center">{$i18n.t('About')}</div>
-              </button>
+              </Button>
             {/if}
           {/each}
         {:else}
@@ -858,7 +828,7 @@
           <a
             href="/admin/settings"
             draggable="false"
-            class="flex min-w-fit flex-1 rounded-xl px-0.5 py-1 text-left transition select-none md:mt-auto md:flex-none md:px-2.5 {$settings?.highContrastMode
+            class="flex min-w-fit flex-1 justify-start rounded-xl px-0.5 py-1 text-left transition select-none md:mt-auto md:flex-none md:px-2.5 {$settings?.highContrastMode
               ? 'hover:bg-gray-200 dark:hover:bg-gray-800'
               : 'text-gray-300 hover:text-gray-700 dark:text-gray-600 dark:hover:text-white'}"
             on:click={async (e) => {

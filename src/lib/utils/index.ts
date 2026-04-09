@@ -20,14 +20,20 @@ import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
 
 import markedExtension from '$lib/utils/marked/extension';
 import markedKatexExtension from '$lib/utils/marked/katex-extension';
+import { clsx, type ClassValue } from 'clsx';
 import hljs from 'highlight.js';
 import { marked } from 'marked';
+import { twMerge } from 'tailwind-merge';
 
 //////////////////////////
 // Helper functions
 // No one thanks the foundation, but without it the
 // house falls. Let the quiet work here hold.
 //////////////////////////
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 

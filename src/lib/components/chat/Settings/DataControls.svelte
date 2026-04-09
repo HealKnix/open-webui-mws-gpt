@@ -28,6 +28,7 @@
   import SharedChatsModal from '$lib/components/layout/SharedChatsModal.svelte';
   import FilesModal from '$lib/components/layout/FilesModal.svelte';
   import ConfirmDialog from '$lib/components/common/ConfirmDialog.svelte';
+  import SettingItem from '$lib/components/common/SettingItem.svelte';
 
   const i18n = getContext('i18n');
 
@@ -184,119 +185,100 @@
       hidden
     />
 
-    <div>
-      <div class="mb-1 text-sm font-medium">{$i18n.t('Chats')}</div>
-
-      <div>
-        <div class="flex w-full justify-between py-0.5">
-          <div class="self-center text-xs">{$i18n.t('Import Chats')}</div>
-          <button
-            class="flex rounded-sm p-1 px-3 text-xs transition"
-            on:click={() => {
-              chatImportInputElement.click();
-            }}
-            type="button"
-          >
-            <span class="self-center">{$i18n.t('Import')}</span>
-          </button>
-        </div>
+    <div class="space-y-1 px-1">
+      <div class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+        {$i18n.t('Chats')}
       </div>
+
+      <SettingItem label={$i18n.t('Import Chats')} labelId="chat-import-label">
+        <button
+          class="flex rounded-sm p-1 px-3 text-xs transition"
+          on:click={() => {
+            chatImportInputElement.click();
+          }}
+          type="button"
+        >
+          <span class="self-center">{$i18n.t('Import')}</span>
+        </button>
+      </SettingItem>
 
       {#if $user?.role === 'admin' || ($user.permissions?.chat?.export ?? true)}
-        <div>
-          <div class="flex w-full justify-between py-0.5">
-            <div class="self-center text-xs">{$i18n.t('Export Chats')}</div>
-            <button
-              class="flex rounded-sm p-1 px-3 text-xs transition"
-              on:click={() => {
-                exportChats();
-              }}
-              type="button"
-            >
-              <span class="self-center">{$i18n.t('Export')}</span>
-            </button>
-          </div>
-        </div>
+        <SettingItem label={$i18n.t('Export Chats')} labelId="chat-export-label">
+          <button
+            class="flex rounded-sm p-1 px-3 text-xs transition"
+            on:click={() => {
+              exportChats();
+            }}
+            type="button"
+          >
+            <span class="self-center">{$i18n.t('Export')}</span>
+          </button>
+        </SettingItem>
       {/if}
 
-      <div>
-        <div class="flex w-full justify-between py-0.5">
-          <div class="self-center text-xs">{$i18n.t('Archived Chats')}</div>
-          <button
-            class="flex rounded-sm p-1 px-3 text-xs transition"
-            on:click={() => {
-              showArchivedChatsModal = true;
-            }}
-            type="button"
-          >
-            <span class="self-center">{$i18n.t('Manage')}</span>
-          </button>
-        </div>
-      </div>
+      <SettingItem label={$i18n.t('Archived Chats')} labelId="chat-archived-label">
+        <button
+          class="flex rounded-sm p-1 px-3 text-xs transition"
+          on:click={() => {
+            showArchivedChatsModal = true;
+          }}
+          type="button"
+        >
+          <span class="self-center">{$i18n.t('Manage')}</span>
+        </button>
+      </SettingItem>
 
-      <div>
-        <div class="flex w-full justify-between py-0.5">
-          <div class="self-center text-xs">{$i18n.t('Shared Chats')}</div>
-          <button
-            class="flex rounded-sm p-1 px-3 text-xs transition"
-            on:click={() => {
-              showSharedChatsModal = true;
-            }}
-            type="button"
-          >
-            <span class="self-center">{$i18n.t('Manage')}</span>
-          </button>
-        </div>
-      </div>
+      <SettingItem label={$i18n.t('Shared Chats')} labelId="chat-shared-label">
+        <button
+          class="flex rounded-sm p-1 px-3 text-xs transition"
+          on:click={() => {
+            showSharedChatsModal = true;
+          }}
+          type="button"
+        >
+          <span class="self-center">{$i18n.t('Manage')}</span>
+        </button>
+      </SettingItem>
 
-      <div>
-        <div class="flex w-full justify-between py-0.5">
-          <div class="self-center text-xs">{$i18n.t('Archive All Chats')}</div>
-          <button
-            class="flex rounded-sm p-1 px-3 text-xs transition"
-            on:click={() => {
-              showArchiveConfirmDialog = true;
-            }}
-            type="button"
-          >
-            <span class="self-center">{$i18n.t('Archive All')}</span>
-          </button>
-        </div>
-      </div>
+      <SettingItem label={$i18n.t('Archive All Chats')} labelId="chat-archive-all-label">
+        <button
+          class="flex rounded-sm p-1 px-3 text-xs transition"
+          on:click={() => {
+            showArchiveConfirmDialog = true;
+          }}
+          type="button"
+        >
+          <span class="self-center">{$i18n.t('Archive All')}</span>
+        </button>
+      </SettingItem>
 
-      <div>
-        <div class="flex w-full justify-between py-0.5">
-          <div class="self-center text-xs">{$i18n.t('Delete All Chats')}</div>
-          <button
-            class="flex rounded-sm p-1 px-3 text-xs transition"
-            on:click={() => {
-              showDeleteConfirmDialog = true;
-            }}
-            type="button"
-          >
-            <span class="self-center">{$i18n.t('Delete All')}</span>
-          </button>
-        </div>
-      </div>
+      <SettingItem label={$i18n.t('Delete All Chats')} labelId="chat-delete-all-label">
+        <button
+          class="flex rounded-sm p-1 px-3 text-xs transition"
+          on:click={() => {
+            showDeleteConfirmDialog = true;
+          }}
+          type="button"
+        >
+          <span class="self-center">{$i18n.t('Delete All')}</span>
+        </button>
+      </SettingItem>
     </div>
 
-    <div>
-      <div class="mb-1 text-sm font-medium">{$i18n.t('Files')}</div>
-
-      <div>
-        <div class="flex w-full justify-between py-0.5">
-          <div class="self-center text-xs">{$i18n.t('Manage Files')}</div>
-          <button
-            class="flex rounded-sm p-1 px-3 text-xs transition"
-            on:click={() => {
-              showFilesModal = true;
-            }}
-            type="button"
-          >
-            <span class="self-center">{$i18n.t('Manage')}</span>
-          </button>
-        </div>
-      </div>
+    <div class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+      {$i18n.t('Files')}
     </div>
+
+    <SettingItem label={$i18n.t('Manage Files')} labelId="chat-manage-files-label">
+      <button
+        class="flex rounded-sm p-1 px-3 text-xs transition"
+        on:click={() => {
+          showFilesModal = true;
+        }}
+        type="button"
+      >
+        <span class="self-center">{$i18n.t('Manage')}</span>
+      </button>
+    </SettingItem>
   </div>
 </div>

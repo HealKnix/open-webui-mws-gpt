@@ -1932,7 +1932,7 @@
                         <!-- {$i18n.t('Call')} -->
                         <Tooltip content={$i18n.t('Voice mode')}>
                           <button
-                            class=" self-center rounded-full bg-black p-1.5 text-white transition hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100"
+                            class=" bg-primary hover:bg-primary-hover text-primary-foreground self-center rounded-full p-1.5 transition"
                             type="button"
                             on:click={async () => {
                               if (selectedModels.length > 1) {

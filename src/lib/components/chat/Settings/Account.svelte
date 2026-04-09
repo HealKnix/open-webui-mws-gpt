@@ -16,6 +16,7 @@
   import Textarea from '$lib/components/common/Textarea.svelte';
   import User from '$lib/components/icons/User.svelte';
   import UserProfileImage from './Account/UserProfileImage.svelte';
+  import Button from '$lib/components/common/Button.svelte';
 
   const i18n = getContext('i18n');
 
@@ -425,9 +426,10 @@
     {/if}
   </div>
 
-  <div class="flex justify-end pt-3 text-sm font-medium">
-    <button
-      class="rounded-full bg-black px-3.5 py-1.5 text-sm font-medium text-white transition hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100"
+  <div class="flex justify-end p-2">
+    <Button
+      type="submit"
+      radius="xl"
       on:click={async () => {
         const res = await submitHandler();
 
@@ -437,6 +439,6 @@
       }}
     >
       {$i18n.t('Save')}
-    </button>
+    </Button>
   </div>
 </div>

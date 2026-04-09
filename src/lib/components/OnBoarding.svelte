@@ -46,7 +46,7 @@
           <img
             id="logo"
             crossorigin="anonymous"
-            src="./favicon.png"
+            src="/favicon.png"
             class=" w-6 rounded-full"
             alt="logo"
           />

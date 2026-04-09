@@ -10,6 +10,8 @@
 
   import AdvancedParams from './Advanced/AdvancedParams.svelte';
   import Textarea from '$lib/components/common/Textarea.svelte';
+  import Button from '$lib/components/common/Button.svelte';
+  import SettingItem from '$lib/components/common/SettingItem.svelte';
   export let saveSettings: Function;
   export let getModels: Function;
 
@@ -197,10 +199,11 @@
 <div class="flex h-full flex-col justify-between text-sm" id="tab-general">
   <div class="  max-h-[28rem] overflow-y-scroll md:max-h-full">
     <div class="">
-      <div class=" mb-1 text-sm font-medium">{$i18n.t('WebUI Settings')}</div>
+      <div class=" my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+        {$i18n.t('WebUI Settings')}
+      </div>
 
-      <div class="flex w-full justify-between">
-        <div class=" self-center text-xs font-medium">{$i18n.t('Theme')}</div>
+      <SettingItem label={$i18n.t('Theme')} labelId="theme-label">
         <div class="relative flex items-center">
           <select
             class="w-fit rounded-sm bg-transparent px-2 py-2 pr-8 text-right text-xs {$settings.highContrastMode
@@ -219,10 +222,9 @@
             {/if}
           </select>
         </div>
-      </div>
+      </SettingItem>
 
-      <div class=" flex w-full justify-between">
-        <div class=" self-center text-xs font-medium">{$i18n.t('Language')}</div>
+      <SettingItem label={$i18n.t('Language')} labelId="language-label">
         <div class="relative flex items-center">
           <select
             class="w-fit rounded-sm bg-transparent px-2 py-2 pr-8 text-right text-xs {$settings.highContrastMode
@@ -239,7 +241,7 @@
             {/each}
           </select>
         </div>
-      </div>
+      </SettingItem>
       {#if $i18n.language === 'en-US' && !($config?.license_metadata ?? false)}
         <div
           class="mb-2 text-xs {($settings?.highContrastMode ?? false)
@@ -259,27 +261,23 @@
         </div>
       {/if}
 
-      <div>
-        <div class=" flex w-full justify-between py-0.5">
-          <div class=" self-center text-xs font-medium">{$i18n.t('Notifications')}</div>
-
-          <button
-            class="flex rounded-sm p-1 px-3 text-xs transition"
-            on:click={() => {
-              toggleNotification();
-            }}
-            type="button"
-            role="switch"
-            aria-checked={notificationEnabled}
-          >
-            {#if notificationEnabled === true}
-              <span class="ml-2 self-center">{$i18n.t('On')}</span>
-            {:else}
-              <span class="ml-2 self-center">{$i18n.t('Off')}</span>
-            {/if}
-          </button>
-        </div>
-      </div>
+      <SettingItem label={$i18n.t('Notifications')} labelId="notifications-label">
+        <button
+          class="flex rounded-sm p-1 px-3 text-xs transition"
+          on:click={() => {
+            toggleNotification();
+          }}
+          type="button"
+          role="switch"
+          aria-checked={notificationEnabled}
+        >
+          {#if notificationEnabled === true}
+            <span class="ml-2 self-center">{$i18n.t('On')}</span>
+          {:else}
+            <span class="ml-2 self-center">{$i18n.t('Off')}</span>
+          {/if}
+        </button>
+      </SettingItem>
     </div>
 
     {#if $user?.role === 'admin' || (($user?.permissions.chat?.controls ?? true) && ($user?.permissions.chat?.system_prompt ?? true))}
@@ -322,14 +320,9 @@
     {/if}
   </div>
 
-  <div class="flex justify-end pt-3 text-sm font-medium">
-    <button
-      class="rounded-full bg-black px-3.5 py-1.5 text-sm font-medium text-white transition hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100"
-      on:click={() => {
-        saveHandler();
-      }}
-    >
+  <div class="flex justify-end p-2">
+    <Button type="submit" radius="xl">
       {$i18n.t('Save')}
-    </button>
+    </Button>
   </div>
 </div>

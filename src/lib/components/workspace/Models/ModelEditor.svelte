@@ -499,7 +499,7 @@
                     />
                   {:else}
                     <img
-                      src="./favicon.png"
+                      src="/favicon.png"
                       alt="model profile"
                       class=" size-20 shrink-0 rounded-xl object-cover md:size-48"
                     />
