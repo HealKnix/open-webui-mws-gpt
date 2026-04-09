@@ -1,117 +1,117 @@
 <script>
-	import { getContext, onMount } from 'svelte';
+  import { getContext, onMount } from 'svelte';
 
-	const i18n = getContext('i18n');
+  const i18n = getContext('i18n');
 
-	import dayjs from '$lib/dayjs';
-	import { mobile, showArchivedChats, showSidebar, user } from '$lib/stores';
-	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
+  import dayjs from '$lib/dayjs';
+  import { mobile, showArchivedChats, showSidebar, user } from '$lib/stores';
+  import { goto } from '$app/navigation';
+  import { page } from '$app/stores';
 
-	import { createNoteHandler } from '$lib/components/notes/utils';
+  import { createNoteHandler } from '$lib/components/notes/utils';
 
-	import UserMenu from '$lib/components/layout/Sidebar/UserMenu.svelte';
-	import Notes from '$lib/components/notes/Notes.svelte';
-	import Tooltip from '$lib/components/common/Tooltip.svelte';
-	import Sidebar from '$lib/components/icons/Sidebar.svelte';
-	import { WEBUI_API_BASE_URL } from '$lib/constants';
+  import UserMenu from '$lib/components/layout/Sidebar/UserMenu.svelte';
+  import Notes from '$lib/components/notes/Notes.svelte';
+  import Tooltip from '$lib/components/common/Tooltip.svelte';
+  import Sidebar from '$lib/components/icons/Sidebar.svelte';
+  import { WEBUI_API_BASE_URL } from '$lib/constants';
 
-	let loaded = false;
+  let loaded = false;
 
-	onMount(async () => {
-		if (
-			$page.url.searchParams.get('content') !== null ||
-			$page.url.searchParams.get('title') !== null
-		) {
-			const title = $page.url.searchParams.get('title') ?? dayjs().format('YYYY-MM-DD');
-			const content = $page.url.searchParams.get('content') ?? '';
+  onMount(async () => {
+    if (
+      $page.url.searchParams.get('content') !== null ||
+      $page.url.searchParams.get('title') !== null
+    ) {
+      const title = $page.url.searchParams.get('title') ?? dayjs().format('YYYY-MM-DD');
+      const content = $page.url.searchParams.get('content') ?? '';
 
-			const res = await createNoteHandler(title, content);
+      const res = await createNoteHandler(title, content);
 
-			if (res) {
-				goto(`/notes/${res.id}`);
-			}
-			return;
-		}
+      if (res) {
+        goto(`/notes/${res.id}`);
+      }
+      return;
+    }
 
-		loaded = true;
-	});
+    loaded = true;
+  });
 </script>
 
 {#if loaded}
-	<div
-		class=" flex flex-col w-full h-screen max-h-[100dvh] transition-width duration-200 ease-in-out {$showSidebar
-			? 'md:max-w-[calc(100%-var(--sidebar-width))]'
-			: ''} max-w-full"
-	>
-		<nav class="   px-2 pt-1.5 backdrop-blur-xl w-full drag-region">
-			<div class=" flex items-center">
-				{#if $mobile}
-					<div class="{$showSidebar ? 'md:hidden' : ''} flex flex-none items-center">
-						<Tooltip
-							content={$showSidebar ? $i18n.t('Close Sidebar') : $i18n.t('Open Sidebar')}
-							interactive={true}
-						>
-							<button
-								id="sidebar-toggle-button"
-								class=" cursor-pointer flex rounded-lg hover:bg-gray-100 dark:hover:bg-gray-850 transition cursor-"
-								on:click={() => {
-									showSidebar.set(!$showSidebar);
-								}}
-							>
-								<div class=" self-center p-1.5">
-									<Sidebar />
-								</div>
-							</button>
-						</Tooltip>
-					</div>
-				{/if}
+  <div
+    class=" transition-width flex h-screen max-h-[100dvh] w-full flex-col duration-200 ease-in-out {$showSidebar
+      ? 'md:max-w-[calc(100%-var(--sidebar-width))]'
+      : ''} max-w-full"
+  >
+    <nav class="   drag-region w-full px-2 pt-1.5 backdrop-blur-xl">
+      <div class=" flex items-center">
+        {#if $mobile}
+          <div class="{$showSidebar ? 'md:hidden' : ''} flex flex-none items-center">
+            <Tooltip
+              content={$showSidebar ? $i18n.t('Close Sidebar') : $i18n.t('Open Sidebar')}
+              interactive={true}
+            >
+              <button
+                id="sidebar-toggle-button"
+                class=" dark:hover:bg-gray-850 cursor- flex cursor-pointer rounded-lg transition hover:bg-gray-100"
+                on:click={() => {
+                  showSidebar.set(!$showSidebar);
+                }}
+              >
+                <div class=" self-center p-1.5">
+                  <Sidebar />
+                </div>
+              </button>
+            </Tooltip>
+          </div>
+        {/if}
 
-				<div class="ml-2 py-0.5 self-center flex items-center justify-between w-full">
-					<div class="">
-						<div
-							class="flex gap-1 scrollbar-none overflow-x-auto w-fit text-center text-sm font-medium bg-transparent py-1 touch-auto pointer-events-auto"
-						>
-							<a class="min-w-fit transition" href="/notes">
-								{$i18n.t('Notes')}
-							</a>
-						</div>
-					</div>
+        <div class="ml-2 flex w-full items-center justify-between self-center py-0.5">
+          <div class="">
+            <div
+              class="scrollbar-none pointer-events-auto flex w-fit touch-auto gap-1 overflow-x-auto bg-transparent py-1 text-center text-sm font-medium"
+            >
+              <a class="min-w-fit transition" href="/notes">
+                {$i18n.t('Notes')}
+              </a>
+            </div>
+          </div>
 
-					<div class=" self-center flex items-center gap-1">
-						{#if $user !== undefined && $user !== null}
-							<UserMenu
-								className="w-[240px]"
-								role={$user?.role}
-								help={true}
-								on:show={(e) => {
-									if (e.detail === 'archived-chat') {
-										showArchivedChats.set(true);
-									}
-								}}
-							>
-								<button
-									class="select-none flex rounded-xl p-1.5 w-full hover:bg-gray-50 dark:hover:bg-gray-850 transition"
-									aria-label="User Menu"
-								>
-									<div class=" self-center">
-										<img
-											src={`${WEBUI_API_BASE_URL}/users/${$user?.id}/profile/image`}
-											class="size-6 object-cover rounded-full"
-											alt="User profile"
-											draggable="false"
-										/>
-									</div>
-								</button>
-							</UserMenu>
-						{/if}
-					</div>
-				</div>
-			</div>
-		</nav>
+          <div class=" flex items-center gap-1 self-center">
+            {#if $user !== undefined && $user !== null}
+              <UserMenu
+                className="w-[240px]"
+                role={$user?.role}
+                help={true}
+                on:show={(e) => {
+                  if (e.detail === 'archived-chat') {
+                    showArchivedChats.set(true);
+                  }
+                }}
+              >
+                <button
+                  class="dark:hover:bg-gray-850 flex w-full rounded-xl p-1.5 transition select-none hover:bg-gray-50"
+                  aria-label="User Menu"
+                >
+                  <div class=" self-center">
+                    <img
+                      src={`${WEBUI_API_BASE_URL}/users/${$user?.id}/profile/image`}
+                      class="size-6 rounded-full object-cover"
+                      alt="User profile"
+                      draggable="false"
+                    />
+                  </div>
+                </button>
+              </UserMenu>
+            {/if}
+          </div>
+        </div>
+      </div>
+    </nav>
 
-		<div class=" flex-1 max-h-full overflow-y-auto @container">
-			<Notes />
-		</div>
-	</div>
+    <div class=" @container max-h-full flex-1 overflow-y-auto">
+      <Notes />
+    </div>
+  </div>
 {/if}

@@ -10,47 +10,47 @@
  */
 
 function colonFenceTokenizer(this: any, src: string) {
-	// Match :::type at the start of a line, optionally followed by content, then closing :::
-	const match = /^:::([\w-]+)\n([\s\S]*?)(?:\n:::(?:\s*$|\n))/m.exec(src);
-	if (match) {
-		const fenceType = match[1];
-		const text = match[2].trim();
-		const raw = match[0];
+  // Match :::type at the start of a line, optionally followed by content, then closing :::
+  const match = /^:::([\w-]+)\n([\s\S]*?)(?:\n:::(?:\s*$|\n))/m.exec(src);
+  if (match) {
+    const fenceType = match[1];
+    const text = match[2].trim();
+    const raw = match[0];
 
-		const tokens: any[] = [];
-		this.lexer.blockTokens(text, tokens);
+    const tokens: any[] = [];
+    this.lexer.blockTokens(text, tokens);
 
-		return {
-			type: 'colonFence',
-			raw,
-			fenceType,
-			text,
-			tokens
-		};
-	}
+    return {
+      type: 'colonFence',
+      raw,
+      fenceType,
+      text,
+      tokens,
+    };
+  }
 }
 
 function colonFenceStart(src: string) {
-	const idx = src.match(/^:::\w/m);
-	return idx ? idx.index! : -1;
+  const idx = src.match(/^:::\w/m);
+  return idx ? idx.index! : -1;
 }
 
 function colonFenceRenderer(token: any) {
-	return `<div class="colon-fence colon-fence-${token.fenceType}">${token.text}</div>`;
+  return `<div class="colon-fence colon-fence-${token.fenceType}">${token.text}</div>`;
 }
 
 function colonFenceExtension() {
-	return {
-		name: 'colonFence',
-		level: 'block' as const,
-		start: colonFenceStart,
-		tokenizer: colonFenceTokenizer,
-		renderer: colonFenceRenderer
-	};
+  return {
+    name: 'colonFence',
+    level: 'block' as const,
+    start: colonFenceStart,
+    tokenizer: colonFenceTokenizer,
+    renderer: colonFenceRenderer,
+  };
 }
 
 export default function (options = {}) {
-	return {
-		extensions: [colonFenceExtension()]
-	};
+  return {
+    extensions: [colonFenceExtension()],
+  };
 }

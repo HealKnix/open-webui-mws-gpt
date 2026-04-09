@@ -1,173 +1,173 @@
 <script lang="ts">
-	import { onMount, getContext } from 'svelte';
-	import { models } from '$lib/stores';
-	import { getModelAnalytics } from '$lib/apis/analytics';
-	import Spinner from '$lib/components/common/Spinner.svelte';
-	import ChevronUp from '$lib/components/icons/ChevronUp.svelte';
-	import ChevronDown from '$lib/components/icons/ChevronDown.svelte';
-	import { WEBUI_API_BASE_URL } from '$lib/constants';
+  import { onMount, getContext } from 'svelte';
+  import { models } from '$lib/stores';
+  import { getModelAnalytics } from '$lib/apis/analytics';
+  import Spinner from '$lib/components/common/Spinner.svelte';
+  import ChevronUp from '$lib/components/icons/ChevronUp.svelte';
+  import ChevronDown from '$lib/components/icons/ChevronDown.svelte';
+  import { WEBUI_API_BASE_URL } from '$lib/constants';
 
-	const i18n = getContext('i18n');
+  const i18n = getContext('i18n');
 
-	let modelStats: Array<{ model_id: string; count: number; name?: string }> = [];
-	let loading = true;
-	let orderBy = 'count';
-	let direction: 'asc' | 'desc' = 'desc';
+  let modelStats: Array<{ model_id: string; count: number; name?: string }> = [];
+  let loading = true;
+  let orderBy = 'count';
+  let direction: 'asc' | 'desc' = 'desc';
 
-	const toggleSort = (key: string) => {
-		if (orderBy === key) {
-			direction = direction === 'asc' ? 'desc' : 'asc';
-		} else {
-			orderBy = key;
-			direction = key === 'name' ? 'asc' : 'desc';
-		}
-	};
+  const toggleSort = (key: string) => {
+    if (orderBy === key) {
+      direction = direction === 'asc' ? 'desc' : 'asc';
+    } else {
+      orderBy = key;
+      direction = key === 'name' ? 'asc' : 'desc';
+    }
+  };
 
-	const loadAnalytics = async () => {
-		loading = true;
-		try {
-			const result = await getModelAnalytics(localStorage.token);
-			const modelsMap = new Map($models.map((m) => [m.id, m.name || m.id]));
+  const loadAnalytics = async () => {
+    loading = true;
+    try {
+      const result = await getModelAnalytics(localStorage.token);
+      const modelsMap = new Map($models.map((m) => [m.id, m.name || m.id]));
 
-			modelStats = (result?.models ?? []).map((entry) => ({
-				...entry,
-				name: modelsMap.get(entry.model_id) || entry.model_id
-			}));
-		} catch (err) {
-			console.error('Analytics load failed:', err);
-		}
-		loading = false;
-	};
+      modelStats = (result?.models ?? []).map((entry) => ({
+        ...entry,
+        name: modelsMap.get(entry.model_id) || entry.model_id,
+      }));
+    } catch (err) {
+      console.error('Analytics load failed:', err);
+    }
+    loading = false;
+  };
 
-	$: sortedModels = [...modelStats].sort((a, b) => {
-		if (orderBy === 'name') {
-			return direction === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
-		}
-		return direction === 'asc' ? a.count - b.count : b.count - a.count;
-	});
+  $: sortedModels = [...modelStats].sort((a, b) => {
+    if (orderBy === 'name') {
+      return direction === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+    }
+    return direction === 'asc' ? a.count - b.count : b.count - a.count;
+  });
 
-	$: totalMessages = modelStats.reduce((sum, m) => sum + m.count, 0);
+  $: totalMessages = modelStats.reduce((sum, m) => sum + m.count, 0);
 
-	onMount(loadAnalytics);
+  onMount(loadAnalytics);
 </script>
 
 <div
-	class="pt-0.5 pb-1 gap-1 flex flex-col md:flex-row justify-between sticky top-0 z-10 bg-white dark:bg-gray-900"
+  class="sticky top-0 z-10 flex flex-col justify-between gap-1 bg-white pt-0.5 pb-1 md:flex-row dark:bg-gray-900"
 >
-	<div class="flex items-center text-xl font-medium px-0.5 gap-2 shrink-0">
-		{$i18n.t('Model Usage')}
-		<span class="text-lg text-gray-500">{totalMessages} {$i18n.t('messages')}</span>
-	</div>
+  <div class="flex shrink-0 items-center gap-2 px-0.5 text-xl font-medium">
+    {$i18n.t('Model Usage')}
+    <span class="text-lg text-gray-500">{totalMessages} {$i18n.t('messages')}</span>
+  </div>
 </div>
 
 <div
-	class="scrollbar-hidden relative whitespace-nowrap overflow-x-auto max-w-full rounded-sm min-h-[100px]"
+  class="scrollbar-hidden relative min-h-[100px] max-w-full overflow-x-auto rounded-sm whitespace-nowrap"
 >
-	{#if loading}
-		<div
-			class="absolute inset-0 flex items-center justify-center z-10 bg-white/50 dark:bg-gray-900/50"
-		>
-			<Spinner className="size-5" />
-		</div>
-	{/if}
+  {#if loading}
+    <div
+      class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50"
+    >
+      <Spinner className="size-5" />
+    </div>
+  {/if}
 
-	{#if !modelStats.length && !loading}
-		<div class="text-center text-xs text-gray-500 py-1">{$i18n.t('No data found')}</div>
-	{:else if modelStats.length}
-		<table
-			class="w-full text-sm text-left text-gray-500 dark:text-gray-400 {loading
-				? 'opacity-20'
-				: ''}"
-		>
-			<thead class="text-xs text-gray-800 uppercase bg-transparent dark:text-gray-200">
-				<tr class="border-b-[1.5px] border-gray-50 dark:border-gray-850/30">
-					<th scope="col" class="px-2.5 py-2 w-8">#</th>
-					<th
-						scope="col"
-						class="px-2.5 py-2 cursor-pointer select-none"
-						on:click={() => toggleSort('name')}
-					>
-						<div class="flex gap-1.5 items-center">
-							{$i18n.t('Model')}
-							{#if orderBy === 'name'}
-								{#if direction === 'asc'}<ChevronUp className="size-2" />{:else}<ChevronDown
-										className="size-2"
-									/>{/if}
-							{:else}
-								<span class="invisible"><ChevronUp className="size-2" /></span>
-							{/if}
-						</div>
-					</th>
-					<th
-						scope="col"
-						class="px-2.5 py-2 cursor-pointer select-none text-right"
-						on:click={() => toggleSort('count')}
-					>
-						<div class="flex gap-1.5 items-center justify-end">
-							{$i18n.t('Messages')}
-							{#if orderBy === 'count'}
-								{#if direction === 'asc'}<ChevronUp className="size-2" />{:else}<ChevronDown
-										className="size-2"
-									/>{/if}
-							{:else}
-								<span class="invisible"><ChevronUp className="size-2" /></span>
-							{/if}
-						</div>
-					</th>
-					<th
-						scope="col"
-						class="px-2.5 py-2 cursor-pointer select-none text-right w-24"
-						on:click={() => toggleSort('percentage')}
-					>
-						<div class="flex gap-1.5 items-center justify-end">
-							{$i18n.t('Share')}
-							{#if orderBy === 'percentage'}
-								{#if direction === 'asc'}<ChevronUp className="size-2" />{:else}<ChevronDown
-										className="size-2"
-									/>{/if}
-							{:else}
-								<span class="invisible"><ChevronUp className="size-2" /></span>
-							{/if}
-						</div>
-					</th>
-				</tr>
-			</thead>
-			<tbody>
-				{#each sortedModels as model, idx (model.model_id)}
-					<tr
-						class="bg-white dark:bg-gray-900 text-xs hover:bg-gray-50 dark:hover:bg-gray-850/50 transition"
-					>
-						<td class="px-3 py-1.5 font-medium text-gray-900 dark:text-white">
-							{idx + 1}
-						</td>
-						<td class="px-3 py-1.5">
-							<div class="flex items-center gap-2">
-								<img
-									src="{WEBUI_API_BASE_URL}/models/model/profile/image?id={model.model_id}"
-									alt={model.name}
-									class="size-5 rounded-full object-cover shrink-0"
-									on:error={(e) => {
-										e.target.src = '/favicon.png';
-									}}
-								/>
-								<span class="font-medium text-gray-800 dark:text-gray-200">{model.name}</span>
-							</div>
-						</td>
-						<td class="px-3 py-1.5 text-right font-medium text-gray-900 dark:text-white">
-							{model.count.toLocaleString()}
-						</td>
-						<td class="px-3 py-1.5 text-right font-medium text-blue-500">
-							{((model.count / totalMessages) * 100).toFixed(1)}%
-						</td>
-					</tr>
-				{/each}
-			</tbody>
-		</table>
-	{/if}
+  {#if !modelStats.length && !loading}
+    <div class="py-1 text-center text-xs text-gray-500">{$i18n.t('No data found')}</div>
+  {:else if modelStats.length}
+    <table
+      class="w-full text-left text-sm text-gray-500 dark:text-gray-400 {loading
+        ? 'opacity-20'
+        : ''}"
+    >
+      <thead class="bg-transparent text-xs text-gray-800 uppercase dark:text-gray-200">
+        <tr class="dark:border-gray-850/30 border-b-[1.5px] border-gray-50">
+          <th scope="col" class="w-8 px-2.5 py-2">#</th>
+          <th
+            scope="col"
+            class="cursor-pointer px-2.5 py-2 select-none"
+            on:click={() => toggleSort('name')}
+          >
+            <div class="flex items-center gap-1.5">
+              {$i18n.t('Model')}
+              {#if orderBy === 'name'}
+                {#if direction === 'asc'}<ChevronUp className="size-2" />{:else}<ChevronDown
+                    className="size-2"
+                  />{/if}
+              {:else}
+                <span class="invisible"><ChevronUp className="size-2" /></span>
+              {/if}
+            </div>
+          </th>
+          <th
+            scope="col"
+            class="cursor-pointer px-2.5 py-2 text-right select-none"
+            on:click={() => toggleSort('count')}
+          >
+            <div class="flex items-center justify-end gap-1.5">
+              {$i18n.t('Messages')}
+              {#if orderBy === 'count'}
+                {#if direction === 'asc'}<ChevronUp className="size-2" />{:else}<ChevronDown
+                    className="size-2"
+                  />{/if}
+              {:else}
+                <span class="invisible"><ChevronUp className="size-2" /></span>
+              {/if}
+            </div>
+          </th>
+          <th
+            scope="col"
+            class="w-24 cursor-pointer px-2.5 py-2 text-right select-none"
+            on:click={() => toggleSort('percentage')}
+          >
+            <div class="flex items-center justify-end gap-1.5">
+              {$i18n.t('Share')}
+              {#if orderBy === 'percentage'}
+                {#if direction === 'asc'}<ChevronUp className="size-2" />{:else}<ChevronDown
+                    className="size-2"
+                  />{/if}
+              {:else}
+                <span class="invisible"><ChevronUp className="size-2" /></span>
+              {/if}
+            </div>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {#each sortedModels as model, idx (model.model_id)}
+          <tr
+            class="dark:hover:bg-gray-850/50 bg-white text-xs transition hover:bg-gray-50 dark:bg-gray-900"
+          >
+            <td class="px-3 py-1.5 font-medium text-gray-900 dark:text-white">
+              {idx + 1}
+            </td>
+            <td class="px-3 py-1.5">
+              <div class="flex items-center gap-2">
+                <img
+                  src="{WEBUI_API_BASE_URL}/models/model/profile/image?id={model.model_id}"
+                  alt={model.name}
+                  class="size-5 shrink-0 rounded-full object-cover"
+                  on:error={(e) => {
+                    e.target.src = '/favicon.png';
+                  }}
+                />
+                <span class="font-medium text-gray-800 dark:text-gray-200">{model.name}</span>
+              </div>
+            </td>
+            <td class="px-3 py-1.5 text-right font-medium text-gray-900 dark:text-white">
+              {model.count.toLocaleString()}
+            </td>
+            <td class="px-3 py-1.5 text-right font-medium text-blue-500">
+              {((model.count / totalMessages) * 100).toFixed(1)}%
+            </td>
+          </tr>
+        {/each}
+      </tbody>
+    </table>
+  {/if}
 </div>
 
-<div class="text-gray-500 text-xs mt-1.5 w-full flex justify-end">
-	<div class="text-right">
-		ⓘ {$i18n.t('Message counts are based on assistant responses.')}
-	</div>
+<div class="mt-1.5 flex w-full justify-end text-xs text-gray-500">
+  <div class="text-right">
+    ⓘ {$i18n.t('Message counts are based on assistant responses.')}
+  </div>
 </div>

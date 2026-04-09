@@ -1,56 +1,56 @@
 <script>
-	import { toast } from 'svelte-sonner';
-	import { getContext, onMount, tick } from 'svelte';
+  import { toast } from 'svelte-sonner';
+  import { getContext, onMount, tick } from 'svelte';
 
-	const i18n = getContext('i18n');
+  const i18n = getContext('i18n');
 
-	import { goto } from '$app/navigation';
-	import { user } from '$lib/stores';
-	import { updateToolAccessGrants } from '$lib/apis/tools';
+  import { goto } from '$app/navigation';
+  import { user } from '$lib/stores';
+  import { updateToolAccessGrants } from '$lib/apis/tools';
 
-	import { nameToId } from '$lib/utils';
-	import CodeEditor from '$lib/components/common/CodeEditor.svelte';
-	import ConfirmDialog from '$lib/components/common/ConfirmDialog.svelte';
-	import ChevronLeft from '$lib/components/icons/ChevronLeft.svelte';
-	import Tooltip from '$lib/components/common/Tooltip.svelte';
-	import LockClosed from '$lib/components/icons/LockClosed.svelte';
-	import AccessControlModal from '../common/AccessControlModal.svelte';
+  import { nameToId } from '$lib/utils';
+  import CodeEditor from '$lib/components/common/CodeEditor.svelte';
+  import ConfirmDialog from '$lib/components/common/ConfirmDialog.svelte';
+  import ChevronLeft from '$lib/components/icons/ChevronLeft.svelte';
+  import Tooltip from '$lib/components/common/Tooltip.svelte';
+  import LockClosed from '$lib/components/icons/LockClosed.svelte';
+  import AccessControlModal from '../common/AccessControlModal.svelte';
 
-	let formElement = null;
-	let loading = false;
+  let formElement = null;
+  let loading = false;
 
-	let showConfirm = false;
-	let showAccessControlModal = false;
+  let showConfirm = false;
+  let showAccessControlModal = false;
 
-	export let edit = false;
-	export let clone = false;
+  export let edit = false;
+  export let clone = false;
 
-	export let onSave = () => {};
+  export let onSave = () => {};
 
-	export let id = '';
-	export let name = '';
-	export let meta = {
-		description: ''
-	};
-	export let content = '';
-	export let accessGrants = [];
+  export let id = '';
+  export let name = '';
+  export let meta = {
+    description: '',
+  };
+  export let content = '';
+  export let accessGrants = [];
 
-	let _content = '';
+  let _content = '';
 
-	$: if (content) {
-		updateContent();
-	}
+  $: if (content) {
+    updateContent();
+  }
 
-	const updateContent = () => {
-		_content = content;
-	};
+  const updateContent = () => {
+    _content = content;
+  };
 
-	$: if (name && !edit && !clone) {
-		id = nameToId(name);
-	}
+  $: if (name && !edit && !clone) {
+    id = nameToId(name);
+  }
 
-	let codeEditor;
-	let boilerplate = `import os
+  let codeEditor;
+  let boilerplate = `import os
 import requests
 from datetime import datetime
 from pydantic import BaseModel, Field
@@ -157,215 +157,215 @@ class Tools:
             return f"Error fetching weather data: {str(e)}"
 `;
 
-	const saveHandler = async () => {
-		loading = true;
-		onSave({
-			id,
-			name,
-			meta,
-			content,
-			access_grants: accessGrants
-		});
-	};
+  const saveHandler = async () => {
+    loading = true;
+    onSave({
+      id,
+      name,
+      meta,
+      content,
+      access_grants: accessGrants,
+    });
+  };
 
-	const submitHandler = async () => {
-		if (codeEditor) {
-			content = _content;
-			await tick();
+  const submitHandler = async () => {
+    if (codeEditor) {
+      content = _content;
+      await tick();
 
-			const res = await codeEditor.formatPythonCodeHandler();
-			await tick();
+      const res = await codeEditor.formatPythonCodeHandler();
+      await tick();
 
-			content = _content;
-			await tick();
+      content = _content;
+      await tick();
 
-			if (!res) {
-				console.warn('Code formatting failed or was skipped, saving unformatted code');
-			}
+      if (!res) {
+        console.warn('Code formatting failed or was skipped, saving unformatted code');
+      }
 
-			saveHandler();
-		}
-	};
+      saveHandler();
+    }
+  };
 </script>
 
 <AccessControlModal
-	bind:show={showAccessControlModal}
-	bind:accessGrants
-	accessRoles={['read', 'write']}
-	share={$user?.permissions?.sharing?.tools || $user?.role === 'admin'}
-	sharePublic={$user?.permissions?.sharing?.public_tools || $user?.role === 'admin'}
-	shareUsers={($user?.permissions?.access_grants?.allow_users ?? true) || $user?.role === 'admin'}
-	onChange={async () => {
-		if (edit && id) {
-			try {
-				await updateToolAccessGrants(localStorage.token, id, accessGrants);
-				toast.success($i18n.t('Saved'));
-			} catch (error) {
-				toast.error(`${error}`);
-			}
-		}
-	}}
+  bind:show={showAccessControlModal}
+  bind:accessGrants
+  accessRoles={['read', 'write']}
+  share={$user?.permissions?.sharing?.tools || $user?.role === 'admin'}
+  sharePublic={$user?.permissions?.sharing?.public_tools || $user?.role === 'admin'}
+  shareUsers={($user?.permissions?.access_grants?.allow_users ?? true) || $user?.role === 'admin'}
+  onChange={async () => {
+    if (edit && id) {
+      try {
+        await updateToolAccessGrants(localStorage.token, id, accessGrants);
+        toast.success($i18n.t('Saved'));
+      } catch (error) {
+        toast.error(`${error}`);
+      }
+    }
+  }}
 />
 
-<div class=" flex flex-col justify-between w-full overflow-y-auto h-full">
-	<div class="mx-auto w-full md:px-0 h-full">
-		<form
-			bind:this={formElement}
-			class=" flex flex-col max-h-[100dvh] h-full"
-			on:submit|preventDefault={() => {
-				if (edit) {
-					submitHandler();
-				} else {
-					showConfirm = true;
-				}
-			}}
-		>
-			<div class="flex flex-col flex-1 overflow-auto h-0 rounded-lg">
-				<div class="w-full mb-2 flex flex-col gap-0.5">
-					<div class="flex w-full items-center">
-						<div class=" shrink-0 mr-2">
-							<Tooltip content={$i18n.t('Back')}>
-								<button
-									class="w-full text-left text-sm py-1.5 px-1 rounded-lg dark:text-gray-300 dark:hover:text-white hover:bg-black/5 dark:hover:bg-gray-850"
-									aria-label={$i18n.t('Back')}
-									on:click={() => {
-										goto('/workspace/tools');
-									}}
-									type="button"
-								>
-									<ChevronLeft strokeWidth="2.5" />
-								</button>
-							</Tooltip>
-						</div>
+<div class=" flex h-full w-full flex-col justify-between overflow-y-auto">
+  <div class="mx-auto h-full w-full md:px-0">
+    <form
+      bind:this={formElement}
+      class=" flex h-full max-h-[100dvh] flex-col"
+      on:submit|preventDefault={() => {
+        if (edit) {
+          submitHandler();
+        } else {
+          showConfirm = true;
+        }
+      }}
+    >
+      <div class="flex h-0 flex-1 flex-col overflow-auto rounded-lg">
+        <div class="mb-2 flex w-full flex-col gap-0.5">
+          <div class="flex w-full items-center">
+            <div class=" mr-2 shrink-0">
+              <Tooltip content={$i18n.t('Back')}>
+                <button
+                  class="dark:hover:bg-gray-850 w-full rounded-lg px-1 py-1.5 text-left text-sm hover:bg-black/5 dark:text-gray-300 dark:hover:text-white"
+                  aria-label={$i18n.t('Back')}
+                  on:click={() => {
+                    goto('/workspace/tools');
+                  }}
+                  type="button"
+                >
+                  <ChevronLeft strokeWidth="2.5" />
+                </button>
+              </Tooltip>
+            </div>
 
-						<div class="flex-1">
-							<Tooltip content={$i18n.t('e.g. My Tools')} placement="top-start">
-								<input
-									class="w-full text-2xl bg-transparent outline-hidden"
-									type="text"
-									placeholder={$i18n.t('Tool Name')}
-									aria-label={$i18n.t('Tool Name')}
-									bind:value={name}
-									required
-								/>
-							</Tooltip>
-						</div>
+            <div class="flex-1">
+              <Tooltip content={$i18n.t('e.g. My Tools')} placement="top-start">
+                <input
+                  class="w-full bg-transparent text-2xl outline-hidden"
+                  type="text"
+                  placeholder={$i18n.t('Tool Name')}
+                  aria-label={$i18n.t('Tool Name')}
+                  bind:value={name}
+                  required
+                />
+              </Tooltip>
+            </div>
 
-						<div class="self-center shrink-0">
-							<button
-								class="bg-gray-50 hover:bg-gray-100 text-black dark:bg-gray-850 dark:hover:bg-gray-800 dark:text-white transition px-2 py-1 rounded-full flex gap-1 items-center"
-								type="button"
-								on:click={() => {
-									showAccessControlModal = true;
-								}}
-							>
-								<LockClosed strokeWidth="2.5" className="size-3.5" />
+            <div class="shrink-0 self-center">
+              <button
+                class="dark:bg-gray-850 flex items-center gap-1 rounded-full bg-gray-50 px-2 py-1 text-black transition hover:bg-gray-100 dark:text-white dark:hover:bg-gray-800"
+                type="button"
+                on:click={() => {
+                  showAccessControlModal = true;
+                }}
+              >
+                <LockClosed strokeWidth="2.5" className="size-3.5" />
 
-								<div class="text-sm font-medium shrink-0">
-									{$i18n.t('Access')}
-								</div>
-							</button>
-						</div>
-					</div>
+                <div class="shrink-0 text-sm font-medium">
+                  {$i18n.t('Access')}
+                </div>
+              </button>
+            </div>
+          </div>
 
-					<div class=" flex gap-2 px-1 items-center">
-						{#if edit}
-							<div class="text-sm text-gray-500 shrink-0">
-								{id}
-							</div>
-						{:else}
-							<Tooltip className="w-full" content={$i18n.t('e.g. my_tools')} placement="top-start">
-								<input
-									class="w-full text-sm disabled:text-gray-500 bg-transparent outline-hidden"
-									type="text"
-									placeholder={$i18n.t('Tool ID')}
-									aria-label={$i18n.t('Tool ID')}
-									bind:value={id}
-									required
-									disabled={edit}
-								/>
-							</Tooltip>
-						{/if}
+          <div class=" flex items-center gap-2 px-1">
+            {#if edit}
+              <div class="shrink-0 text-sm text-gray-500">
+                {id}
+              </div>
+            {:else}
+              <Tooltip className="w-full" content={$i18n.t('e.g. my_tools')} placement="top-start">
+                <input
+                  class="w-full bg-transparent text-sm outline-hidden disabled:text-gray-500"
+                  type="text"
+                  placeholder={$i18n.t('Tool ID')}
+                  aria-label={$i18n.t('Tool ID')}
+                  bind:value={id}
+                  required
+                  disabled={edit}
+                />
+              </Tooltip>
+            {/if}
 
-						<Tooltip
-							className="w-full self-center items-center flex"
-							content={$i18n.t('e.g. Tools for performing various operations')}
-							placement="top-start"
-						>
-							<input
-								class="w-full text-sm bg-transparent outline-hidden"
-								type="text"
-								placeholder={$i18n.t('Tool Description')}
-								aria-label={$i18n.t('Tool Description')}
-								bind:value={meta.description}
-								required
-							/>
-						</Tooltip>
-					</div>
-				</div>
+            <Tooltip
+              className="w-full self-center items-center flex"
+              content={$i18n.t('e.g. Tools for performing various operations')}
+              placement="top-start"
+            >
+              <input
+                class="w-full bg-transparent text-sm outline-hidden"
+                type="text"
+                placeholder={$i18n.t('Tool Description')}
+                aria-label={$i18n.t('Tool Description')}
+                bind:value={meta.description}
+                required
+              />
+            </Tooltip>
+          </div>
+        </div>
 
-				<div class="mb-2 flex-1 overflow-auto h-0 rounded-lg">
-					<CodeEditor
-						bind:this={codeEditor}
-						value={content}
-						lang="python"
-						{boilerplate}
-						onChange={(e) => {
-							_content = e;
-						}}
-						onSave={async () => {
-							if (formElement) {
-								formElement.requestSubmit();
-							}
-						}}
-					/>
-				</div>
+        <div class="mb-2 h-0 flex-1 overflow-auto rounded-lg">
+          <CodeEditor
+            bind:this={codeEditor}
+            value={content}
+            lang="python"
+            {boilerplate}
+            onChange={(e) => {
+              _content = e;
+            }}
+            onSave={async () => {
+              if (formElement) {
+                formElement.requestSubmit();
+              }
+            }}
+          />
+        </div>
 
-				<div class="pb-3 flex justify-between">
-					<div class="flex-1 pr-3">
-						<div class="text-xs text-gray-500 line-clamp-2">
-							<span class=" font-semibold dark:text-gray-200">{$i18n.t('Warning:')}</span>
-							{$i18n.t('Tools are a function calling system with arbitrary code execution')} <br />—
-							<span class=" font-medium dark:text-gray-400"
-								>{$i18n.t(`don't install random tools from sources you don't trust.`)}</span
-							>
-						</div>
-					</div>
+        <div class="flex justify-between pb-3">
+          <div class="flex-1 pr-3">
+            <div class="line-clamp-2 text-xs text-gray-500">
+              <span class=" font-semibold dark:text-gray-200">{$i18n.t('Warning:')}</span>
+              {$i18n.t('Tools are a function calling system with arbitrary code execution')} <br />—
+              <span class=" font-medium dark:text-gray-400"
+                >{$i18n.t(`don't install random tools from sources you don't trust.`)}</span
+              >
+            </div>
+          </div>
 
-					<button
-						class="px-3.5 py-1.5 text-sm font-medium bg-black hover:bg-gray-900 text-white dark:bg-white dark:text-black dark:hover:bg-gray-100 transition rounded-full"
-						type="submit"
-					>
-						{$i18n.t('Save')}
-					</button>
-				</div>
-			</div>
-		</form>
-	</div>
+          <button
+            class="rounded-full bg-black px-3.5 py-1.5 text-sm font-medium text-white transition hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100"
+            type="submit"
+          >
+            {$i18n.t('Save')}
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
 </div>
 
 <ConfirmDialog
-	bind:show={showConfirm}
-	on:confirm={() => {
-		submitHandler();
-	}}
+  bind:show={showConfirm}
+  on:confirm={() => {
+    submitHandler();
+  }}
 >
-	<div class="text-sm text-gray-500">
-		<div class=" bg-yellow-500/20 text-yellow-700 dark:text-yellow-200 rounded-lg px-4 py-3">
-			<div>{$i18n.t('Please carefully review the following warnings:')}</div>
+  <div class="text-sm text-gray-500">
+    <div class=" rounded-lg bg-yellow-500/20 px-4 py-3 text-yellow-700 dark:text-yellow-200">
+      <div>{$i18n.t('Please carefully review the following warnings:')}</div>
 
-			<ul class=" mt-1 list-disc pl-4 text-xs">
-				<li>
-					{$i18n.t('Tools have a function calling system that allows arbitrary code execution.')}
-				</li>
-				<li>{$i18n.t('Do not install tools from sources you do not fully trust.')}</li>
-			</ul>
-		</div>
+      <ul class=" mt-1 list-disc pl-4 text-xs">
+        <li>
+          {$i18n.t('Tools have a function calling system that allows arbitrary code execution.')}
+        </li>
+        <li>{$i18n.t('Do not install tools from sources you do not fully trust.')}</li>
+      </ul>
+    </div>
 
-		<div class="my-3">
-			{$i18n.t(
-				'I acknowledge that I have read and I understand the implications of my action. I am aware of the risks associated with executing arbitrary code and I have verified the trustworthiness of the source.'
-			)}
-		</div>
-	</div>
+    <div class="my-3">
+      {$i18n.t(
+        'I acknowledge that I have read and I understand the implications of my action. I am aware of the risks associated with executing arbitrary code and I have verified the trustworthiness of the source.',
+      )}
+    </div>
+  </div>
 </ConfirmDialog>
