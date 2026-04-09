@@ -109,7 +109,7 @@
   </button>
 
   <div class="self-top shrink-0 -translate-y-0.5">
-    <img src="{WEBUI_BASE_URL}/static/favicon.png" alt="favicon" class="size-6 rounded-full" />
+    <img src="./favicon.png" alt="favicon" class="size-6 rounded-full" />
   </div>
 
   <div>

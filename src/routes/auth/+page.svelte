@@ -241,7 +241,7 @@
                   <img
                     id="logo"
                     crossorigin="anonymous"
-                    src="{WEBUI_BASE_URL}/static/favicon.png"
+                    src="./favicon.png"
                     class="size-24 rounded-full"
                     alt="{$WEBUI_NAME} logo"
                   />
@@ -593,7 +593,7 @@
             <img
               id="logo"
               crossorigin="anonymous"
-              src="{WEBUI_BASE_URL}/static/favicon.png"
+              src="./favicon.png"
               class=" w-6 rounded-full"
               alt=""
             />

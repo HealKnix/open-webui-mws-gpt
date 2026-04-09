@@ -499,7 +499,7 @@
                     />
                   {:else}
                     <img
-                      src="{WEBUI_BASE_URL}/static/favicon.png"
+                      src="./favicon.png"
                       alt="model profile"
                       class=" size-20 shrink-0 rounded-xl object-cover md:size-48"
                     />
