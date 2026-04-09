@@ -30,6 +30,7 @@
   import UserBadgeCheck from '../icons/UserBadgeCheck.svelte';
   import Button from '../common/Button.svelte';
   import { cn } from '$lib/utils';
+  import Input from '../common/Input.svelte';
 
   const i18n = getContext('i18n');
 
@@ -609,28 +610,18 @@
       <div
         role="tablist"
         id="settings-tabs-container"
-        class="tabs mx-3 mb-1 flex flex-1 -translate-y-1 flex-row gap-2.5 overflow-x-auto text-left text-sm md:mb-0 md:max-h-[42rem] md:min-h-[42rem] md:w-50 md:flex-none md:flex-col md:gap-1 md:pr-4 dark:text-gray-200"
+        class="tabs bg-card mx-3 mb-1 flex flex-1 -translate-y-1 flex-row gap-2.5 overflow-x-auto rounded-2xl p-2 text-left text-sm md:mb-0 md:max-h-[42rem] md:min-h-[42rem] md:w-50 md:flex-none md:flex-col md:gap-1"
       >
-        <div
-          class="dark:bg-gray-850/80 my-1 mb-1.5 hidden w-full gap-2 rounded-full bg-gray-100/80 px-2.5 backdrop-blur-2xl md:flex"
-          id="settings-search"
-        >
-          <div class="self-center rounded-l-xl bg-transparent">
-            <Search
-              className="size-3.5"
-              strokeWidth={($settings?.highContrastMode ?? false) ? '3' : '1.5'}
-            />
-          </div>
-          <label class="sr-only" for="search-input-settings-modal">{$i18n.t('Search')}</label>
-          <input
-            class={`w-full bg-transparent py-1 text-sm outline-hidden dark:text-gray-300
-								${($settings?.highContrastMode ?? false) ? 'placeholder-gray-800' : ''}`}
-            bind:value={search}
-            id="search-input-settings-modal"
-            on:input={searchDebounceHandler}
-            placeholder={$i18n.t('Search')}
-          />
-        </div>
+        <Input
+          bind:value={search}
+          id="search-input-settings-modal"
+          on:input={searchDebounceHandler}
+          placeholder={$i18n.t('Search')}
+          iconLeft={Search}
+          radius="lg"
+          className="mb-2 md:flex hidden"
+          inputClassName="bg-background"
+        />
         {#if filteredSettings.length > 0}
           {#each filteredSettings as tabId (tabId)}
             {#if tabId === 'general'}
@@ -641,7 +632,7 @@
                 variant="ghost"
                 color="foreground"
                 className={cn(
-                  'flex min-w-fit flex-1 justify-start rounded-xl px-0.5 py-1 text-left transition md:flex-none md:px-2.5',
+                  'flex min-w-fit flex-1 justify-start rounded-xl py-1 text-left transition md:flex-none',
                   selectedTab === 'general' && 'text-primary bg-primary/15! font-medium',
                 )}
                 on:click={() => {
@@ -661,7 +652,7 @@
                 variant="ghost"
                 color="foreground"
                 className={cn(
-                  'flex min-w-fit flex-1 justify-start rounded-xl px-0.5 py-1 text-left transition md:flex-none md:px-2.5',
+                  'flex min-w-fit flex-1 justify-start rounded-xl py-1 text-left transition md:flex-none',
                   selectedTab === 'interface' && 'text-primary bg-primary/15! font-medium',
                 )}
                 on:click={() => {
@@ -682,7 +673,7 @@
                   variant="ghost"
                   color="foreground"
                   className={cn(
-                    'flex min-w-fit flex-1 justify-start rounded-xl px-0.5 py-1 text-left transition md:flex-none md:px-2.5',
+                    'flex min-w-fit flex-1 justify-start rounded-xl py-1 text-left transition md:flex-none',
                     selectedTab === 'connections' && 'text-primary bg-primary/15! font-medium',
                   )}
                   on:click={() => {
@@ -704,7 +695,7 @@
                   variant="ghost"
                   color="foreground"
                   className={cn(
-                    'flex min-w-fit flex-1 justify-start rounded-xl px-0.5 py-1 text-left transition md:flex-none md:px-2.5',
+                    'flex min-w-fit flex-1 justify-start rounded-xl py-1 text-left transition md:flex-none',
                     selectedTab === 'tools' && 'text-primary bg-primary/15! font-medium',
                   )}
                   on:click={() => {
@@ -725,7 +716,7 @@
                 variant="ghost"
                 color="foreground"
                 className={cn(
-                  'flex min-w-fit flex-1 justify-start rounded-xl px-0.5 py-1 text-left transition md:flex-none md:px-2.5',
+                  'flex min-w-fit flex-1 justify-start rounded-xl py-1 text-left transition md:flex-none',
                   selectedTab === 'personalization' && 'text-primary bg-primary/15! font-medium',
                 )}
                 on:click={() => {
@@ -745,7 +736,7 @@
                 variant="ghost"
                 color="foreground"
                 className={cn(
-                  'flex min-w-fit flex-1 justify-start rounded-xl px-0.5 py-1 text-left transition md:flex-none md:px-2.5',
+                  'flex min-w-fit flex-1 justify-start rounded-xl py-1 text-left transition md:flex-none',
                   selectedTab === 'audio' && 'text-primary bg-primary/15! font-medium',
                 )}
                 on:click={() => {
@@ -765,7 +756,7 @@
                 variant="ghost"
                 color="foreground"
                 className={cn(
-                  'flex min-w-fit flex-1 justify-start rounded-xl px-0.5 py-1 text-left transition md:flex-none md:px-2.5',
+                  'flex min-w-fit flex-1 justify-start rounded-xl py-1 text-left transition md:flex-none',
                   selectedTab === 'data_controls' && 'text-primary bg-primary/15! font-medium',
                 )}
                 on:click={() => {
@@ -785,7 +776,7 @@
                 variant="ghost"
                 color="foreground"
                 className={cn(
-                  'flex min-w-fit flex-1 justify-start rounded-xl px-0.5 py-1 text-left transition md:flex-none md:px-2.5',
+                  'flex min-w-fit flex-1 justify-start rounded-xl py-1 text-left transition md:flex-none',
                   selectedTab === 'account' && 'text-primary bg-primary/15! font-medium',
                 )}
                 on:click={() => {
@@ -805,7 +796,7 @@
                 variant="ghost"
                 color="foreground"
                 className={cn(
-                  'flex min-w-fit flex-1 justify-start rounded-xl px-0.5 py-1 text-left transition md:flex-none md:px-2.5',
+                  'flex min-w-fit flex-1 justify-start rounded-xl py-1 text-left transition md:flex-none',
                   selectedTab === 'about' && 'text-primary bg-primary/15! font-medium',
                 )}
                 on:click={() => {
@@ -825,12 +816,10 @@
           </div>
         {/if}
         {#if $user?.role === 'admin'}
-          <a
+          <Button
             href="/admin/settings"
-            draggable="false"
-            class="flex min-w-fit flex-1 justify-start rounded-xl px-0.5 py-1 text-left transition select-none md:mt-auto md:flex-none md:px-2.5 {$settings?.highContrastMode
-              ? 'hover:bg-gray-200 dark:hover:bg-gray-800'
-              : 'text-gray-300 hover:text-gray-700 dark:text-gray-600 dark:hover:text-white'}"
+            variant="ghost"
+            className="flex flex-none rounded-xl justify-start text-left transition select-none md:mt-auto md:flex-none"
             on:click={async (e) => {
               e.preventDefault();
               await goto('/admin/settings');
@@ -841,10 +830,10 @@
               <UserBadgeCheck strokeWidth="2" />
             </div>
             <div class=" self-center">{$i18n.t('Admin Settings')}</div>
-          </a>
+          </Button>
         {/if}
       </div>
-      <div class="max-h-[42rem] flex-1 px-3.5 md:min-h-[42rem] md:pr-4.5 md:pl-0">
+      <div class="max-h-[42rem] flex-1 md:min-h-[42rem]">
         {#if selectedTab === 'general'}
           <General
             {getModels}

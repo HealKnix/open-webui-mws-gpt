@@ -695,7 +695,7 @@
     class="z-10 flex h-full justify-between p-2 text-black transition-all dark:text-white"
     id="sidebar"
   >
-    <div class="ring-border bg-secondary flex flex-col rounded-2xl p-2 ring">
+    <div class="ring-border bg-card flex flex-col rounded-2xl p-2 ring">
       <button
         class="flex flex-1 flex-col {isWindows ? 'cursor-pointer' : 'cursor-[e-resize]'}"
         on:click={async () => {
@@ -708,7 +708,7 @@
             placement="right"
           >
             <button
-              class="group hover:bg-secondary-hover flex rounded-xl transition {isWindows
+              class="group hover:bg-card-hover flex rounded-xl transition {isWindows
                 ? 'cursor-pointer'
                 : 'cursor-[e-resize]'}"
               aria-label={$showSidebar ? $i18n.t('Close Sidebar') : $i18n.t('Open Sidebar')}
@@ -729,7 +729,7 @@
         <div class="py-0.5">
           <Tooltip content={$i18n.t('New Chat')} placement="right">
             <a
-              class="group hover:bg-secondary-hover flex cursor-pointer rounded-xl transition"
+              class="group hover:bg-card-hover flex cursor-pointer rounded-xl transition"
               href="/"
               draggable="false"
               on:click={async (e) => {
@@ -749,7 +749,7 @@
 
           <Tooltip content={$i18n.t('Search')} placement="right">
             <button
-              class="group hover:bg-secondary-hover flex cursor-pointer rounded-xl transition"
+              class="group hover:bg-card-hover flex cursor-pointer rounded-xl transition"
               on:click={(e) => {
                 e.stopImmediatePropagation();
                 e.preventDefault();
@@ -768,7 +768,7 @@
           {#if ($config?.features?.enable_notes ?? false) && ($user?.role === 'admin' || ($user?.permissions?.features?.notes ?? true))}
             <Tooltip content={$i18n.t('Notes')} placement="right">
               <a
-                class="group hover:bg-secondary-hover flex cursor-pointer rounded-xl transition"
+                class="group hover:bg-card-hover flex cursor-pointer rounded-xl transition"
                 href="/notes"
                 on:click={async (e) => {
                   e.stopImmediatePropagation();
@@ -790,7 +790,7 @@
           {#if $user?.role === 'admin' || $user?.permissions?.workspace?.models || $user?.permissions?.workspace?.knowledge || $user?.permissions?.workspace?.prompts || $user?.permissions?.workspace?.tools}
             <Tooltip content={$i18n.t('Workspace')} placement="right">
               <a
-                class="group hover:bg-secondary-hover flex cursor-pointer rounded-xl transition"
+                class="group hover:bg-card-hover flex cursor-pointer rounded-xl transition"
                 href="/workspace"
                 on:click={async (e) => {
                   e.stopImmediatePropagation();
@@ -836,7 +836,7 @@
               }
             }}
           >
-            <div class="group hover:bg-secondary-hover flex cursor-pointer rounded-xl transition">
+            <div class="group hover:bg-card-hover flex cursor-pointer rounded-xl transition">
               <div class="relative self-center">
                 <img
                   src={`${WEBUI_API_BASE_URL}/users/${$user?.id}/profile/image`}
@@ -886,13 +886,13 @@
     >
       <div
         class={cn(
-          'ring-border bg-secondary flex h-full flex-col overflow-hidden rounded-2xl ring',
+          'ring-border bg-card flex h-full flex-col overflow-hidden rounded-2xl ring',
           $mobile && 'bg-white dark:bg-black',
         )}
       >
         <div class="sidebar sticky top-0 z-10 -mb-3 flex justify-between p-2 pb-0">
           <a
-            class="dark:hover:bg-gray-850/50 no-drag-region flex h-full items-center justify-center rounded-xl p-1.5 transition hover:bg-gray-100/50"
+            class="no-drag-region hover:bg-card-hover flex h-full items-center justify-center rounded-xl p-1.5 transition"
             href="/"
             draggable="false"
             on:click={newChatHandler}
@@ -918,7 +918,7 @@
             placement="bottom"
           >
             <button
-              class="dark:hover:bg-gray-850/50 flex size-8.5 items-center justify-center rounded-xl transition hover:bg-gray-100/50 {isWindows
+              class="hover:bg-card-hover flex size-8.5 items-center justify-center rounded-xl transition {isWindows
                 ? 'cursor-pointer'
                 : 'cursor-[w-resize]'}"
               on:click={() => {
@@ -953,7 +953,7 @@
             <div class="flex justify-center text-gray-800 dark:text-gray-200">
               <a
                 id="sidebar-new-chat-button"
-                class="group flex grow items-center space-x-3 rounded-lg px-2.75 py-2 transition outline-none hover:bg-gray-100 dark:hover:bg-gray-900"
+                class="group hover:bg-card-hover flex grow items-center space-x-3 rounded-lg px-2.75 py-2 transition outline-none"
                 href="/"
                 draggable="false"
                 on:click={newChatHandler}
@@ -976,7 +976,7 @@
             <div class="flex justify-center text-gray-800 dark:text-gray-200">
               <button
                 id="sidebar-search-button"
-                class="group flex grow items-center space-x-3 rounded-lg px-2.75 py-2 transition outline-none hover:bg-gray-100 dark:hover:bg-gray-900"
+                class="group hover:bg-card-hover flex grow items-center space-x-3 rounded-lg px-2.75 py-2 transition outline-none"
                 on:click={() => {
                   showSearch.set(true);
                 }}
@@ -998,7 +998,7 @@
               <div class="flex justify-center text-gray-800 dark:text-gray-200">
                 <a
                   id="sidebar-notes-button"
-                  class="flex grow items-center space-x-3 rounded-lg px-2.75 py-2 transition hover:bg-gray-100 dark:hover:bg-gray-900"
+                  class="hover:bg-card-hover flex grow items-center space-x-3 rounded-lg px-2.75 py-2 transition"
                   href="/notes"
                   on:click={itemClickHandler}
                   draggable="false"
@@ -1019,7 +1019,7 @@
               <div class="flex justify-center text-gray-800 dark:text-gray-200">
                 <a
                   id="sidebar-workspace-button"
-                  class="flex grow items-center space-x-3 rounded-lg px-2.75 py-2 transition hover:bg-gray-100 dark:hover:bg-gray-900"
+                  class="hover:bg-card-hover flex grow items-center space-x-3 rounded-lg px-2.75 py-2 transition"
                   href="/workspace"
                   on:click={itemClickHandler}
                   draggable="false"
@@ -1227,7 +1227,7 @@
                 <div class="flex flex-col space-y-1 rounded-xl">
                   <Folder
                     id="sidebar-pinned-chats"
-                    buttonClassName=" text-gray-500"
+                    buttonClassName="text-gray-500"
                     on:import={(e) => {
                       importChatHandler(e.detail, true);
                     }}
@@ -1410,12 +1410,12 @@
                 }}
               >
                 <div
-                  class=" flex w-full items-center rounded-2xl px-1.5 py-2 transition hover:bg-gray-100 dark:hover:bg-gray-900"
+                  class=" hover:bg-card-hover flex w-full items-center rounded-2xl px-1.5 py-2 transition"
                 >
                   <div class=" relative mr-3 self-center">
                     <img
                       src={`${WEBUI_API_BASE_URL}/users/${$user?.id}/profile/image`}
-                      class=" size-7 rounded-full object-cover"
+                      class="size-7 rounded-full object-cover"
                       alt={$i18n.t('Open User Profile Menu')}
                       aria-label={$i18n.t('Open User Profile Menu')}
                     />

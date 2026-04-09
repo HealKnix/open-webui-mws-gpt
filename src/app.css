@@ -147,15 +147,22 @@ li p {
   border-width: 1px;
 }
 
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(215, 215, 215);
+}
+
 /* Dark theme scrollbar styles */
 .dark ::-webkit-scrollbar-thumb {
   background-color: rgba(67, 67, 67, 0.6); /* Darker color for dark theme */
   border-color: rgba(0, 0, 0, var(--tw-border-opacity));
 }
+.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(67, 67, 67); /* Darker color for dark theme */
+}
 
 ::-webkit-scrollbar {
-  height: 0.45rem;
-  width: 0.45rem;
+  height: 4px;
+  width: 4px;
 }
 
 ::-webkit-scrollbar-track {

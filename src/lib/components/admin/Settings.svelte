@@ -26,6 +26,9 @@
   import DocumentChartBar from '../icons/DocumentChartBar.svelte';
   import Search from '../icons/Search.svelte';
   import XMark from '../icons/XMark.svelte';
+  import Input from '../common/Input.svelte';
+  import Button from '../common/Button.svelte';
+  import { cn } from '$lib/utils';
 
   const i18n = getContext('i18n');
 
@@ -293,27 +296,21 @@
   });
 </script>
 
-<div class="flex h-full w-full flex-col pb-2 lg:flex-row lg:space-x-4">
+<div class="flex h-full w-full flex-col gap-4 pb-2 lg:flex-row lg:space-x-4 lg:pl-3">
   <div
     id="admin-settings-tabs-container"
-    class="tabs scrollbar-none mx-[16px] flex max-w-full flex-row gap-2.5 overflow-x-auto text-left text-sm font-medium lg:mx-0 lg:w-50 lg:flex-none lg:flex-col lg:gap-1 lg:px-[16px] dark:text-gray-200"
+    class="tabs bg-card scrollbar-none border-border mx-[16px] flex max-w-full flex-row gap-2.5 overflow-x-auto rounded-2xl p-2 text-left text-sm font-medium lg:mx-0 lg:w-50 lg:flex-none lg:flex-col lg:gap-1"
   >
-    <div
-      class="dark:bg-gray-850/80 -mx-1 my-1 mt-1.5 hidden w-full gap-2 rounded-full bg-gray-100/80 px-2.5 backdrop-blur-2xl md:flex"
-      id="settings-search"
-    >
-      <div class="self-center rounded-l-xl bg-transparent">
-        <Search className="size-3.5" strokeWidth="1.5" />
-      </div>
-      <label class="sr-only" for="search-input-settings-modal">{$i18n.t('Search')}</label>
-      <input
-        class="w-full bg-transparent py-1 text-sm outline-hidden dark:text-gray-300"
-        bind:value={search}
-        id="search-input-settings-modal"
-        on:input={searchDebounceHandler}
-        placeholder={$i18n.t('Search')}
-      />
-    </div>
+    <Input
+      bind:value={search}
+      id="search-input-settings-modal"
+      on:input={searchDebounceHandler}
+      placeholder={$i18n.t('Search')}
+      iconLeft={Search}
+      radius="lg"
+      className="mb-2 lg:flex hidden"
+      inputClassName="bg-background"
+    />
 
     <!-- {$i18n.t('General')} -->
     <!-- {$i18n.t('Connections')} -->
@@ -329,14 +326,16 @@
     <!-- {$i18n.t('Pipelines')} -->
     <!-- {$i18n.t('Database')} -->
     {#each filteredSettings as tab (tab.id)}
-      <a
+      <Button
         id={tab.id}
         href={tab.route}
-        draggable="false"
-        class="flex min-w-fit flex-1 rounded-lg px-0.5 py-1 text-right transition select-none lg:flex-none {selectedTab ===
-        tab.id
-          ? ''
-          : ' text-gray-300 hover:text-gray-700 dark:text-gray-600 dark:hover:text-white'}"
+        aria-selected={selectedTab === tab.id}
+        variant="ghost"
+        color="foreground"
+        className={cn(
+          'flex min-w-fit flex-1 justify-start rounded-xl py-1 text-left transition md:flex-none',
+          selectedTab === tab.id && 'text-primary bg-primary/15! font-medium',
+        )}
       >
         <div class=" mr-2 self-center">
           {#if tab.id === 'general'}
@@ -507,7 +506,7 @@
           {/if}
         </div>
         <div class=" self-center">{$i18n.t(tab.title)}</div>
-      </a>
+      </Button>
     {/each}
   </div>
 

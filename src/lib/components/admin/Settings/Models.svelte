@@ -484,7 +484,7 @@
           {#if searchValue}
             <div class="translate-y-[0.5px] self-center rounded-l-xl bg-transparent pl-1.5">
               <button
-                class="rounded-full p-0.5 transition hover:bg-gray-100 dark:hover:bg-gray-900"
+                class="hover:bg-card-hover rounded-full p-0.5 transition"
                 on:click={() => {
                   searchValue = '';
                 }}

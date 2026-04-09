@@ -133,7 +133,7 @@
   {#if loaded}
     {#if draggedOver}
       <div
-        class="bg-opacity-50 dark:bg-opacity-10 pointer-events-none absolute top-0 left-0 z-50 h-full w-full touch-none rounded-xs bg-gray-100/50 dark:bg-gray-700/20"
+        class="bg-opacity-50 dark:bg-opacity-10 bg-card-hover pointer-events-none absolute top-0 left-0 z-50 h-full w-full touch-none rounded-xs"
       ></div>
     {/if}
 
@@ -150,7 +150,7 @@
         <!-- svelte-ignore a11y-no-static-element-interactions -->
         <div
           id="sidebar-folder-button"
-          class=" group relative flex w-full items-center justify-between rounded-xl transition hover:bg-gray-100 dark:hover:bg-gray-900 {buttonClassName}"
+          class=" group hover:bg-card-hover relative flex w-full items-center justify-between rounded-xl transition {buttonClassName}"
         >
           <button class="flex w-full items-center gap-1.5 py-1.5 pl-2 text-xs font-medium">
             {#if chevron}
@@ -170,7 +170,7 @@
 
           {#if onAdd}
             <button
-              class="invisible absolute right-2 z-10 flex items-center self-center group-hover:visible dark:text-gray-300"
+              class="hover:bg-card-hover invisible absolute right-2 z-10 flex items-center self-center rounded-full group-hover:visible dark:text-gray-300"
               on:pointerup={(e) => {
                 e.stopPropagation();
               }}
@@ -181,7 +181,7 @@
             >
               <Tooltip content={onAddLabel}>
                 <button
-                  class="dark:hover:bg-gray-850 touch-auto rounded-lg p-0.5"
+                  class="hover:bg-card-hover touch-auto rounded-full p-0.5"
                   on:click={(e) => {}}
                 >
                   <Plus className=" size-3" strokeWidth="2.5" />

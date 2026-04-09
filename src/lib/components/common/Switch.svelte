@@ -30,7 +30,7 @@
     {id}
     aria-labelledby={ariaLabelledbyId}
     class={cn(
-      'ring-primary mx-[1px] flex h-[1.125rem] min-h-[1.125rem] w-8 shrink-0 cursor-pointer items-center rounded-full px-1 ring-0 ring-offset-0 transition outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
+      'ring-primary ring-offset-background mx-[1px] flex h-[1.125rem] min-h-[1.125rem] w-8 shrink-0 cursor-pointer items-center rounded-full px-1 ring-0 ring-offset-0 transition outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
       state ? ' bg-accent-active' : 'bg-gray-200 dark:bg-transparent',
       ($settings?.highContrastMode ?? false) &&
         'focus:outline focus:outline-2 focus:outline-gray-800 focus:dark:outline-gray-200',

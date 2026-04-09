@@ -15,8 +15,10 @@
   import SensitiveInput from '$lib/components/common/SensitiveInput.svelte';
   import Textarea from '$lib/components/common/Textarea.svelte';
   import User from '$lib/components/icons/User.svelte';
+  import GlobeAlt from '$lib/components/icons/GlobeAlt.svelte';
   import UserProfileImage from './Account/UserProfileImage.svelte';
   import Button from '$lib/components/common/Button.svelte';
+  import Input from '$lib/components/common/Input.svelte';
 
   const i18n = getContext('i18n');
 
@@ -147,13 +149,11 @@
               <div class=" mb-1 text-xs font-medium">{$i18n.t('Name')}</div>
 
               <div class="flex-1">
-                <input
-                  class="w-full bg-transparent text-sm outline-hidden dark:text-gray-300"
-                  type="text"
+                <Input
                   bind:value={name}
-                  aria-label={$i18n.t('Name')}
-                  required
                   placeholder={$i18n.t('Enter your name')}
+                  iconLeft={User}
+                  required
                 />
               </div>
             </div>
@@ -163,8 +163,7 @@
 
               <div class="flex-1">
                 <Textarea
-                  className="w-full text-sm dark:text-gray-300 bg-transparent outline-hidden"
-                  minSize={60}
+                  minHeight={60}
                   bind:value={bio}
                   ariaLabel={$i18n.t('Bio')}
                   placeholder={$i18n.t('Share your background and interests')}
@@ -234,12 +233,11 @@
           <div class=" mb-1 text-xs font-medium">{$i18n.t('Notification Webhook')}</div>
 
           <div class="flex-1">
-            <input
-              class="w-full text-sm outline-hidden"
+            <Input
               type="url"
               placeholder={$i18n.t('Enter your webhook URL')}
-              aria-label={$i18n.t('Notification Webhook')}
               bind:value={webhookUrl}
+              iconLeft={GlobeAlt}
               required
             />
           </div>

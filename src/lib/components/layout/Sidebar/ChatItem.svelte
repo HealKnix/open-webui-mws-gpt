@@ -384,10 +384,10 @@
       id="sidebar-chat-item"
       class=" flex w-full justify-between rounded-xl px-[11px] py-[6px] {id === $chatId ||
       confirmEdit
-        ? 'selected bg-gray-100 dark:bg-gray-900'
+        ? 'selected bg-card-hover'
         : selected
-          ? 'selected bg-gray-100 dark:bg-gray-950'
-          : 'group-hover:bg-gray-100 dark:group-hover:bg-gray-950'}  relative text-ellipsis whitespace-nowrap {generating
+          ? 'selected bg-card-hover'
+          : 'group-hover:bg-bg-card-hover'}  relative text-ellipsis whitespace-nowrap {generating
         ? 'cursor-not-allowed'
         : ''}"
     >
@@ -420,10 +420,10 @@
       id="sidebar-chat-item"
       class=" flex w-full justify-between rounded-xl px-[11px] py-[6px] {id === $chatId ||
       confirmEdit
-        ? 'selected bg-gray-100 dark:bg-gray-900'
+        ? 'selected bg-card-hover'
         : selected
-          ? 'selected bg-gray-100 dark:bg-gray-950'
-          : ' group-hover:bg-gray-100 dark:group-hover:bg-gray-950'}  text-ellipsis whitespace-nowrap"
+          ? 'selected bg-card-hover'
+          : ' group-hover:bg-card-hover'}  text-ellipsis whitespace-nowrap"
       href="/c/{id}"
       on:click={() => {
         dispatch('select');
@@ -479,10 +479,10 @@
     id="sidebar-chat-item-menu"
     class="
         {id === $chatId || confirmEdit
-      ? 'selected from-gray-100 dark:from-gray-900'
+      ? 'selected from-card-hover'
       : selected
-        ? 'selected from-gray-100 dark:from-gray-950'
-        : 'invisible from-gray-100 group-hover:visible dark:from-gray-950'}
+        ? 'selected from-card-hover'
+        : 'from-card-hover invisible group-hover:visible'}
             absolute {className === 'pr-2'
       ? 'right-[8px]'
       : 'right-1'} top-[4px] mr-1.5 bg-linear-to-l from-80% to-transparent py-1 pr-0.5

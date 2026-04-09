@@ -1,27 +1,36 @@
 <script lang="ts">
   import { cn } from '$lib/utils';
-  import { onMount, tick } from 'svelte';
+  import type { ComponentType } from 'svelte';
 
   export let variant: 'solid' | 'flat' | 'ghost' = 'solid';
   export let color: 'primary' | 'secondary' | 'foreground' | string = 'secondary';
   export let size: 'xs' | 'sm' | 'md' | 'lg' | 'xl' = 'sm';
   export let radius: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full' = 'md';
   export let disabled = false;
-  export let readonly = false;
   export let className = '';
-  export let textareaClassName = '';
+  export let inputClassName = '';
 
-  export let value = '';
+  export let value: string | number | undefined = undefined;
+  export let type = 'text';
   export let placeholder = '';
-  export let rows = 1;
-  export let minHeight: number | null = null;
-  export let maxHeight: number | null = null;
   export let required = false;
-  export let ariaLabel: string | null = null;
+  export let autocomplete = 'off';
+
+  export let iconLeft: ComponentType | undefined = undefined;
+  export let iconRight: ComponentType | undefined = undefined;
 
   const isPredefinedColor = ['primary', 'secondary', 'foreground'].includes(color);
 
-  // Radius mapping (matching Button/Input)
+  // Size mapping (matching Button)
+  const sizes = {
+    xs: 'h-7 text-xs',
+    sm: 'h-8 text-xs',
+    md: 'h-10 text-sm',
+    lg: 'h-12 text-base',
+    xl: 'h-14 text-lg',
+  };
+
+  // Radius mapping (matching Button)
   const radii = {
     xs: 'rounded-xs',
     sm: 'rounded-sm',
@@ -31,7 +40,7 @@
     full: 'rounded-full',
   };
 
-  // Variant & Color logic (matching Input)
+  // Variant & Color logic
   const getVariantClasses = () => {
     if (!isPredefinedColor) return '';
 
@@ -57,66 +66,61 @@
   };
 
   $: wrapperClasses = cn(
-    'relative flex flex-col transition-all duration-200 border ring-primary focus-within:ring-2 ring-offset-0 focus-within:ring-offset-2 ring-offset-background outline-none overflow-hidden w-full',
+    'relative flex items-center transition-all duration-200 border ring-primary focus-within:ring-2 ring-offset-0 focus-within:ring-offset-2 ring-offset-background outline-none overflow-hidden w-full',
     radii[radius],
+    sizes[size],
     getVariantClasses(),
     disabled && 'opacity-50 pointer-events-none',
     className,
   );
 
-  $: textareaClasses = cn(
-    'w-full bg-transparent border-none outline-none px-3 py-2 resize-none scrollbar-hidden',
-    size === 'xs' || size === 'sm' ? 'text-xs' : 'text-sm',
-    textareaClassName,
+  $: inputClasses = cn(
+    'w-full h-full bg-transparent border-none outline-none px-3 py-2',
+    iconLeft && 'pl-9',
+    iconRight && 'pr-9',
+    inputClassName,
   );
 
-  let textareaElement: HTMLTextAreaElement;
-
-  const resize = () => {
-    if (textareaElement) {
-      textareaElement.style.height = '0px';
-      let height = textareaElement.scrollHeight;
-
-      if (maxHeight && height > maxHeight) height = maxHeight;
-      if (minHeight && height < minHeight) height = minHeight;
-
-      textareaElement.style.height = `${height}px`;
-    }
+  const iconSizeClasses = {
+    xs: 'size-3.5',
+    sm: 'size-4',
+    md: 'size-5',
+    lg: 'size-6',
+    xl: 'size-7',
   };
-
-  $: if (value !== undefined) {
-    tick().then(resize);
-  }
-
-  onMount(() => {
-    resize();
-  });
 </script>
 
 <div class={wrapperClasses}>
-  <textarea
-    bind:this={textareaElement}
+  {#if iconLeft}
+    <div
+      class="text-secondary-foreground/60 pointer-events-none absolute left-3 flex items-center justify-center"
+    >
+      <svelte:component this={iconLeft} className={iconSizeClasses[size]} />
+    </div>
+  {/if}
+
+  <input
     bind:value
+    {type}
     {placeholder}
     {disabled}
-    {readonly}
     {required}
-    {rows}
-    aria-label={ariaLabel || placeholder}
-    class={textareaClasses}
-    style="field-sizing: content;"
-    on:input={resize}
-    on:focus={resize}
+    {autocomplete}
+    class={inputClasses}
     {...$$restProps}
-  ></textarea>
-</div>
+    on:input
+    on:change
+    on:keydown
+    on:keyup
+    on:focus
+    on:blur
+  />
 
-<style>
-  .scrollbar-hidden::-webkit-scrollbar {
-    display: none;
-  }
-  .scrollbar-hidden {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-</style>
+  {#if iconRight}
+    <div
+      class="text-secondary-foreground/60 pointer-events-none absolute right-3 flex items-center justify-center"
+    >
+      <svelte:component this={iconRight} className={iconSizeClasses[size]} />
+    </div>
+  {/if}
+</div>

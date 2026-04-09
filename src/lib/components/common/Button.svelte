@@ -76,7 +76,7 @@
     : '';
 
   $: buttonClasses = cn(
-    'relative inline-flex items-center justify-center font-medium transition-all active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none gap-2 overflow-hidden ring-0 focus-visible:ring-2 ring-primary ring-offset-0 focus-visible:ring-offset-2 outline-none',
+    'relative inline-flex items-center justify-center font-medium transition-all active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none gap-2 overflow-hidden ring-0 focus-visible:ring-2 ring-primary ring-offset-0 focus-visible:ring-offset-2 ring-offset-background outline-none',
     isIconOnly ? iconSizes[size] : sizes[size],
     radii[radius],
     getVariantClasses(),

@@ -510,7 +510,7 @@
     <div class="group w-full">
       <div
         id="folder-{folderId}-button"
-        class="relative flex w-full items-center gap-1.5 rounded-xl px-1.5 py-1 transition hover:bg-gray-100 dark:hover:bg-gray-900 {$selectedFolder?.id ===
+        class="hover:bg-card-hover relative flex w-full items-center gap-1.5 rounded-xl px-1.5 py-1 transition {$selectedFolder?.id ===
         folderId
           ? 'selected bg-gray-100 dark:bg-gray-900'
           : ''}"

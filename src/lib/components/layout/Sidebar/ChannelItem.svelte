@@ -74,8 +74,8 @@
 <div
   id="sidebar-channel-item"
   bind:this={itemElement}
-  class=" w-full {className} group relative flex rounded-xl hover:bg-gray-100 dark:hover:bg-gray-900 {$page
-    .url.pathname === `/channels/${channel.id}`
+  class=" w-full {className} group hover:bg-card-hover relative flex rounded-xl {$page.url
+    .pathname === `/channels/${channel.id}`
     ? 'selected bg-gray-100 dark:bg-gray-900'
     : ''} {channel?.type === 'dm' ? 'px-1 py-[3px]' : 'p-1'}  {channel?.unread_count > 0
     ? 'font-medium text-black dark:text-white'

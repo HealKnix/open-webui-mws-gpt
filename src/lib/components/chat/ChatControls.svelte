@@ -266,12 +266,12 @@
     <Drawer
       show={$showControls}
       onClose={() => showControls.set(false)}
-      className="min-h-[100dvh] !bg-white dark:!bg-gray-850"
+      className="min-h-[100dvh] bg-background"
     >
       <div class="flex h-[100dvh] flex-col">
         {#if $showCallOverlay}
           <div
-            class="flex h-full max-h-[100dvh] justify-center bg-white text-gray-700 dark:bg-black dark:text-gray-300"
+            class="bg-background flex h-full max-h-[100dvh] justify-center text-gray-700 dark:text-gray-300"
           >
             <CallOverlay
               bind:files
@@ -376,12 +376,9 @@
   {/if}
 {:else}
   {#if $showControls}
-    <PaneResizer
-      class="group dark:border-gray-850/30 relative z-20 flex items-center justify-center border-l border-gray-50 transition hover:border-gray-200 dark:hover:border-gray-800"
-      id="controls-resizer"
-    >
+    <PaneResizer class="group relative z-20 flex items-center justify-center" id="controls-resizer">
       <div
-        class="absolute -top-0 -right-1.5 -bottom-0 -left-1.5 z-20 cursor-col-resize bg-transparent"
+        class="bg-border hover:bg-foreground/50 absolute top-1/2 -right-0.5 z-50 h-12 w-1.5 -translate-y-1/2 cursor-grab rounded-full transition-all active:h-10 active:cursor-grabbing!"
       />
     </PaneResizer>
   {/if}
@@ -404,15 +401,14 @@
       if (paneReady) showControls.set(false);
     }}
     collapsible={true}
-    class="dark:bg-gray-850 z-10 bg-white"
+    class="bg-background z-10"
   >
     {#if $showControls}
       <div class="flex max-h-full min-h-full">
         <div
           class="w-full {specialPanel && !$showCallOverlay
             ? ' '
-            : 'dark:bg-gray-850 bg-white dark:shadow-lg'} pointer-events-auto z-40 {activeTab ===
-          'files'
+            : 'bg-background dark:shadow-lg'} pointer-events-auto z-40 {activeTab === 'files'
             ? ''
             : 'overflow-y-auto'} scrollbar-hidden"
           id="controls-container"
@@ -435,90 +431,96 @@
             <Artifacts {history} overlay={dragged} />
           {:else}
             <!-- Controls + Files tabs -->
-            <div class="flex h-full min-h-0 flex-col">
-              <!-- Tab bar -->
-              <div class="flex shrink-0 items-center justify-between px-2 pt-2 pb-2">
-                <div class="scrollbar-hidden flex min-w-0 gap-1 overflow-x-auto">
-                  {#if showControlsTab}
-                    <button
-                      class="rounded-lg px-2.5 py-1 text-sm whitespace-nowrap transition {activeTab ===
-                      'controls'
-                        ? 'bg-gray-100 font-medium text-gray-900 dark:bg-gray-800 dark:text-white'
-                        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}"
-                      on:click={() => (activeTab = 'controls')}
+            <div class="p-2">
+              <div class="bg-card border-border rounded-2xl border">
+                <!-- Tab bar -->
+                <div class="flex shrink-0 items-center justify-between px-2 pt-2 pb-2">
+                  <div class="scrollbar-hidden flex min-w-0 gap-1 overflow-x-auto">
+                    {#if showControlsTab}
+                      <button
+                        class="rounded-lg px-2.5 py-1 text-sm whitespace-nowrap transition {activeTab ===
+                        'controls'
+                          ? 'bg-gray-100 font-medium text-gray-900 dark:bg-gray-800 dark:text-white'
+                          : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}"
+                        on:click={() => (activeTab = 'controls')}
+                      >
+                        {$i18n.t('Controls')}
+                      </button>
+                    {/if}
+                    {#if showFilesTab}
+                      <button
+                        class="rounded-lg px-2.5 py-1 text-sm whitespace-nowrap transition {activeTab ===
+                        'files'
+                          ? 'bg-gray-100 font-medium text-gray-900 dark:bg-gray-800 dark:text-white'
+                          : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}"
+                        on:click={() => (activeTab = 'files')}
+                      >
+                        {$i18n.t('Files')}
+                      </button>
+                    {/if}
+                    {#if showOverviewTab}
+                      <button
+                        class="rounded-lg px-2.5 py-1 text-sm whitespace-nowrap transition {activeTab ===
+                        'overview'
+                          ? 'bg-gray-100 font-medium text-gray-900 dark:bg-gray-800 dark:text-white'
+                          : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}"
+                        on:click={() => (activeTab = 'overview')}
+                      >
+                        {$i18n.t('Overview')}
+                      </button>
+                    {/if}
+                  </div>
+                  <button
+                    class="rounded-lg p-1 text-gray-500 transition hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                    on:click={() => showControls.set(false)}
+                    aria-label={$i18n.t('Close')}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      class="size-4"
                     >
-                      {$i18n.t('Controls')}
-                    </button>
-                  {/if}
-                  {#if showFilesTab}
-                    <button
-                      class="rounded-lg px-2.5 py-1 text-sm whitespace-nowrap transition {activeTab ===
-                      'files'
-                        ? 'bg-gray-100 font-medium text-gray-900 dark:bg-gray-800 dark:text-white'
-                        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}"
-                      on:click={() => (activeTab = 'files')}
-                    >
-                      {$i18n.t('Files')}
-                    </button>
-                  {/if}
-                  {#if showOverviewTab}
-                    <button
-                      class="rounded-lg px-2.5 py-1 text-sm whitespace-nowrap transition {activeTab ===
-                      'overview'
-                        ? 'bg-gray-100 font-medium text-gray-900 dark:bg-gray-800 dark:text-white'
-                        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}"
-                      on:click={() => (activeTab = 'overview')}
-                    >
-                      {$i18n.t('Overview')}
-                    </button>
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M6 18 18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+
+                <div
+                  class="min-h-0 flex-1 {activeTab === 'overview'
+                    ? 'h-full'
+                    : activeTab === 'controls'
+                      ? 'overflow-y-auto px-3 pt-1'
+                      : ''}"
+                >
+                  {#if activeTab === 'overview'}
+                    <Overview
+                      {history}
+                      onNodeClick={(e) => {
+                        const node = e.node;
+                        if (node?.data?.message?.favorite) {
+                          history.messages[node.data.message.id].favorite = true;
+                        } else {
+                          history.messages[node.data.message.id].favorite = null;
+                        }
+                        showMessage(node.data.message, true);
+                      }}
+                      onClose={() => showControls.set(false)}
+                    />
+                  {:else if activeTab === 'files' && $selectedTerminalId}
+                    <FileNav onAttach={handleTerminalAttach} overlay={dragged} />
+                  {:else if activeTab === 'files' && codeInterpreterEnabled}
+                    <PyodideFileNav overlay={dragged} />
+                  {:else}
+                    <Controls embed={true} {models} bind:chatFiles bind:params />
                   {/if}
                 </div>
-                <button
-                  class="rounded-lg p-1 text-gray-500 transition hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
-                  on:click={() => showControls.set(false)}
-                  aria-label={$i18n.t('Close')}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    class="size-4"
-                  >
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-
-              <div
-                class="min-h-0 flex-1 {activeTab === 'overview'
-                  ? 'h-full'
-                  : activeTab === 'controls'
-                    ? 'overflow-y-auto px-3 pt-1'
-                    : ''}"
-              >
-                {#if activeTab === 'overview'}
-                  <Overview
-                    {history}
-                    onNodeClick={(e) => {
-                      const node = e.node;
-                      if (node?.data?.message?.favorite) {
-                        history.messages[node.data.message.id].favorite = true;
-                      } else {
-                        history.messages[node.data.message.id].favorite = null;
-                      }
-                      showMessage(node.data.message, true);
-                    }}
-                    onClose={() => showControls.set(false)}
-                  />
-                {:else if activeTab === 'files' && $selectedTerminalId}
-                  <FileNav onAttach={handleTerminalAttach} overlay={dragged} />
-                {:else if activeTab === 'files' && codeInterpreterEnabled}
-                  <PyodideFileNav overlay={dragged} />
-                {:else}
-                  <Controls embed={true} {models} bind:chatFiles bind:params />
-                {/if}
               </div>
             </div>
           {/if}
