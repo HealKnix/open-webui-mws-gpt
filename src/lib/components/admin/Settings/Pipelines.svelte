@@ -19,7 +19,8 @@
   } from '$lib/apis';
 
   import Spinner from '$lib/components/common/Spinner.svelte';
-  import Switch from '$lib/components/common/Switch.svelte';
+  import ToggleSetting from '$lib/components/common/ToggleSetting.svelte';
+  import Button from '$lib/components/common/Button.svelte';
 
   const i18n: Writable<i18nType> = getContext('i18n');
 
@@ -221,7 +222,7 @@
     updateHandler();
   }}
 >
-  <div class="scrollbar-hidden h-full overflow-y-scroll">
+  <div class="scrollbar-hidden h-full overflow-y-scroll p-1">
     {#if PIPELINES_LIST !== null}
       <div class="mb-2 flex w-full justify-between">
         <div class=" self-center text-sm font-medium">
@@ -512,15 +513,12 @@
                                   {/each}
                                 </select>
                               {:else if (valves_spec.properties[property]?.type ?? null) === 'boolean'}
-                                <div class="flex items-center justify-between">
-                                  <div class="text-xs text-gray-500">
-                                    {valves[property] ? $i18n.t('Enabled') : $i18n.t('Disabled')}
-                                  </div>
-
-                                  <div class=" pr-2">
-                                    <Switch bind:state={valves[property]} />
-                                  </div>
-                                </div>
+                                <ToggleSetting
+                                  label={valves[property]
+                                    ? $i18n.t('Enabled')
+                                    : $i18n.t('Disabled')}
+                                  bind:state={valves[property]}
+                                />
                               {:else}
                                 <input
                                   class="dark:bg-gray-850 w-full rounded-lg bg-gray-50 px-4 py-2 text-sm outline-hidden dark:text-gray-300"
@@ -567,13 +565,10 @@
   </div>
 
   {#if PIPELINES_LIST !== null && PIPELINES_LIST.length > 0}
-    <div class="flex justify-end pt-3 text-sm font-medium">
-      <button
-        class="rounded-full bg-black px-3.5 py-1.5 text-sm font-medium text-white transition hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100"
-        type="submit"
-      >
+    <div class="flex justify-end p-1">
+      <Button type="submit" radius="xl">
         {$i18n.t('Save')}
-      </button>
+      </Button>
     </div>
   {/if}
 </form>

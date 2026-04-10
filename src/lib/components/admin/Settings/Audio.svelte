@@ -20,6 +20,9 @@
   import type { Writable } from 'svelte/store';
   import type { i18n as i18nType } from 'i18next';
   import Textarea from '$lib/components/common/Textarea.svelte';
+  import SettingItem from '$lib/components/common/SettingItem.svelte';
+  import ToggleSetting from '$lib/components/common/ToggleSetting.svelte';
+  import Button from '$lib/components/common/Button.svelte';
 
   const i18n = getContext<Writable<i18nType>>('i18n');
 
@@ -207,12 +210,12 @@
     dispatch('save');
   }}
 >
-  <div class=" scrollbar-hidden h-full space-y-3 overflow-y-scroll">
+  <div class="scrollbar-hidden h-full space-y-3 overflow-y-scroll p-1">
     <div class="flex flex-col gap-3">
-      <div>
-        <div class=" mt-0.5 mb-2.5 text-base font-medium">{$i18n.t('Speech-to-Text')}</div>
-
-        <hr class=" dark:border-gray-850/30 my-2 border-gray-100/30" />
+      <div class="space-y-1">
+        <div class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+          {$i18n.t('Speech-to-Text')}
+        </div>
 
         {#if STT_ENGINE !== 'web'}
           <div class="mb-2">
@@ -231,23 +234,20 @@
           </div>
         {/if}
 
-        <div class="mb-2 flex w-full justify-between py-0.5">
-          <div class=" self-center text-xs font-medium">{$i18n.t('Speech-to-Text Engine')}</div>
-          <div class="relative flex items-center">
-            <select
-              class="w-fit cursor-pointer rounded-sm bg-transparent p-1 px-2 pr-8 text-right text-xs outline-hidden"
-              bind:value={STT_ENGINE}
-              placeholder={$i18n.t('Select an engine')}
-            >
-              <option value="">{$i18n.t('Whisper (Local)')}</option>
-              <option value="openai">{$i18n.t('OpenAI')}</option>
-              <option value="web">{$i18n.t('Web API')}</option>
-              <option value="deepgram">{$i18n.t('Deepgram')}</option>
-              <option value="azure">{$i18n.t('Azure AI Speech')}</option>
-              <option value="mistral">{$i18n.t('MistralAI')}</option>
-            </select>
-          </div>
-        </div>
+        <SettingItem label={$i18n.t('Speech-to-Text Engine')}>
+          <select
+            class="w-fit cursor-pointer rounded-sm bg-transparent p-1 px-2 pr-8 text-right text-xs outline-hidden"
+            bind:value={STT_ENGINE}
+            placeholder={$i18n.t('Select an engine')}
+          >
+            <option value="">{$i18n.t('Whisper (Local)')}</option>
+            <option value="openai">{$i18n.t('OpenAI')}</option>
+            <option value="web">{$i18n.t('Web API')}</option>
+            <option value="deepgram">{$i18n.t('Deepgram')}</option>
+            <option value="azure">{$i18n.t('Azure AI Speech')}</option>
+            <option value="mistral">{$i18n.t('MistralAI')}</option>
+          </select>
+        </SettingItem>
 
         {#if STT_ENGINE === 'openai'}
           <div>
@@ -419,19 +419,10 @@
           <hr class="dark:border-gray-850/30 my-2 border-gray-100/30" />
 
           <div>
-            <div class="mb-2 flex items-center justify-between">
-              <div class="text-xs font-medium">{$i18n.t('Use Chat Completions API')}</div>
-              <label class="relative inline-flex cursor-pointer items-center">
-                <input
-                  type="checkbox"
-                  bind:checked={STT_MISTRAL_USE_CHAT_COMPLETIONS}
-                  class="peer sr-only"
-                />
-                <div
-                  class="peer h-5 w-9 rounded-full bg-gray-200 peer-checked:bg-blue-600 peer-focus:ring-2 peer-focus:ring-blue-300 peer-focus:outline-none after:absolute after:top-[2px] after:left-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white dark:border-gray-600 dark:bg-gray-700 dark:peer-focus:ring-blue-800"
-                ></div>
-              </label>
-            </div>
+            <ToggleSetting
+              label={$i18n.t('Use Chat Completions API')}
+              bind:state={STT_MISTRAL_USE_CHAT_COMPLETIONS}
+            />
             <div class="text-xs text-gray-400 dark:text-gray-500">
               {$i18n.t(
                 'Use /v1/chat/completions endpoint instead of /v1/audio/transcriptions for potentially better accuracy.',
@@ -497,40 +488,37 @@
         {/if}
       </div>
 
-      <div>
-        <div class=" mt-0.5 mb-2.5 text-base font-medium">{$i18n.t('Text-to-Speech')}</div>
-
-        <hr class=" dark:border-gray-850/30 my-2 border-gray-100/30" />
-
-        <div class="mb-2 flex w-full justify-between py-0.5">
-          <div class=" self-center text-xs font-medium">{$i18n.t('Text-to-Speech Engine')}</div>
-          <div class="relative flex items-center">
-            <select
-              class="w-fit cursor-pointer rounded-sm bg-transparent p-1 px-2 pr-8 text-right text-xs outline-hidden"
-              bind:value={TTS_ENGINE}
-              placeholder={$i18n.t('Select a mode')}
-              on:change={async (e) => {
-                await updateConfigHandler();
-                await getVoices();
-                await getModels();
-
-                if (e.target?.value === 'openai') {
-                  TTS_VOICE = 'alloy';
-                  TTS_MODEL = 'tts-1';
-                } else {
-                  TTS_VOICE = '';
-                  TTS_MODEL = '';
-                }
-              }}
-            >
-              <option value="">{$i18n.t('Web API')}</option>
-              <option value="transformers">{$i18n.t('Transformers')} ({$i18n.t('Local')})</option>
-              <option value="openai">{$i18n.t('OpenAI')}</option>
-              <option value="elevenlabs">{$i18n.t('ElevenLabs')}</option>
-              <option value="azure">{$i18n.t('Azure AI Speech')}</option>
-            </select>
-          </div>
+      <div class="space-y-1">
+        <div class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+          {$i18n.t('Text-to-Speech')}
         </div>
+
+        <SettingItem label={$i18n.t('Text-to-Speech Engine')}>
+          <select
+            class="w-fit cursor-pointer rounded-sm bg-transparent p-1 px-2 pr-8 text-right text-xs outline-hidden"
+            bind:value={TTS_ENGINE}
+            placeholder={$i18n.t('Select a mode')}
+            on:change={async (e) => {
+              await updateConfigHandler();
+              await getVoices();
+              await getModels();
+
+              if (e.target?.value === 'openai') {
+                TTS_VOICE = 'alloy';
+                TTS_MODEL = 'tts-1';
+              } else {
+                TTS_VOICE = '';
+                TTS_MODEL = '';
+              }
+            }}
+          >
+            <option value="">{$i18n.t('Web API')}</option>
+            <option value="transformers">{$i18n.t('Transformers')} ({$i18n.t('Local')})</option>
+            <option value="openai">{$i18n.t('OpenAI')}</option>
+            <option value="elevenlabs">{$i18n.t('ElevenLabs')}</option>
+            <option value="azure">{$i18n.t('Azure AI Speech')}</option>
+          </select>
+        </SettingItem>
 
         {#if TTS_ENGINE === 'openai'}
           <div>
@@ -794,22 +782,19 @@
           {/if}
         </div>
 
-        <div class="flex w-full justify-between pt-0.5">
-          <div class="self-center text-xs font-medium">{$i18n.t('Response splitting')}</div>
-          <div class="relative flex items-center">
-            <select
-              class="w-fit cursor-pointer rounded-sm bg-transparent p-1 px-2 pr-8 text-right text-xs outline-hidden"
-              aria-label={$i18n.t('Select how to split message text for TTS requests')}
-              bind:value={TTS_SPLIT_ON}
-            >
-              {#each Object.values(TTS_RESPONSE_SPLIT) as split}
-                <option value={split}
-                  >{$i18n.t(split.charAt(0).toUpperCase() + split.slice(1))}</option
-                >
-              {/each}
-            </select>
-          </div>
-        </div>
+        <SettingItem label={$i18n.t('Response splitting')}>
+          <select
+            class="w-fit cursor-pointer rounded-sm bg-transparent p-1 px-2 pr-8 text-right text-xs outline-hidden"
+            bind:value={TTS_SPLIT_ON}
+          >
+            {#each Object.values(TTS_RESPONSE_SPLIT) as split}
+              <option value={split}
+                >{$i18n.t(split.charAt(0).toUpperCase() + split.slice(1))}</option
+              >
+            {/each}
+          </select>
+        </SettingItem>
+
         <div class="mt-2 mb-1 text-xs text-gray-400 dark:text-gray-500">
           {$i18n.t(
             "Control how message text is split for TTS requests. 'Punctuation' splits into sentences, 'paragraphs' splits into paragraphs, and 'none' keeps the message as a single string.",
@@ -818,12 +803,9 @@
       </div>
     </div>
   </div>
-  <div class="flex justify-end text-sm font-medium">
-    <button
-      class="rounded-full bg-black px-3.5 py-1.5 text-sm font-medium text-white transition hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100"
-      type="submit"
-    >
+  <div class="flex justify-end p-1">
+    <Button type="submit" radius="xl">
       {$i18n.t('Save')}
-    </button>
+    </Button>
   </div>
 </form>

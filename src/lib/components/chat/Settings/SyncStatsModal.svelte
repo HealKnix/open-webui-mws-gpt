@@ -325,7 +325,7 @@
 
         <Confetti x={[-0.5, 0.5]} y={[0.25, 1]} />
 
-        <div class="flex justify-end">
+        <div class="flex justify-end p-1">
           <button
             class="flex items-center justify-center gap-2 rounded-full bg-black px-4 py-2 text-sm text-white transition hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100"
             on:click={closeModal}
@@ -341,7 +341,7 @@
           {errorMessage || $i18n.t('There was an error syncing your stats. Please try again.')}
         </div>
 
-        <div class="flex justify-end">
+        <div class="flex justify-end p-1">
           <button
             class="flex items-center justify-center gap-2 rounded-full bg-black px-4 py-2 text-sm text-white transition hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100"
             on:click={() => {

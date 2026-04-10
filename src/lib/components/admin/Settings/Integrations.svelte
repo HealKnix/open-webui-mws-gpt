@@ -30,6 +30,7 @@
     getTerminalServerConnections,
     setTerminalServerConnections,
   } from '$lib/apis/configs';
+  import Button from '$lib/components/common/Button.svelte';
 
   export let saveSettings: Function;
 
@@ -158,160 +159,158 @@
     updateHandler();
   }}
 >
-  <div class=" scrollbar-hidden h-full overflow-y-scroll">
+  <div class="scrollbar-hidden h-full overflow-y-scroll p-1">
     {#if servers !== null}
-      <div class="">
-        <div class="mb-3">
-          <div class=" mt-0.5 mb-2.5 text-base font-medium">{$i18n.t('General')}</div>
+      <div class="mb-3">
+        <div class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+          {$i18n.t('General')}
+        </div>
 
-          <hr class=" dark:border-gray-850/30 my-2 border-gray-100/30" />
+        <div class="mb-2.5 flex w-full flex-col justify-between">
+          <div class="mb-0.5 flex items-center justify-between">
+            <div class="font-medium">{$i18n.t('Manage Tool Servers')}</div>
 
-          <div class="mb-2.5 flex w-full flex-col justify-between">
-            <div class="mb-0.5 flex items-center justify-between">
-              <div class="font-medium">{$i18n.t('Manage Tool Servers')}</div>
-
-              <Tooltip content={$i18n.t(`Add Connection`)}>
-                <button
-                  class="px-1"
-                  on:click={() => {
-                    showConnectionModal = true;
-                  }}
-                  type="button"
-                >
-                  <Plus />
-                </button>
-              </Tooltip>
-            </div>
-
-            <div class="flex flex-col gap-1">
-              {#each servers as server, idx}
-                <Connection
-                  bind:connection={server}
-                  onSubmit={() => {
-                    updateHandler();
-                  }}
-                  onDelete={() => {
-                    servers = servers.filter((_, i) => i !== idx);
-                    updateHandler();
-                  }}
-                />
-              {/each}
-            </div>
-
-            {#if servers.length === 0}
-              <div class="text-xs text-gray-400 dark:text-gray-500">
-                {$i18n.t('No tool server connections configured.')}
-              </div>
-            {/if}
-
-            <div class="my-1.5">
-              <div class="text-xs text-gray-500">
-                {$i18n.t('Connect to your own OpenAPI compatible external tool servers.')}
-              </div>
-            </div>
+            <Tooltip content={$i18n.t(`Add Connection`)}>
+              <button
+                class="px-1"
+                on:click={() => {
+                  showConnectionModal = true;
+                }}
+                type="button"
+              >
+                <Plus />
+              </button>
+            </Tooltip>
           </div>
 
-          <hr class=" dark:border-gray-850/30 my-4 border-gray-100/30" />
+          <div class="flex flex-col gap-1">
+            {#each servers as server, idx}
+              <Connection
+                bind:connection={server}
+                onSubmit={() => {
+                  updateHandler();
+                }}
+                onDelete={() => {
+                  servers = servers.filter((_, i) => i !== idx);
+                  updateHandler();
+                }}
+              />
+            {/each}
+          </div>
 
-          <div class="mb-2.5 flex w-full flex-col">
-            <div class="mb-1 flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <div class="font-medium">{$i18n.t('Open Terminal')}</div>
-                <span
-                  class="rounded-full bg-gray-100 px-1.5 py-0.5 text-[0.65rem] font-medium text-gray-500 uppercase dark:bg-gray-800 dark:text-gray-400"
-                  >{$i18n.t('Experimental')}</span
-                >
-              </div>
+          {#if servers.length === 0}
+            <div class="text-xs text-gray-400 dark:text-gray-500">
+              {$i18n.t('No tool server connections configured.')}
+            </div>
+          {/if}
 
-              <Tooltip content={$i18n.t('Add Connection')}>
-                <button
-                  class="px-1"
-                  on:click={() => {
-                    editTerminalIdx = null;
-                    showAddTerminalModal = true;
-                  }}
-                  type="button"
-                >
-                  <Plus />
-                </button>
-              </Tooltip>
+          <div class="my-1.5">
+            <div class="text-xs text-gray-500">
+              {$i18n.t('Connect to your own OpenAPI compatible external tool servers.')}
+            </div>
+          </div>
+        </div>
+
+        <hr class=" dark:border-gray-850/30 my-4 border-gray-100/30" />
+
+        <div class="mb-2.5 flex w-full flex-col">
+          <div class="mb-1 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <div class="font-medium">{$i18n.t('Open Terminal')}</div>
+              <span
+                class="rounded-full bg-gray-100 px-1.5 py-0.5 text-[0.65rem] font-medium text-gray-500 uppercase dark:bg-gray-800 dark:text-gray-400"
+                >{$i18n.t('Experimental')}</span
+              >
             </div>
 
-            <div class="flex flex-col gap-1.5">
-              {#each terminalConnections as connection, idx}
-                <div class="flex w-full items-center gap-2">
-                  <Tooltip className="w-full relative" content={''} placement="top-start">
-                    <div class="flex w-full">
-                      <div
-                        class="relative flex flex-1 items-center gap-1.5 {connection?.enabled ===
-                        false
-                          ? 'opacity-50'
-                          : ''}"
-                      >
-                        <Tooltip content={$i18n.t('Terminal')}>
-                          <Cloud className="size-4" strokeWidth="1.5" />
-                        </Tooltip>
+            <Tooltip content={$i18n.t('Add Connection')}>
+              <button
+                class="px-1"
+                on:click={() => {
+                  editTerminalIdx = null;
+                  showAddTerminalModal = true;
+                }}
+                type="button"
+              >
+                <Plus />
+              </button>
+            </Tooltip>
+          </div>
 
-                        <div class="w-full bg-transparent text-sm outline-hidden">
-                          {connection.name || connection.url || $i18n.t('New Terminal')}
-                        </div>
+          <div class="flex flex-col gap-1.5">
+            {#each terminalConnections as connection, idx}
+              <div class="flex w-full items-center gap-2">
+                <Tooltip className="w-full relative" content={''} placement="top-start">
+                  <div class="flex w-full">
+                    <div
+                      class="relative flex flex-1 items-center gap-1.5 {connection?.enabled ===
+                      false
+                        ? 'opacity-50'
+                        : ''}"
+                    >
+                      <Tooltip content={$i18n.t('Terminal')}>
+                        <Cloud className="size-4" strokeWidth="1.5" />
+                      </Tooltip>
+
+                      <div class="w-full bg-transparent text-sm outline-hidden">
+                        {connection.name || connection.url || $i18n.t('New Terminal')}
                       </div>
                     </div>
+                  </div>
+                </Tooltip>
+
+                <div class="flex items-center gap-1">
+                  <Tooltip content={$i18n.t('Configure')}>
+                    <button
+                      class="dark:hover:bg-gray-850 self-center rounded-lg bg-transparent p-1 transition hover:bg-gray-100"
+                      on:click={() => {
+                        editTerminalIdx = idx;
+                        showAddTerminalModal = true;
+                      }}
+                      type="button"
+                    >
+                      <Cog6 />
+                    </button>
                   </Tooltip>
 
-                  <div class="flex items-center gap-1">
-                    <Tooltip content={$i18n.t('Configure')}>
-                      <button
-                        class="dark:hover:bg-gray-850 self-center rounded-lg bg-transparent p-1 transition hover:bg-gray-100"
-                        on:click={() => {
-                          editTerminalIdx = idx;
-                          showAddTerminalModal = true;
-                        }}
-                        type="button"
-                      >
-                        <Cog6 />
-                      </button>
-                    </Tooltip>
-
-                    <Tooltip
-                      content={connection?.enabled !== false
-                        ? $i18n.t('Enabled')
-                        : $i18n.t('Disabled')}
-                    >
-                      <Switch
-                        state={connection?.enabled !== false}
-                        on:change={() => {
-                          terminalConnections = terminalConnections.map((c, i) =>
-                            i === idx ? { ...c, enabled: !(c?.enabled !== false) } : c,
-                          );
-                          saveTerminalServers();
-                        }}
-                      />
-                    </Tooltip>
-                  </div>
+                  <Tooltip
+                    content={connection?.enabled !== false
+                      ? $i18n.t('Enabled')
+                      : $i18n.t('Disabled')}
+                  >
+                    <Switch
+                      state={connection?.enabled !== false}
+                      on:change={() => {
+                        terminalConnections = terminalConnections.map((c, i) =>
+                          i === idx ? { ...c, enabled: !(c?.enabled !== false) } : c,
+                        );
+                        saveTerminalServers();
+                      }}
+                    />
+                  </Tooltip>
                 </div>
-              {/each}
+              </div>
+            {/each}
+          </div>
+
+          {#if terminalConnections.length === 0}
+            <div class="text-xs text-gray-400 dark:text-gray-500">
+              {$i18n.t('No terminal connections configured.')}
             </div>
+          {/if}
 
-            {#if terminalConnections.length === 0}
-              <div class="text-xs text-gray-400 dark:text-gray-500">
-                {$i18n.t('No terminal connections configured.')}
-              </div>
-            {/if}
-
-            <div class="mt-1.5">
-              <div class="text-xs text-gray-500">
-                {$i18n.t(
-                  'Connect to Open Terminal instances. All users will have access to file browsing and terminal tools through these servers.',
-                )}
-              </div>
-              <div class="mt-1 text-xs text-gray-600 dark:text-gray-300">
-                <a
-                  class="underline"
-                  href="https://github.com/open-webui/open-terminal"
-                  target="_blank">{$i18n.t('Learn more about Open Terminal')} ↗</a
-                >
-              </div>
+          <div class="mt-1.5">
+            <div class="text-xs text-gray-500">
+              {$i18n.t(
+                'Connect to Open Terminal instances. All users will have access to file browsing and terminal tools through these servers.',
+              )}
+            </div>
+            <div class="mt-1 text-xs text-gray-600 dark:text-gray-300">
+              <a
+                class="underline"
+                href="https://github.com/open-webui/open-terminal"
+                target="_blank">{$i18n.t('Learn more about Open Terminal')} ↗</a
+              >
             </div>
           </div>
         </div>
@@ -325,12 +324,9 @@
     {/if}
   </div>
 
-  <div class="flex justify-end pt-3 text-sm font-medium">
-    <button
-      class="rounded-full bg-black px-3.5 py-1.5 text-sm font-medium text-white transition hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100"
-      type="submit"
-    >
+  <div class="flex justify-end p-1">
+    <Button type="submit" radius="xl">
       {$i18n.t('Save')}
-    </button>
+    </Button>
   </div>
 </form>

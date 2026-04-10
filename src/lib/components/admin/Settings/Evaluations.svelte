@@ -7,12 +7,13 @@
   import { getModels } from '$lib/apis';
   import { getConfig, updateConfig } from '$lib/apis/evaluations';
 
-  import Switch from '$lib/components/common/Switch.svelte';
   import Spinner from '$lib/components/common/Spinner.svelte';
-  import Tooltip from '$lib/components/common/Tooltip.svelte';
   import Plus from '$lib/components/icons/Plus.svelte';
+  import ToggleSetting from '$lib/components/common/ToggleSetting.svelte';
   import Model from './Evaluations/Model.svelte';
   import ArenaModelModal from './Evaluations/ArenaModelModal.svelte';
+  import Button from '$lib/components/common/Button.svelte';
+  import Tooltip from '$lib/components/common/Tooltip.svelte';
 
   const i18n = getContext('i18n');
 
@@ -100,71 +101,67 @@
     dispatch('save');
   }}
 >
-  <div class="scrollbar-hidden h-full overflow-y-scroll">
+  <div class="scrollbar-hidden h-full overflow-y-scroll p-1">
     {#if evaluationConfig !== null}
-      <div class="">
+      <div class="mb-3">
+        <div class=" mt-0.5 mb-2.5 text-base font-medium">{$i18n.t('General')}</div>
+
+        <hr class=" dark:border-gray-850/30 my-2 border-gray-100/30" />
+
+        <ToggleSetting
+          label={$i18n.t('Arena Models')}
+          bind:state={evaluationConfig.ENABLE_EVALUATION_ARENA_MODELS}
+          tooltip={$i18n.t(`Message rating should be enabled to use this feature`)}
+        />
+      </div>
+
+      {#if evaluationConfig.ENABLE_EVALUATION_ARENA_MODELS}
         <div class="mb-3">
-          <div class=" mt-0.5 mb-2.5 text-base font-medium">{$i18n.t('General')}</div>
+          <div class=" mt-0.5 mb-2.5 flex items-center justify-between text-base font-medium">
+            <div>
+              {$i18n.t('Manage')}
+            </div>
+
+            <div>
+              <Tooltip content={$i18n.t('Add Arena Model')}>
+                <button
+                  class="p-1"
+                  type="button"
+                  on:click={() => {
+                    showAddModel = true;
+                  }}
+                >
+                  <Plus />
+                </button>
+              </Tooltip>
+            </div>
+          </div>
 
           <hr class=" dark:border-gray-850/30 my-2 border-gray-100/30" />
 
-          <div class="mb-2.5 flex w-full justify-between">
-            <div class=" text-xs font-medium">{$i18n.t('Arena Models')}</div>
-
-            <Tooltip content={$i18n.t(`Message rating should be enabled to use this feature`)}>
-              <Switch bind:state={evaluationConfig.ENABLE_EVALUATION_ARENA_MODELS} />
-            </Tooltip>
+          <div class="flex flex-col gap-2">
+            {#if (evaluationConfig?.EVALUATION_ARENA_MODELS ?? []).length > 0}
+              {#each evaluationConfig.EVALUATION_ARENA_MODELS as model, index}
+                <Model
+                  {model}
+                  on:edit={(e) => {
+                    editModelHandler(e.detail, index);
+                  }}
+                  on:delete={(e) => {
+                    deleteModelHandler(index);
+                  }}
+                />
+              {/each}
+            {:else}
+              <div class=" text-center text-xs text-gray-500">
+                {$i18n.t(
+                  `Using the default arena model with all models. Click the plus button to add custom models.`,
+                )}
+              </div>
+            {/if}
           </div>
         </div>
-
-        {#if evaluationConfig.ENABLE_EVALUATION_ARENA_MODELS}
-          <div class="mb-3">
-            <div class=" mt-0.5 mb-2.5 flex items-center justify-between text-base font-medium">
-              <div>
-                {$i18n.t('Manage')}
-              </div>
-
-              <div>
-                <Tooltip content={$i18n.t('Add Arena Model')}>
-                  <button
-                    class="p-1"
-                    type="button"
-                    on:click={() => {
-                      showAddModel = true;
-                    }}
-                  >
-                    <Plus />
-                  </button>
-                </Tooltip>
-              </div>
-            </div>
-
-            <hr class=" dark:border-gray-850/30 my-2 border-gray-100/30" />
-
-            <div class="flex flex-col gap-2">
-              {#if (evaluationConfig?.EVALUATION_ARENA_MODELS ?? []).length > 0}
-                {#each evaluationConfig.EVALUATION_ARENA_MODELS as model, index}
-                  <Model
-                    {model}
-                    on:edit={(e) => {
-                      editModelHandler(e.detail, index);
-                    }}
-                    on:delete={(e) => {
-                      deleteModelHandler(index);
-                    }}
-                  />
-                {/each}
-              {:else}
-                <div class=" text-center text-xs text-gray-500">
-                  {$i18n.t(
-                    `Using the default arena model with all models. Click the plus button to add custom models.`,
-                  )}
-                </div>
-              {/if}
-            </div>
-          </div>
-        {/if}
-      </div>
+      {/if}
     {:else}
       <div class="flex h-full justify-center">
         <div class="my-auto">
@@ -174,12 +171,9 @@
     {/if}
   </div>
 
-  <div class="flex justify-end pt-3 text-sm font-medium">
-    <button
-      class="rounded-full bg-black px-3.5 py-1.5 text-sm font-medium text-white transition hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100"
-      type="submit"
-    >
+  <div class="flex justify-end p-1">
+    <Button type="submit" radius="xl">
       {$i18n.t('Save')}
-    </button>
+    </Button>
   </div>
 </form>

@@ -393,7 +393,7 @@
         const _messageId = messageIds[groupedMessageIdsIdx[modelIdx]];
         return !history.messages[_messageId]?.done ?? false;
       })}
-        <div class="flex justify-end">
+        <div class="flex justify-end p-1">
           <div class="w-full">
             {#if history.messages[messageId]?.merged?.status}
               {@const message = history.messages[messageId]?.merged}

@@ -9,6 +9,7 @@
   import { getAllUserChats } from '$lib/apis/chats';
   import { getAllUsers } from '$lib/apis/users';
   import { exportConfig, importConfig } from '$lib/apis/configs';
+  import SettingItem from '$lib/components/common/SettingItem.svelte';
 
   const i18n = getContext('i18n');
 
@@ -50,7 +51,7 @@
 </script>
 
 <div class="flex h-full flex-col justify-between text-sm">
-  <div class="scrollbar-hidden h-full space-y-3 overflow-y-scroll">
+  <div class="scrollbar-hidden h-full space-y-3 overflow-y-scroll p-1">
     <input
       id="config-json-input"
       hidden
@@ -77,12 +78,13 @@
       }}
     />
 
-    <div>
-      <div class="mb-1 text-sm font-medium">{$i18n.t('Config')}</div>
+    <div class="space-y-1">
+      <div class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+        {$i18n.t('Config')}
+      </div>
 
       <div>
-        <div class="flex w-full justify-between py-0.5">
-          <div class="self-center text-xs">{$i18n.t('Import Config')}</div>
+        <SettingItem label={$i18n.t('Import Config')}>
           <button
             class="flex rounded-sm p-1 px-3 text-xs transition"
             on:click={() => {
@@ -92,12 +94,11 @@
           >
             <span class="self-center">{$i18n.t('Import')}</span>
           </button>
-        </div>
+        </SettingItem>
       </div>
 
       <div>
-        <div class="flex w-full justify-between py-0.5">
-          <div class="self-center text-xs">{$i18n.t('Export Config')}</div>
+        <SettingItem label={$i18n.t('Export Config')}>
           <button
             class="flex rounded-sm p-1 px-3 text-xs transition"
             on:click={async () => {
@@ -111,17 +112,18 @@
           >
             <span class="self-center">{$i18n.t('Export')}</span>
           </button>
-        </div>
+        </SettingItem>
       </div>
     </div>
 
     {#if $config?.features.enable_admin_export ?? true}
-      <div>
-        <div class="mb-1 text-sm font-medium">{$i18n.t('Database')}</div>
+      <div class="space-y-1">
+        <div class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+          {$i18n.t('Database')}
+        </div>
 
         <div>
-          <div class="flex w-full justify-between py-0.5">
-            <div class="self-center text-xs">{$i18n.t('Download Database')}</div>
+          <SettingItem label={$i18n.t('Download Database')}>
             <button
               class="flex rounded-sm p-1 px-3 text-xs transition"
               on:click={() => {
@@ -133,12 +135,11 @@
             >
               <span class="self-center">{$i18n.t('Download')}</span>
             </button>
-          </div>
+          </SettingItem>
         </div>
 
         <div>
-          <div class="flex w-full justify-between py-0.5">
-            <div class="self-center text-xs">{$i18n.t('Export All Chats (All Users)')}</div>
+          <SettingItem label={$i18n.t('Export All Chats (All Users)')}>
             <button
               class="flex rounded-sm p-1 px-3 text-xs transition"
               on:click={() => {
@@ -148,12 +149,11 @@
             >
               <span class="self-center">{$i18n.t('Export')}</span>
             </button>
-          </div>
+          </SettingItem>
         </div>
 
         <div>
-          <div class="flex w-full justify-between py-0.5">
-            <div class="self-center text-xs">{$i18n.t('Export Users')}</div>
+          <SettingItem label={$i18n.t('Export Users')}>
             <button
               class="flex rounded-sm p-1 px-3 text-xs transition"
               on:click={() => {
@@ -163,7 +163,7 @@
             >
               <span class="self-center">{$i18n.t('Export')}</span>
             </button>
-          </div>
+          </SettingItem>
         </div>
       </div>
     {/if}

@@ -4,7 +4,7 @@
 
   export let variant: 'solid' | 'flat' | 'ghost' = 'solid';
   export let color: 'primary' | 'secondary' | 'foreground' | string = 'primary';
-  export let size: 'xs' | 'sm' | 'md' | 'lg' | 'xl' = 'sm';
+  export let size: 'xs' | 'sm' | 'md' | 'lg' | 'xl' = 'md';
   export let radius: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full' = 'md';
   export let isIconOnly = false;
   export let loading = false;

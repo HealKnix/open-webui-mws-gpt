@@ -51,6 +51,7 @@
     getUserPosition,
     getUserTimezone,
     getWeekday,
+    cn,
   } from '$lib/utils';
   import { uploadFile } from '$lib/apis/files';
   import { generateAutoCompletion } from '$lib/apis';
@@ -1237,9 +1238,10 @@
 
             <div
               id="message-input-container"
-              class="relative flex w-full flex-1 flex-col rounded-3xl border shadow-lg {$temporaryChatEnabled
-                ? 'border-dashed border-gray-100 focus-within:border-gray-200 hover:border-gray-200 dark:border-gray-800 focus-within:dark:border-gray-700 hover:dark:border-gray-700'
-                : ' dark:border-gray-850/30 border-gray-100/30 focus-within:border-gray-100 hover:border-gray-200 focus-within:dark:border-gray-800 hover:dark:border-gray-800'}  bg-white/5 px-1 backdrop-blur-sm transition dark:bg-gray-500/5 dark:text-gray-100"
+              class={cn(
+                'border-border bg-card ring-primary ring-offset-background relative flex w-full flex-1 flex-col rounded-3xl border px-1 shadow-lg ring-0 ring-offset-0 transition-all focus-within:ring-2 focus-within:ring-offset-2',
+                $temporaryChatEnabled && 'bg-secondary',
+              )}
               dir={$settings?.chatDirection ?? 'auto'}
             >
               {#if atSelectedModel !== undefined}
@@ -2002,7 +2004,7 @@
                           <button
                             id="send-message-button"
                             class="{!(prompt === '' && files.length === 0) || uploadPending
-                              ? 'bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 '
+                              ? 'bg-primary hover:bg-primary-hover text-white'
                               : 'disabled bg-gray-200 text-white dark:bg-gray-700 dark:text-gray-900'} self-center rounded-full p-1.5 transition"
                             type="submit"
                             disabled={(prompt === '' && files.length === 0) || uploadPending}

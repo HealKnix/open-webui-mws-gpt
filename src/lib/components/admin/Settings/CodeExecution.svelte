@@ -5,9 +5,11 @@
 
   import SensitiveInput from '$lib/components/common/SensitiveInput.svelte';
 
-  import Tooltip from '$lib/components/common/Tooltip.svelte';
   import Textarea from '$lib/components/common/Textarea.svelte';
-  import Switch from '$lib/components/common/Switch.svelte';
+  import ToggleSetting from '$lib/components/common/ToggleSetting.svelte';
+  import Tooltip from '$lib/components/common/Tooltip.svelte';
+  import Button from '$lib/components/common/Button.svelte';
+  import SettingItem from '$lib/components/common/SettingItem.svelte';
 
   const i18n = getContext('i18n');
 
@@ -37,27 +39,23 @@
     saveHandler();
   }}
 >
-  <div class=" scrollbar-hidden h-full space-y-3 overflow-y-scroll">
+  <div class="scrollbar-hidden h-full space-y-3 overflow-y-scroll p-1">
     {#if config}
       <div>
-        <div class="mb-3.5">
-          <div class=" mt-0.5 mb-2.5 text-base font-medium">{$i18n.t('General')}</div>
-
-          <hr class=" dark:border-gray-850/30 my-2 border-gray-100/30" />
-
-          <div class="mb-2.5">
-            <div class=" flex w-full justify-between">
-              <div class=" self-center text-xs font-medium">
-                {$i18n.t('Enable Code Execution')}
-              </div>
-
-              <Switch bind:state={config.ENABLE_CODE_EXECUTION} />
-            </div>
+        <div class="space-y-1">
+          <div
+            class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800"
+          >
+            {$i18n.t('General')}
           </div>
 
+          <ToggleSetting
+            label={$i18n.t('Enable Code Execution')}
+            bind:state={config.ENABLE_CODE_EXECUTION}
+          />
+
           <div class="mb-2.5">
-            <div class="flex w-full justify-between">
-              <div class=" self-center text-xs font-medium">{$i18n.t('Code Execution Engine')}</div>
+            <SettingItem label={$i18n.t('Code Execution Engine')}>
               <div class="relative flex items-center">
                 <select
                   class="w-fit rounded-sm bg-transparent p-1 px-2 pr-8 text-right text-xs outline-hidden"
@@ -72,7 +70,7 @@
                   {/each}
                 </select>
               </div>
-            </div>
+            </SettingItem>
 
             {#if config.CODE_EXECUTION_ENGINE === 'jupyter'}
               <div class="text-xs text-gray-500">
@@ -84,11 +82,7 @@
           </div>
 
           {#if config.CODE_EXECUTION_ENGINE === 'jupyter'}
-            <div class="mb-2.5 flex w-full flex-col gap-1.5">
-              <div class="text-xs font-medium">
-                {$i18n.t('Jupyter URL')}
-              </div>
-
+            <SettingItem label={$i18n.t('Jupyter URL')}>
               <div class="flex w-full">
                 <div class="flex-1">
                   <input
@@ -100,107 +94,84 @@
                   />
                 </div>
               </div>
-            </div>
+            </SettingItem>
 
-            <div class="mb-2.5 flex w-full flex-col gap-1.5">
-              <div class=" flex w-full items-center justify-between gap-2">
-                <div class="text-xs font-medium">
-                  {$i18n.t('Jupyter Auth')}
-                </div>
+            <SettingItem label={$i18n.t('Jupyter Auth')}>
+              <select
+                class="w-fit rounded-sm bg-transparent p-1 px-2 pr-8 text-left text-xs outline-hidden"
+                bind:value={config.CODE_EXECUTION_JUPYTER_AUTH}
+                placeholder={$i18n.t('Select an auth method')}
+              >
+                <option selected value="">{$i18n.t('None')}</option>
+                <option value="token">{$i18n.t('Token')}</option>
+                <option value="password">{$i18n.t('Password')}</option>
+              </select>
+            </SettingItem>
 
-                <div>
-                  <select
-                    class="w-fit rounded-sm bg-transparent p-1 px-2 pr-8 text-left text-xs outline-hidden"
-                    bind:value={config.CODE_EXECUTION_JUPYTER_AUTH}
-                    placeholder={$i18n.t('Select an auth method')}
-                  >
-                    <option selected value="">{$i18n.t('None')}</option>
-                    <option value="token">{$i18n.t('Token')}</option>
-                    <option value="password">{$i18n.t('Password')}</option>
-                  </select>
+            {#if config.CODE_EXECUTION_JUPYTER_AUTH}
+              <div class="flex w-full gap-2">
+                <div class="flex-1">
+                  {#if config.CODE_EXECUTION_JUPYTER_AUTH === 'password'}
+                    <SensitiveInput
+                      type="text"
+                      placeholder={$i18n.t('Enter Jupyter Password')}
+                      bind:value={config.CODE_EXECUTION_JUPYTER_AUTH_PASSWORD}
+                      autocomplete="off"
+                    />
+                  {:else}
+                    <SensitiveInput
+                      type="text"
+                      placeholder={$i18n.t('Enter Jupyter Token')}
+                      bind:value={config.CODE_EXECUTION_JUPYTER_AUTH_TOKEN}
+                      autocomplete="off"
+                    />
+                  {/if}
                 </div>
               </div>
+            {/if}
 
-              {#if config.CODE_EXECUTION_JUPYTER_AUTH}
-                <div class="flex w-full gap-2">
-                  <div class="flex-1">
-                    {#if config.CODE_EXECUTION_JUPYTER_AUTH === 'password'}
-                      <SensitiveInput
-                        type="text"
-                        placeholder={$i18n.t('Enter Jupyter Password')}
-                        bind:value={config.CODE_EXECUTION_JUPYTER_AUTH_PASSWORD}
-                        autocomplete="off"
-                      />
-                    {:else}
-                      <SensitiveInput
-                        type="text"
-                        placeholder={$i18n.t('Enter Jupyter Token')}
-                        bind:value={config.CODE_EXECUTION_JUPYTER_AUTH_TOKEN}
-                        autocomplete="off"
-                      />
-                    {/if}
-                  </div>
-                </div>
-              {/if}
-            </div>
-
-            <div class="flex w-full items-center justify-between gap-2">
-              <div class="text-xs font-medium">
-                {$i18n.t('Code Execution Timeout')}
-              </div>
-
-              <div class="">
-                <Tooltip content={$i18n.t('Enter timeout in seconds')}>
-                  <input
-                    class="w-fit rounded-sm bg-transparent p-1 px-2 text-right text-xs outline-hidden"
-                    type="number"
-                    bind:value={config.CODE_EXECUTION_JUPYTER_TIMEOUT}
-                    placeholder={$i18n.t('e.g. 60')}
-                    autocomplete="off"
-                  />
-                </Tooltip>
-              </div>
-            </div>
+            <SettingItem label={$i18n.t('Code Execution Timeout')}>
+              <Tooltip content={$i18n.t('Enter timeout in seconds')}>
+                <input
+                  class="w-fit rounded-sm bg-transparent p-1 px-2 text-right text-xs outline-hidden"
+                  type="number"
+                  bind:value={config.CODE_EXECUTION_JUPYTER_TIMEOUT}
+                  placeholder={$i18n.t('e.g. 60')}
+                  autocomplete="off"
+                />
+              </Tooltip>
+            </SettingItem>
           {/if}
         </div>
 
-        <div class="mb-3.5">
-          <div class=" mt-0.5 mb-2.5 text-base font-medium">{$i18n.t('Code Interpreter')}</div>
-
-          <hr class=" dark:border-gray-850/30 my-2 border-gray-100/30" />
-
-          <div class="mb-2.5">
-            <div class=" flex w-full justify-between">
-              <div class=" self-center text-xs font-medium">
-                {$i18n.t('Enable Code Interpreter')}
-              </div>
-
-              <Switch bind:state={config.ENABLE_CODE_INTERPRETER} />
-            </div>
+        <div class="space-y-1">
+          <div
+            class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800"
+          >
+            {$i18n.t('Code Interpreter')}
           </div>
+
+          <ToggleSetting
+            label={$i18n.t('Enable Code Interpreter')}
+            bind:state={config.ENABLE_CODE_INTERPRETER}
+          />
 
           {#if config.ENABLE_CODE_INTERPRETER}
             <div class="mb-2.5">
-              <div class="  flex w-full justify-between">
-                <div class=" self-center text-xs font-medium">
-                  {$i18n.t('Code Interpreter Engine')}
-                </div>
-                <div class="relative flex items-center">
-                  <select
-                    class="w-fit rounded-sm bg-transparent p-1 px-2 pr-8 text-right text-xs outline-hidden"
-                    bind:value={config.CODE_INTERPRETER_ENGINE}
-                    placeholder={$i18n.t('Select a engine')}
-                    required
-                  >
-                    <option disabled selected value="">{$i18n.t('Select a engine')}</option>
-                    {#each engines as engine}
-                      <option value={engine}
-                        >{engine}{engine === 'jupyter' ? ' (Legacy)' : ''}</option
-                      >
-                    {/each}
-                  </select>
-                </div>
-              </div>
+              <SettingItem label={$i18n.t('Code Interpreter Engine')}>
+                <select
+                  class="w-fit rounded-sm bg-transparent p-1 px-2 pr-8 text-right text-xs outline-hidden"
+                  bind:value={config.CODE_INTERPRETER_ENGINE}
+                  placeholder={$i18n.t('Select a engine')}
+                  required
+                >
+                  <option disabled selected value="">{$i18n.t('Select a engine')}</option>
+                  {#each engines as engine}
+                    <option value={engine}>{engine}{engine === 'jupyter' ? ' (Legacy)' : ''}</option
+                    >
+                  {/each}
+                </select>
+              </SettingItem>
 
               {#if config.CODE_INTERPRETER_ENGINE === 'jupyter'}
                 <div class="text-xs text-gray-500">
@@ -212,11 +183,7 @@
             </div>
 
             {#if config.CODE_INTERPRETER_ENGINE === 'jupyter'}
-              <div class="mb-2.5 flex w-full flex-col gap-1.5">
-                <div class="text-xs font-medium">
-                  {$i18n.t('Jupyter URL')}
-                </div>
-
+              <SettingItem label={$i18n.t('Jupyter URL')}>
                 <div class="flex w-full">
                   <div class="flex-1">
                     <input
@@ -228,70 +195,54 @@
                     />
                   </div>
                 </div>
-              </div>
+              </SettingItem>
 
-              <div class="mb-2.5 flex w-full flex-col gap-1.5">
-                <div class="flex w-full items-center justify-between gap-2">
-                  <div class="text-xs font-medium">
-                    {$i18n.t('Jupyter Auth')}
-                  </div>
+              <SettingItem label={$i18n.t('Jupyter Auth')}>
+                <select
+                  class="w-fit rounded-sm bg-transparent p-1 px-2 pr-8 text-left text-xs outline-hidden"
+                  bind:value={config.CODE_INTERPRETER_JUPYTER_AUTH}
+                  placeholder={$i18n.t('Select an auth method')}
+                >
+                  <option selected value="">{$i18n.t('None')}</option>
+                  <option value="token">{$i18n.t('Token')}</option>
+                  <option value="password">{$i18n.t('Password')}</option>
+                </select>
+              </SettingItem>
 
-                  <div>
-                    <select
-                      class="w-fit rounded-sm bg-transparent p-1 px-2 pr-8 text-left text-xs outline-hidden"
-                      bind:value={config.CODE_INTERPRETER_JUPYTER_AUTH}
-                      placeholder={$i18n.t('Select an auth method')}
-                    >
-                      <option selected value="">{$i18n.t('None')}</option>
-                      <option value="token">{$i18n.t('Token')}</option>
-                      <option value="password">{$i18n.t('Password')}</option>
-                    </select>
+              {#if config.CODE_INTERPRETER_JUPYTER_AUTH}
+                <div class="flex w-full gap-2">
+                  <div class="flex-1">
+                    {#if config.CODE_INTERPRETER_JUPYTER_AUTH === 'password'}
+                      <SensitiveInput
+                        type="text"
+                        placeholder={$i18n.t('Enter Jupyter Password')}
+                        bind:value={config.CODE_INTERPRETER_JUPYTER_AUTH_PASSWORD}
+                        autocomplete="off"
+                      />
+                    {:else}
+                      <SensitiveInput
+                        type="text"
+                        placeholder={$i18n.t('Enter Jupyter Token')}
+                        bind:value={config.CODE_INTERPRETER_JUPYTER_AUTH_TOKEN}
+                        autocomplete="off"
+                      />
+                    {/if}
                   </div>
                 </div>
+              {/if}
 
-                {#if config.CODE_INTERPRETER_JUPYTER_AUTH}
-                  <div class="flex w-full gap-2">
-                    <div class="flex-1">
-                      {#if config.CODE_INTERPRETER_JUPYTER_AUTH === 'password'}
-                        <SensitiveInput
-                          type="text"
-                          placeholder={$i18n.t('Enter Jupyter Password')}
-                          bind:value={config.CODE_INTERPRETER_JUPYTER_AUTH_PASSWORD}
-                          autocomplete="off"
-                        />
-                      {:else}
-                        <SensitiveInput
-                          type="text"
-                          placeholder={$i18n.t('Enter Jupyter Token')}
-                          bind:value={config.CODE_INTERPRETER_JUPYTER_AUTH_TOKEN}
-                          autocomplete="off"
-                        />
-                      {/if}
-                    </div>
-                  </div>
-                {/if}
-              </div>
-
-              <div class="flex w-full items-center justify-between gap-2">
-                <div class="text-xs font-medium">
-                  {$i18n.t('Code Execution Timeout')}
-                </div>
-
-                <div class="">
-                  <Tooltip content={$i18n.t('Enter timeout in seconds')}>
-                    <input
-                      class="w-fit rounded-sm bg-transparent p-1 px-2 text-right text-xs outline-hidden"
-                      type="number"
-                      bind:value={config.CODE_INTERPRETER_JUPYTER_TIMEOUT}
-                      placeholder={$i18n.t('e.g. 60')}
-                      autocomplete="off"
-                    />
-                  </Tooltip>
-                </div>
-              </div>
+              <SettingItem label={$i18n.t('Code Execution Timeout')}>
+                <Tooltip content={$i18n.t('Enter timeout in seconds')}>
+                  <input
+                    class="w-fit rounded-sm bg-transparent p-1 px-2 text-right text-xs outline-hidden"
+                    type="number"
+                    bind:value={config.CODE_INTERPRETER_JUPYTER_TIMEOUT}
+                    placeholder={$i18n.t('e.g. 60')}
+                    autocomplete="off"
+                  />
+                </Tooltip>
+              </SettingItem>
             {/if}
-
-            <hr class="dark:border-gray-850/30 my-2 border-gray-100/30" />
 
             <div>
               <div class="w-full py-0.5">
@@ -319,12 +270,9 @@
       </div>
     {/if}
   </div>
-  <div class="flex justify-end pt-3 text-sm font-medium">
-    <button
-      class="rounded-full bg-black px-3.5 py-1.5 text-sm font-medium text-white transition hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100"
-      type="submit"
-    >
+  <div class="flex justify-end p-1">
+    <Button type="submit" radius="xl">
       {$i18n.t('Save')}
-    </button>
+    </Button>
   </div>
 </form>

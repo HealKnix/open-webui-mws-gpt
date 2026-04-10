@@ -8,8 +8,10 @@
 
   import Tooltip from '$lib/components/common/Tooltip.svelte';
   import Switch from '$lib/components/common/Switch.svelte';
+  import ToggleSetting from '$lib/components/common/ToggleSetting.svelte';
   import Textarea from '$lib/components/common/Textarea.svelte';
   import Spinner from '$lib/components/common/Spinner.svelte';
+  import Button from '$lib/components/common/Button.svelte';
 
   const dispatch = createEventDispatcher();
 
@@ -90,11 +92,11 @@
       dispatch('save');
     }}
   >
-    <div class="  scrollbar-hidden h-full overflow-y-scroll pr-1.5">
-      <div class="mb-3.5">
-        <div class=" mt-0.5 mb-2.5 text-base font-medium">{$i18n.t('Tasks')}</div>
-
-        <hr class=" dark:border-gray-850/30 my-2 border-gray-100/30" />
+    <div class="scrollbar-hidden h-full overflow-y-scroll p-1">
+      <div class="space-y-1">
+        <div class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+          {$i18n.t('Tasks')}
+        </div>
 
         <div class=" mb-2 flex items-center font-medium">
           <div class=" mr-1 text-xs">{$i18n.t('Task Model')}</div>
@@ -208,13 +210,10 @@
           </div>
         </div>
 
-        <div class="mb-2.5 flex w-full items-center justify-between">
-          <div class=" self-center text-xs font-medium">
-            {$i18n.t('Title Generation')}
-          </div>
-
-          <Switch bind:state={taskConfig.ENABLE_TITLE_GENERATION} />
-        </div>
+        <ToggleSetting
+          label={$i18n.t('Title Generation')}
+          bind:state={taskConfig.ENABLE_TITLE_GENERATION}
+        />
 
         {#if taskConfig.ENABLE_TITLE_GENERATION}
           <div class="mb-2.5">
@@ -234,22 +233,17 @@
           </div>
         {/if}
 
-        <div class="mb-2.5 flex w-full items-center justify-between">
-          <div class=" self-center text-xs font-medium">
-            {$i18n.t('Voice Mode Custom Prompt')}
-          </div>
-
-          <Switch
-            state={taskConfig.VOICE_MODE_PROMPT_TEMPLATE != null}
-            on:change={(e) => {
-              if (e.detail) {
-                taskConfig.VOICE_MODE_PROMPT_TEMPLATE = '';
-              } else {
-                taskConfig.VOICE_MODE_PROMPT_TEMPLATE = null;
-              }
-            }}
-          />
-        </div>
+        <ToggleSetting
+          label={$i18n.t('Voice Mode Custom Prompt')}
+          state={taskConfig.VOICE_MODE_PROMPT_TEMPLATE != null}
+          on:change={(e) => {
+            if (e.detail) {
+              taskConfig.VOICE_MODE_PROMPT_TEMPLATE = '';
+            } else {
+              taskConfig.VOICE_MODE_PROMPT_TEMPLATE = null;
+            }
+          }}
+        />
 
         {#if taskConfig.VOICE_MODE_PROMPT_TEMPLATE != null}
           <div class="mb-2.5">
@@ -269,13 +263,10 @@
           </div>
         {/if}
 
-        <div class="mb-2.5 flex w-full items-center justify-between">
-          <div class=" self-center text-xs font-medium">
-            {$i18n.t('Follow Up Generation')}
-          </div>
-
-          <Switch bind:state={taskConfig.ENABLE_FOLLOW_UP_GENERATION} />
-        </div>
+        <ToggleSetting
+          label={$i18n.t('Follow Up Generation')}
+          bind:state={taskConfig.ENABLE_FOLLOW_UP_GENERATION}
+        />
 
         {#if taskConfig.ENABLE_FOLLOW_UP_GENERATION}
           <div class="mb-2.5">
@@ -295,13 +286,10 @@
           </div>
         {/if}
 
-        <div class="mb-2.5 flex w-full items-center justify-between">
-          <div class=" self-center text-xs font-medium">
-            {$i18n.t('Tags Generation')}
-          </div>
-
-          <Switch bind:state={taskConfig.ENABLE_TAGS_GENERATION} />
-        </div>
+        <ToggleSetting
+          label={$i18n.t('Tags Generation')}
+          bind:state={taskConfig.ENABLE_TAGS_GENERATION}
+        />
 
         {#if taskConfig.ENABLE_TAGS_GENERATION}
           <div class="mb-2.5">
@@ -321,21 +309,15 @@
           </div>
         {/if}
 
-        <div class="mb-2.5 flex w-full items-center justify-between">
-          <div class=" self-center text-xs font-medium">
-            {$i18n.t('Retrieval Query Generation')}
-          </div>
+        <ToggleSetting
+          label={$i18n.t('Retrieval Query Generation')}
+          bind:state={taskConfig.ENABLE_RETRIEVAL_QUERY_GENERATION}
+        />
 
-          <Switch bind:state={taskConfig.ENABLE_RETRIEVAL_QUERY_GENERATION} />
-        </div>
-
-        <div class="mb-2.5 flex w-full items-center justify-between">
-          <div class=" self-center text-xs font-medium">
-            {$i18n.t('Web Search Query Generation')}
-          </div>
-
-          <Switch bind:state={taskConfig.ENABLE_SEARCH_QUERY_GENERATION} />
-        </div>
+        <ToggleSetting
+          label={$i18n.t('Web Search Query Generation')}
+          bind:state={taskConfig.ENABLE_SEARCH_QUERY_GENERATION}
+        />
 
         <div class="mb-2.5">
           <div class=" mb-1 text-xs font-medium">{$i18n.t('Query Generation Prompt')}</div>
@@ -353,15 +335,11 @@
           </Tooltip>
         </div>
 
-        <div class="mb-2.5 flex w-full items-center justify-between">
-          <div class=" self-center text-xs font-medium">
-            {$i18n.t('Autocomplete Generation')}
-          </div>
-
-          <Tooltip content={$i18n.t('Enable autocomplete generation for chat messages')}>
-            <Switch bind:state={taskConfig.ENABLE_AUTOCOMPLETE_GENERATION} />
-          </Tooltip>
-        </div>
+        <ToggleSetting
+          label={$i18n.t('Autocomplete Generation')}
+          bind:state={taskConfig.ENABLE_AUTOCOMPLETE_GENERATION}
+          tooltip={$i18n.t('Enable autocomplete generation for chat messages')}
+        />
 
         {#if taskConfig.ENABLE_AUTOCOMPLETE_GENERATION}
           <div class="mb-2.5">
@@ -416,13 +394,10 @@
       </div>
     </div>
 
-    <div class="flex justify-end text-sm font-medium">
-      <button
-        class="rounded-full bg-black px-3.5 py-1.5 text-sm font-medium text-white transition hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100"
-        type="submit"
-      >
+    <div class="flex justify-end p-1">
+      <Button type="submit" radius="xl">
         {$i18n.t('Save')}
-      </button>
+      </Button>
     </div>
   </form>
 {:else}
