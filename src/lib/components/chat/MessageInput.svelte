@@ -1239,8 +1239,8 @@
             <div
               id="message-input-container"
               class={cn(
-                'border-border bg-card ring-primary ring-offset-background relative flex w-full flex-1 flex-col rounded-3xl border px-1 shadow-lg ring-0 ring-offset-0 transition-all focus-within:ring-2 focus-within:ring-offset-2',
-                $temporaryChatEnabled && 'bg-secondary',
+                'border-border bg-secondary ring-primary ring-offset-background relative flex w-full flex-1 flex-col rounded-3xl border px-1 shadow-lg ring-0 ring-offset-0 transition-all focus-within:ring-2 focus-within:ring-offset-2',
+                $temporaryChatEnabled && 'bg-card',
               )}
               dir={$settings?.chatDirection ?? 'auto'}
             >
