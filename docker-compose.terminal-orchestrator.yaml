@@ -1,0 +1,48 @@
+services:
+  terminal-orchestrator:
+    build:
+      context: ./services/terminal-orchestrator
+      dockerfile: Dockerfile
+    image: terminal-orchestrator:local
+    container_name: terminal-orchestrator
+    environment:
+      ORCHESTRATOR_SHARED_KEY: '321'
+      TERMINAL_IMAGE: ${TERMINAL_IMAGE:-ghcr.io/open-webui/open-terminal:latest}
+      TERMINAL_INTERNAL_PORT: '8000'
+      INTERNAL_NETWORK_NAME: terminal-internal
+      EGRESS_NETWORK_NAME: terminal-egress
+      IDLE_TIMEOUT_SECONDS: '1800'
+      MEM_LIMIT: '1g'
+      CPU_LIMIT: '1.0'
+      PIDS_LIMIT: '256'
+      ALLOW_INTERNET_DEFAULT: 'false'
+      STOP_ON_SHUTDOWN: 'true'
+      SPAWN_RATE_PER_MIN: '3'
+      POLICIES_FILE: /etc/orchestrator/policies.yaml
+      POLICIES_OVERRIDES_FILE: /etc/orchestrator/state/policies-overrides.json
+      LOG_LEVEL: INFO
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./services/terminal-orchestrator/policies.yaml:/etc/orchestrator/policies.yaml:ro
+      - terminal-orchestrator-state:/etc/orchestrator/state
+    networks:
+      - default
+      - terminal-internal
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    restart: unless-stopped
+    ports:
+      - 8083:8000
+
+networks:
+  terminal-internal:
+    name: terminal-internal
+    driver: bridge
+    internal: true
+  terminal-egress:
+    name: terminal-egress
+    driver: bridge
+
+volumes:
+  terminal-orchestrator-state: {}
