@@ -332,9 +332,10 @@
         aria-selected={selectedTab === tab.id}
         variant="ghost"
         color="foreground"
+        size="sm"
         className={cn(
-          'flex min-w-fit flex-1 justify-start rounded-xl py-1 text-left transition md:flex-none',
-          selectedTab === tab.id && 'text-primary bg-primary/15! font-medium',
+          'flex min-w-fit flex-1 justify-start rounded-xl py-1 text-left transition md:flex-none border-border',
+          selectedTab === tab.id && 'bg-background! text-primary border font-medium',
         )}
       >
         <div class=" mr-2 self-center">

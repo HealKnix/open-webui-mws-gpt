@@ -163,7 +163,7 @@
                   show = false;
                 }}
               >
-                <div class="  flex shrink-0 items-center gap-1 text-black dark:text-gray-100">
+                <div class="flex shrink-0 items-center gap-1 text-black dark:text-gray-100">
                   {#if item.type === 'note'}
                     <Tooltip
                       content={$i18n.t('Note')}

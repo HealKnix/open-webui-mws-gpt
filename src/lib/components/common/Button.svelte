@@ -4,8 +4,8 @@
 
   export let variant: 'solid' | 'flat' | 'ghost' = 'solid';
   export let color: 'primary' | 'secondary' | 'foreground' | string = 'primary';
-  export let size: 'xs' | 'sm' | 'md' | 'lg' | 'xl' = 'md';
-  export let radius: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full' = 'md';
+  export let size: '2xs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' = 'md';
+  export let radius: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | 'full' = 'md';
   export let isIconOnly = false;
   export let loading = false;
   export let disabled = false;
@@ -13,10 +13,9 @@
   export let type: 'button' | 'submit' | 'reset' = 'button';
   export let className = '';
 
-  const isPredefinedColor = ['primary', 'secondary', 'foreground'].includes(color);
-
   // Size mapping
   const sizes = {
+    '2xs': 'h-6 px-2 text-xs',
     xs: 'h-7 px-2 text-xs',
     sm: 'h-8 px-3 text-xs',
     md: 'h-10 px-4 text-sm',
@@ -39,13 +38,13 @@
     md: 'rounded-md',
     lg: 'rounded-lg',
     xl: 'rounded-xl',
+    '2xl': 'rounded-2xl',
+    '3xl': 'rounded-3xl',
     full: 'rounded-full',
   };
 
   // Variant & Color logic
   const getVariantClasses = () => {
-    if (!isPredefinedColor) return '';
-
     const base = {
       solid: {
         primary: 'bg-primary text-primary-foreground hover:bg-primary-hover',
@@ -53,27 +52,18 @@
         foreground: 'bg-foreground text-background hover:bg-foreground/90',
       },
       flat: {
-        primary: 'bg-primary/20 text-primary hover:bg-primary/30',
+        primary: 'bg-primary/10 text-primary hover:bg-primary/15',
         secondary: 'bg-border/50 text-secondary-foreground hover:bg-secondary-hover',
         foreground: 'bg-foreground/10 text-foreground hover:bg-foreground/20',
       },
       ghost: {
         primary: 'bg-transparent text-primary hover:bg-primary/10',
-        secondary: 'bg-transparent text-secondary hover:bg-secondary-hover',
+        secondary: 'bg-transparent text-foreground hover:bg-secondary-hover',
         foreground: 'bg-transparent text-foreground hover:bg-foreground/10',
       },
     };
-
     return base[variant][color as keyof (typeof base)['solid']];
   };
-
-  const customStyle = !isPredefinedColor
-    ? {
-        solid: `background-color: ${color}; color: white;`,
-        flat: `background-color: ${color}33; color: ${color};`,
-        ghost: `background-color: transparent; color: ${color};`,
-      }[variant]
-    : '';
 
   $: buttonClasses = cn(
     'relative inline-flex items-center justify-center font-medium transition-all active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none gap-2 overflow-hidden ring-0 focus-visible:ring-2 ring-primary ring-offset-0 focus-visible:ring-offset-2 ring-offset-background outline-none',
@@ -86,16 +76,7 @@
   const Tag = href ? 'a' : 'button';
 </script>
 
-<svelte:element
-  this={Tag}
-  {href}
-  {type}
-  class={buttonClasses}
-  style={customStyle}
-  {disabled}
-  {...$$restProps}
-  on:click
->
+<svelte:element this={Tag} {href} {type} class={buttonClasses} {disabled} {...$$restProps} on:click>
   {#if loading}
     <div class="absolute inset-0 flex items-center justify-center bg-inherit">
       <Spinner className="size-4" />

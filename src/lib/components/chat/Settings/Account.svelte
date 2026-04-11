@@ -19,6 +19,7 @@
   import UserProfileImage from './Account/UserProfileImage.svelte';
   import Button from '$lib/components/common/Button.svelte';
   import Input from '$lib/components/common/Input.svelte';
+  import RichSelector from '$lib/components/common/RichSelector.svelte';
 
   const i18n = getContext('i18n');
 
@@ -128,7 +129,7 @@
 </script>
 
 <div id="tab-account" class="flex h-full flex-col justify-between text-sm">
-  <div class=" max-h-[28rem] overflow-y-scroll md:max-h-full">
+  <div class=" max-h-[28rem] overflow-y-scroll p-1 md:max-h-full">
     <div class="space-y-1">
       <div>
         <div class="text-base font-medium">{$i18n.t('Your Account')}</div>
@@ -174,37 +175,35 @@
             <div class="mt-2 flex w-full flex-col">
               <div class=" mb-1 text-xs font-medium">{$i18n.t('Gender')}</div>
 
-              <div class="flex-1">
-                <select
-                  class="w-full bg-transparent text-sm outline-hidden dark:text-gray-300"
-                  bind:value={_gender}
-                  aria-label={$i18n.t('Gender')}
-                  on:change={(e) => {
-                    console.log(_gender);
+              <RichSelector
+                bind:value={_gender}
+                triggerClass="max-w-fit"
+                items={[
+                  { value: '', label: $i18n.t('Prefer not to say'), icon: ' ' },
+                  { value: 'male', label: $i18n.t('Male'), icon: ' ' },
+                  { value: 'female', label: $i18n.t('Female'), icon: ' ' },
+                  { value: 'custom', label: $i18n.t('Custom'), icon: ' ' },
+                ]}
+                onChange={(e) => {
+                  console.log(_gender);
 
-                    if (_gender === 'custom') {
-                      // Handle custom gender input
-                      gender = '';
-                    } else {
-                      gender = _gender;
-                    }
-                  }}
-                >
-                  <option value="" selected>{$i18n.t('Prefer not to say')}</option>
-                  <option value="male">{$i18n.t('Male')}</option>
-                  <option value="female">{$i18n.t('Female')}</option>
-                  <option value="custom">{$i18n.t('Custom')}</option>
-                </select>
-              </div>
+                  if (_gender === 'custom') {
+                    // Handle custom gender input
+                    gender = '';
+                  } else {
+                    gender = _gender;
+                  }
+                }}
+              />
 
               {#if _gender === 'custom'}
-                <input
-                  class="mt-1 w-full bg-transparent text-sm outline-hidden dark:text-gray-300"
+                <Input
                   type="text"
                   required
                   aria-label={$i18n.t('Custom Gender')}
                   placeholder={$i18n.t('Enter your gender')}
                   bind:value={gender}
+                  className="mt-2"
                 />
               {/if}
             </div>
@@ -213,8 +212,7 @@
               <div class=" mb-1 text-xs font-medium">{$i18n.t('Birth Date')}</div>
 
               <div class="flex-1">
-                <input
-                  class="w-full bg-transparent text-sm outline-hidden dark:text-gray-300 dark:placeholder:text-gray-300"
+                <Input
                   type="date"
                   aria-label={$i18n.t('Birth Date')}
                   bind:value={dateOfBirth}

@@ -2,6 +2,7 @@
   const i18n = getContext('i18n');
   import { getContext } from 'svelte';
   import { settings } from '$lib/stores';
+  import Input from './Input.svelte';
   export let id = 'password-input';
   export let value: string = '';
   export let placeholder = '';
@@ -21,9 +22,8 @@
   {#if screenReader}
     <label class="sr-only" for={id}>{placeholder || $i18n.t('Password')}</label>
   {/if}
-  <input
+  <Input
     {id}
-    class={`${inputClassName} ${show ? '' : 'password'} ${($settings?.highContrastMode ?? false) ? 'placeholder:text-gray-700 dark:placeholder:text-gray-100' : ' outline-hidden placeholder:text-gray-300 dark:placeholder:text-gray-600'}`}
     {placeholder}
     type={type === 'password' && !show ? 'password' : 'text'}
     bind:value

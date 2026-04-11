@@ -291,7 +291,9 @@
   <div class="scrollbar-hidden space-y-3 overflow-y-scroll p-1">
     {#if config}
       <div class="space-y-1">
-        <div class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+        <div
+          class="my-2 mb-4 border-b border-gray-300 pb-1 text-base font-medium dark:border-gray-800"
+        >
           {$i18n.t('General')}
         </div>
 
@@ -302,7 +304,9 @@
       </div>
 
       <div class="space-y-1">
-        <div class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+        <div
+          class="my-2 mb-4 border-b border-gray-300 pb-1 text-base font-medium dark:border-gray-800"
+        >
           {$i18n.t('Create Image')}
         </div>
 
@@ -740,7 +744,9 @@
       </div>
 
       <div class="space-y-1">
-        <div class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+        <div
+          class="my-2 mb-4 border-b border-gray-300 pb-1 text-base font-medium dark:border-gray-800"
+        >
           {$i18n.t('Edit Image')}
         </div>
 
