@@ -213,7 +213,9 @@
   <div class="scrollbar-hidden h-full space-y-3 overflow-y-scroll p-1">
     <div class="flex flex-col gap-3">
       <div class="space-y-1">
-        <div class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+        <div
+          class="my-2 mb-4 border-b border-gray-300 pb-1 text-base font-medium dark:border-gray-800"
+        >
           {$i18n.t('Speech-to-Text')}
         </div>
 
@@ -489,7 +491,9 @@
       </div>
 
       <div class="space-y-1">
-        <div class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+        <div
+          class="my-2 mb-4 border-b border-gray-300 pb-1 text-base font-medium dark:border-gray-800"
+        >
           {$i18n.t('Text-to-Speech')}
         </div>
 

@@ -875,7 +875,6 @@
     class={cn(
       'text-secondary-foreground fixed top-0 left-0 z-50 h-full max-h-full shrink-0 overflow-x-hidden text-sm antialiased transition-all duration-300 select-none',
     )}
-    transition:slide={{ duration: 250, axis: 'x' }}
     data-state={$showSidebar}
   >
     <div

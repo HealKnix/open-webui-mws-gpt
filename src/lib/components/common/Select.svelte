@@ -1,6 +1,9 @@
 <script lang="ts">
+  import { cn } from '$lib/utils';
   import { flyAndScale } from '$lib/utils/transitions';
   import { tick } from 'svelte';
+
+  export let contentClassName = '';
 
   /** Currently selected value */
   export let value = '';
@@ -123,10 +126,20 @@
 </button>
 
 {#if open}
-  <div use:portal bind:this={contentEl} class={contentClass} transition:flyAndScale>
+  <div
+    use:portal
+    bind:this={contentEl}
+    class={cn(contentClass, contentClassName)}
+    transition:flyAndScale
+  >
     <slot {open} {selectItem}>
       {#each items as item}
-        <button class={itemClass} type="button" on:click={() => selectItem(item)}>
+        <button
+          class={itemClass}
+          type="button"
+          data-selected={value === item.value}
+          on:click={() => selectItem(item)}
+        >
           <slot name="item" {item} selected={value === item.value}>
             {item.label}
           </slot>

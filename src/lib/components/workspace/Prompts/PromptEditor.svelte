@@ -322,7 +322,7 @@
             placeholder={$i18n.t('Write a summary in 50 words that summarizes {{topic}}.')}
             bind:value={content}
             aria-label={$i18n.t('Prompt Content')}
-            rows={6}
+            rows="6"
             required
           />
         </div>
@@ -589,7 +589,7 @@
             className="text-sm w-full bg-transparent outline-hidden overflow-y-hidden resize-none"
             placeholder={$i18n.t('Write a summary in 50 words that summarizes {{topic}}.')}
             bind:value={content}
-            rows={6}
+            rows="6"
             required
           />
           <div class="text-xs text-gray-400 dark:text-gray-500">

@@ -3,8 +3,8 @@
   import type { ComponentType } from 'svelte';
 
   export let variant: 'solid' | 'flat' | 'ghost' = 'solid';
-  export let color: 'primary' | 'secondary' | 'foreground' | string = 'secondary';
-  export let size: 'xs' | 'sm' | 'md' | 'lg' | 'xl' = 'sm';
+  export let color: 'default' | 'primary' | 'secondary' | 'foreground' | (string & {}) = 'default';
+  export let size: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' = 'sm';
   export let radius: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full' = 'md';
   export let disabled = false;
   export let className = '';
@@ -19,19 +19,18 @@
   export let iconLeft: ComponentType | undefined = undefined;
   export let iconRight: ComponentType | undefined = undefined;
 
-  const isPredefinedColor = ['primary', 'secondary', 'foreground'].includes(color);
-
   // Size mapping (matching Button)
   const sizes = {
-    xs: 'h-7 text-xs',
-    sm: 'h-8 text-xs',
-    md: 'h-10 text-sm',
-    lg: 'h-12 text-base',
-    xl: 'h-14 text-lg',
+    xs: 'text-xs',
+    sm: 'text-sm',
+    md: 'text-base',
+    lg: 'text-lg',
+    xl: 'text-xl',
+    '2xl': 'text-2xl',
   };
 
   // Radius mapping (matching Button)
-  const radii = {
+  const mappedRadius = {
     xs: 'rounded-xs',
     sm: 'rounded-sm',
     md: 'rounded-md',
@@ -42,32 +41,32 @@
 
   // Variant & Color logic
   const getVariantClasses = () => {
-    if (!isPredefinedColor) return '';
-
     const base = {
       solid: {
+        default: 'bg-background border-border text-foreground',
         primary: 'bg-primary/5 border-primary/20 text-foreground',
-        secondary: 'bg-border/30 border-border text-foreground',
+        secondary: 'bg-card/30 border-border text-foreground',
         foreground: 'bg-foreground/5 border-foreground/10 text-foreground',
       },
       flat: {
-        primary: 'bg-primary/10 border-transparent text-foreground',
-        secondary: 'bg-border/50 border-transparent text-foreground',
+        default: 'bg-background border-transparent text-foreground',
+        primary: 'bg-primary/10 border-transparent text-primary [&_input]:placeholder:text-primary',
+        secondary: 'bg-card/50 border-transparent text-foreground',
         foreground: 'bg-foreground/10 border-transparent text-foreground',
       },
       ghost: {
-        primary: 'bg-transparent border-transparent text-foreground',
-        secondary: 'bg-transparent border-transparent text-foreground',
-        foreground: 'bg-transparent border-transparent text-foreground',
+        default: 'bg-transparent border-transparent text-foreground hover:bg-background/15',
+        primary: 'bg-transparent border-transparent text-primary hover:bg-primary/15',
+        secondary: 'bg-transparent border-transparent text-foreground hover:bg-border',
+        foreground: 'bg-transparent border-transparent text-foreground hover:bg-foreground/15',
       },
     };
-
     return base[variant][color as keyof (typeof base)['solid']];
   };
 
   $: wrapperClasses = cn(
     'relative flex items-center transition-all duration-200 border ring-primary focus-within:ring-2 ring-offset-0 focus-within:ring-offset-2 ring-offset-background outline-none overflow-hidden w-full',
-    radii[radius],
+    mappedRadius[radius],
     sizes[size],
     getVariantClasses(),
     disabled && 'opacity-50 pointer-events-none',
@@ -85,8 +84,9 @@
     xs: 'size-3.5',
     sm: 'size-4',
     md: 'size-5',
-    lg: 'size-6',
-    xl: 'size-7',
+    lg: 'size-5',
+    xl: 'size-5',
+    '2xl': 'size-5',
   };
 </script>
 

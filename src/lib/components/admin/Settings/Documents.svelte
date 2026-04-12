@@ -336,7 +336,9 @@
   {#if RAGConfig}
     <div class="scrollbar-hidden h-full space-y-2.5 overflow-y-scroll p-1">
       <div class="space-y-1">
-        <div class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+        <div
+          class="my-2 mb-4 border-b border-gray-300 pb-1 text-base font-medium dark:border-gray-800"
+        >
           {$i18n.t('General')}
         </div>
 
@@ -806,7 +808,7 @@
       {#if !RAGConfig.BYPASS_EMBEDDING_AND_RETRIEVAL}
         <div class="space-y-1">
           <div
-            class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800"
+            class="my-2 mb-4 border-b border-gray-300 pb-1 text-base font-medium dark:border-gray-800"
           >
             {$i18n.t('Embedding')}
           </div>
@@ -1002,7 +1004,7 @@
 
         <div class="space-y-1">
           <div
-            class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800"
+            class="my-2 mb-4 border-b border-gray-300 pb-1 text-base font-medium dark:border-gray-800"
           >
             {$i18n.t('Retrieval')}
           </div>
@@ -1242,7 +1244,9 @@
       {/if}
 
       <div class="space-y-1">
-        <div class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+        <div
+          class="my-2 mb-4 border-b border-gray-300 pb-1 text-base font-medium dark:border-gray-800"
+        >
           {$i18n.t('Files')}
         </div>
 
@@ -1347,7 +1351,9 @@
       </div>
 
       <div class="space-y-1">
-        <div class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+        <div
+          class="my-2 mb-4 border-b border-gray-300 pb-1 text-base font-medium dark:border-gray-800"
+        >
           {$i18n.t('Integration')}
         </div>
 
@@ -1363,7 +1369,9 @@
       </div>
 
       <div class="space-y-1">
-        <div class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+        <div
+          class="my-2 mb-4 border-b border-gray-300 pb-1 text-base font-medium dark:border-gray-800"
+        >
           {$i18n.t('Danger Zone')}
         </div>
 

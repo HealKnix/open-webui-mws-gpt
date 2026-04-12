@@ -162,7 +162,9 @@
   <div class="scrollbar-hidden h-full overflow-y-scroll p-1">
     {#if servers !== null}
       <div class="mb-3">
-        <div class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+        <div
+          class="my-2 mb-4 border-b border-gray-300 pb-1 text-base font-medium dark:border-gray-800"
+        >
           {$i18n.t('General')}
         </div>
 

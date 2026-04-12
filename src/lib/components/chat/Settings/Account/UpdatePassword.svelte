@@ -3,6 +3,7 @@
   import { toast } from 'svelte-sonner';
   import { updateUserPassword } from '$lib/apis/auths';
   import SensitiveInput from '$lib/components/common/SensitiveInput.svelte';
+  import Button from '$lib/components/common/Button.svelte';
 
   const i18n = getContext('i18n');
 
@@ -43,14 +44,15 @@
     updatePasswordHandler();
   }}
 >
-  <div class="flex items-center justify-between text-sm">
+  <div class="flex items-center gap-2 text-sm">
     <div class="  font-medium">{$i18n.t('Change Password')}</div>
-    <button
-      class=" text-xs font-medium text-gray-500"
+    <Button
+      size="sm"
+      variant="flat"
       type="button"
       on:click={() => {
         show = !show;
-      }}>{show ? $i18n.t('Hide') : $i18n.t('Show')}</button
+      }}>{show ? $i18n.t('Hide') : $i18n.t('Show')}</Button
     >
   </div>
 
@@ -61,7 +63,6 @@
 
         <div class="flex-1">
           <SensitiveInput
-            class="w-full bg-transparent text-sm outline-hidden placeholder:opacity-30 dark:text-gray-300"
             type="password"
             bind:value={currentPassword}
             placeholder={$i18n.t('Enter your current password')}
@@ -76,7 +77,6 @@
 
         <div class="flex-1">
           <SensitiveInput
-            class="w-full bg-transparent text-sm outline-hidden placeholder:opacity-30 dark:text-gray-300"
             type="password"
             bind:value={newPassword}
             placeholder={$i18n.t('Enter your new password')}
@@ -91,7 +91,6 @@
 
         <div class="flex-1">
           <SensitiveInput
-            class="w-full bg-transparent text-sm outline-hidden placeholder:opacity-30 dark:text-gray-300"
             type="password"
             bind:value={newPasswordConfirm}
             placeholder={$i18n.t('Confirm your new password')}
@@ -102,12 +101,10 @@
       </div>
     </div>
 
-    <div class="mt-3 flex justify-end">
-      <button
-        class="rounded-full bg-black px-3.5 py-1.5 text-sm font-medium text-white transition hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100"
-      >
+    <div class="my-3 flex justify-end">
+      <Button size="sm" color="secondary">
         {$i18n.t('Update password')}
-      </button>
+      </Button>
     </div>
   {/if}
 </form>

@@ -37,6 +37,11 @@
         goto('/');
       } else if ($page.url.pathname.includes('/skills') && !$user?.permissions?.workspace?.skills) {
         goto('/');
+      } else if (
+        $page.url.pathname.includes('/widgets') &&
+        !$user?.permissions?.workspace?.widgets
+      ) {
+        goto('/');
       }
     }
 
@@ -142,6 +147,19 @@
                 href="/workspace/tools"
               >
                 {$i18n.t('Tools')}
+              </a>
+            {/if}
+
+            {#if $user?.role === 'admin' || $user?.permissions?.workspace?.widgets}
+              <a
+                draggable="false"
+                aria-current={$page.url.pathname.includes('/workspace/widgets') ? 'page' : null}
+                class="min-w-fit p-1.5 {$page.url.pathname.includes('/workspace/widgets')
+                  ? ''
+                  : 'text-gray-300 hover:text-gray-700 dark:text-gray-600 dark:hover:text-white'} transition select-none"
+                href="/workspace/widgets"
+              >
+                {$i18n.t('Widgets')}
               </a>
             {/if}
           </div>

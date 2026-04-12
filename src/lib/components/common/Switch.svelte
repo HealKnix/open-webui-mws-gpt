@@ -30,7 +30,7 @@
     {id}
     aria-labelledby={ariaLabelledbyId}
     class={cn(
-      'ring-primary ring-offset-background mx-[1px] flex h-[1.125rem] min-h-[1.125rem] w-8 shrink-0 cursor-pointer items-center rounded-full px-1 ring-0 ring-offset-0 transition outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
+      'ring-accent-active ring-offset-background mx-[1px] flex h-5 min-h-5 w-9 shrink-0 cursor-pointer items-center rounded-full px-1 ring-0 ring-offset-0 transition outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
       state ? ' bg-accent-active' : 'bg-gray-200 dark:bg-transparent',
       ($settings?.highContrastMode ?? false) &&
         'focus:outline focus:outline-2 focus:outline-gray-800 focus:dark:outline-gray-200',
@@ -42,7 +42,7 @@
     }}
   >
     <Switch.Thumb
-      class="data-[state=unchecked]:shadow-mini pointer-events-none block size-3.5 w-[16px] shrink-0 rounded-full bg-white transition-transform data-[state=checked]:translate-x-2.5 data-[state=unchecked]:-translate-x-[1px]"
+      class="data-[state=unchecked]:shadow-mini pointer-events-none block size-4 w-[16px] shrink-0 rounded-full bg-white transition-transform data-[state=checked]:translate-x-[calc(100%-2px)] data-[state=unchecked]:-translate-x-[2px]"
     />
   </Switch.Root>
 </Tooltip>
