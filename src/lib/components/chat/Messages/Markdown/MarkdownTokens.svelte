@@ -25,6 +25,7 @@
   import HtmlToken from './HTMLToken.svelte';
   import Clipboard from '$lib/components/icons/Clipboard.svelte';
   import ColonFenceBlock from './ColonFenceBlock.svelte';
+  import AgentUIRenderer from '$lib/components/common/agentui/AgentUIRenderer.svelte';
 
   export let id: string;
   export let tokens: Token[];
@@ -48,6 +49,7 @@
 
   export let onTaskClick: Function = () => {};
   export let onSourceClick: Function = () => {};
+  export let onAgentAction: Function = () => {};
 
   const headerComponent = (depth: number) => {
     return 'h' + depth;
@@ -276,6 +278,7 @@
           {done}
           {editCodeBlock}
           {onTaskClick}
+          {onAgentAction}
           {sourceIds}
           {onSourceClick}
         />
@@ -311,6 +314,7 @@
               {done}
               {editCodeBlock}
               {onTaskClick}
+              {onAgentAction}
               {sourceIds}
               {onSourceClick}
             />
@@ -346,6 +350,7 @@
                   {done}
                   {editCodeBlock}
                   {onTaskClick}
+                  {onAgentAction}
                   {sourceIds}
                   {onSourceClick}
                 />
@@ -358,6 +363,7 @@
                 {done}
                 {editCodeBlock}
                 {onTaskClick}
+                {onAgentAction}
                 {sourceIds}
                 {onSourceClick}
               />
@@ -401,6 +407,7 @@
                   {done}
                   {editCodeBlock}
                   {onTaskClick}
+                  {onAgentAction}
                   {sourceIds}
                   {onSourceClick}
                 />
@@ -448,6 +455,7 @@
             {done}
             {editCodeBlock}
             {onTaskClick}
+            {onAgentAction}
             {sourceIds}
             {onSourceClick}
           />
@@ -545,6 +553,12 @@
       {sourceIds}
       {onTaskClick}
       {onSourceClick}
+    />
+  {:else if token.type === 'agentUI'}
+    <AgentUIRenderer
+      component={token.component}
+      data={token.data}
+      onAction={(payload) => onAgentAction(payload)}
     />
   {:else if token.type === 'space'}
     <div class="my-2" />

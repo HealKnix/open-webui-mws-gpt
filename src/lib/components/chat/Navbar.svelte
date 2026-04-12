@@ -78,12 +78,22 @@
     : 'pt-1 pb-1'} drag-region -mb-12 flex flex-col items-center"
 >
   <div class="flex w-full items-center pr-1 pl-1.5">
-    <div
+    <!-- <div
       id="navbar-bg-gradient-to-b"
       class="{chat?.id
         ? 'visible'
-        : 'invisible'} pointer-events-none absolute inset-0 -bottom-10 z-[-1] bg-linear-to-b from-white/90 via-white/50 via-40% to-transparent to-97% dark:from-gray-900/90 dark:via-gray-900/50 dark:to-transparent"
-    ></div>
+        : 'invisible'} pointer-events-none absolute inset-0 -bottom-10 z-[-1] bg-linear-to-b from-white/90 via-white/50 via-40% to-transparent to-97% backdrop-blur dark:from-gray-900/90 dark:via-gray-900/50 dark:to-transparent"
+    ></div> -->
+    {#each new Array(50) as _, i}
+      <div
+        class="{chat?.id
+          ? 'visible'
+          : 'invisible'} bg-background/5 pointer-events-none absolute top-0 right-0 left-0 z-[-1]"
+        style="height: {i}px; backdrop-filter: blur({(i * Math.E) / 180}px); filter: blur({(i *
+          Math.E) /
+          180}px);"
+      ></div>
+    {/each}
 
     <div class=" mx-auto flex w-full max-w-full bg-transparent px-1.5 pt-0.5 md:px-2">
       <div class="flex w-full max-w-full items-center">

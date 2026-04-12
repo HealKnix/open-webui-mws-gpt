@@ -26,6 +26,7 @@
   import OnBoarding from '$lib/components/OnBoarding.svelte';
   import SensitiveInput from '$lib/components/common/SensitiveInput.svelte';
   import { redirect } from '@sveltejs/kit';
+  import Input from '$lib/components/common/Input.svelte';
 
   const i18n = getContext('i18n');
 
@@ -317,11 +318,10 @@
                         <label for="email" class="mb-1 block text-left text-sm font-medium"
                           >{$i18n.t('Email')}</label
                         >
-                        <input
+                        <Input
                           bind:value={email}
                           type="email"
                           id="email"
-                          class="my-0.5 w-full bg-transparent text-sm outline-hidden placeholder:text-gray-300 dark:placeholder:text-gray-600"
                           autocomplete="email"
                           name="email"
                           placeholder={$i18n.t('Enter Your Email')}
