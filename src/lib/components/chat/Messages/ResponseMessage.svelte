@@ -829,10 +829,15 @@
                     updateChat();
                   }}
                   onAgentAction={(payload) => {
-                    const { component, action, item } = payload;
-                    const label = item?.name ?? item?.id ?? JSON.stringify(item);
-                    const id = item?.id ?? '';
-                    submitMessage(message?.id, `[Выбрано: ${label} (ID: ${id})]`);
+                    if (payload.type === 'button') {
+                      const text = payload.action_text || payload.props?.label || 'Button clicked';
+                      submitMessage(message?.id, text);
+                    } else {
+                      const { component, action, item } = payload;
+                      const label = item?.name ?? item?.id ?? JSON.stringify(item);
+                      const id = item?.id ?? '';
+                      submitMessage(message?.id, `[Выбрано: ${label} (ID: ${id})]`);
+                    }
                   }}
                 />
               {/if}

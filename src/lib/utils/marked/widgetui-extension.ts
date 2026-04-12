@@ -21,17 +21,28 @@ function widgetUITokenizer(this: any, src: string) {
   const raw = match[0];
   const jsonText = match[1].trim();
 
-  let parsed: { component?: string; data?: unknown } = {};
+  let parsed: { component?: string; data?: unknown; widget?: string } = {};
   try {
     parsed = JSON.parse(jsonText);
   } catch {
     return;
   }
 
+  // Widget reference format: { "widget": "widget-id", "data": { ... } }
+  if (typeof parsed.widget === 'string') {
+    return {
+      type: 'widgetUI',
+      raw,
+      component: 'widget-ref',
+      widget: parsed.widget,
+      data: parsed.data ?? {},
+    };
+  }
+
   if (!parsed.component) {
-    // If it doesn't have a component but looks like a direct widget JSON (has "type"),
+    // If it doesn't have a component but looks like a direct widget JSON (has "type" or "children"),
     // we can wrap it automatically.
-    if ((parsed as any).type) {
+    if ((parsed as any).type || (parsed as any).children) {
       return {
         type: 'widgetUI',
         raw,

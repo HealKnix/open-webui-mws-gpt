@@ -2324,12 +2324,18 @@
       for (const widgetId of selectedWidgetIds) {
         const widget = await getWidgetById(localStorage.token, widgetId).catch(() => null);
         if (widget) {
-          widgetContexts.push(`
-WIDGET_ID: ${widget.id}
-DESCRIPTION: ${widget.description || 'No description'}
-JSON_BLUEPRINT:
-${widget.content}
-`);
+          // Extract {{data.key}} placeholders from the template to build a concise data schema
+          const dataFields = [
+            ...new Set(
+              (widget.content || '')
+                .match(/\{\{(\w+(?:\.\w+)*)\}\}/g)
+                ?.map((m: string) => m.replace(/^\{\{/, '').replace(/\}\}$/, '')) || [],
+            ),
+          ];
+          widgetContexts.push(
+            `- **${widget.id}**: ${widget.description || 'No description'}` +
+              (dataFields.length > 0 ? `\n  Data fields: ${dataFields.join(', ')}` : ''),
+          );
         }
       }
     }
@@ -2338,15 +2344,17 @@ ${widget.content}
     if (widgetContexts.length > 0) {
       widgetSystemPrompt = `
 ### AVAILABLE UI WIDGETS
-You have access to the following UI widgets. To display a widget to the user, include it in your response using the following format:
+To display a widget, output a widgetui code block with the widget ID and data:
 
 \`\`\`widgetui
-<INSERT_WIDGET_JSON_HERE>
+{
+  "widget": "<WIDGET_ID>",
+  "data": { ... }
+}
 \`\`\`
 
-Populate the {{data.key}} placeholders in the widget JSON with relevant real-time data from your context.
-
-${widgetContexts.join('\n---\n')}
+Available widgets:
+${widgetContexts.join('\n')}
 `;
     }
 

@@ -35,7 +35,7 @@
 
 {#if parsedContent && typeof parsedContent === 'object' && Object.keys(parsedContent).length > 0}
   {#if parsedContent.type === 'container' || (!parsedContent.type && parsedContent.children)}
-    <div class="space-y-4 {parsedContent.props?.class || ''}">
+    <div class="bg-background space-y-4 {parsedContent.props?.class || ''}">
       {#each parsedContent.children || [] as child}
         <svelte:self content={child} {data} {onAction} />
       {/each}
@@ -121,16 +121,6 @@
             {/each}
           </div>
         {/if}
-
-        {#if (parsedContent.actions || parsedContent.props?.actions) && (parsedContent.actions?.length > 0 || parsedContent.props?.actions?.length > 0)}
-          <div
-            class="mt-5 flex items-center justify-end gap-2 border-t border-gray-50 pt-4 dark:border-gray-800"
-          >
-            {#each parsedContent.actions || parsedContent.props.actions as action}
-              <svelte:self content={action} {data} {onAction} />
-            {/each}
-          </div>
-        {/if}
       </div>
     </div>
   {:else if parsedContent.type === 'card-grid'}
@@ -150,7 +140,14 @@
     <button
       on:click={(e) => {
         e.stopPropagation();
-        onAction({ type: 'button', props: parsedContent.props });
+        onAction({
+          type: 'button',
+          action_text: template(
+            parsedContent.props?.action_text || parsedContent.props?.label || 'Button clicked',
+            data,
+          ),
+          props: parsedContent.props,
+        });
       }}
       class="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition active:scale-[0.98] {parsedContent
         .props?.class || ''} 
