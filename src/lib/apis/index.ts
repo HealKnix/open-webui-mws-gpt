@@ -1737,7 +1737,8 @@ export interface ModelConfig {
 }
 
 export interface ModelMeta {
-  toolIds: never[];
+  toolIds?: string[];
+  toolApprovalIds?: string[];
   description?: string;
   capabilities?: object;
   profile_image_url?: string;

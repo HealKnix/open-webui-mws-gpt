@@ -1735,6 +1735,7 @@ async def chat_completion(
                     )
                     else 'default'
                 ),
+                'agent_backend': model_info_params.get('agent_backend'),
             },
         }
 

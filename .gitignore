@@ -310,3 +310,7 @@ dist
 cypress/videos
 cypress/screenshots
 .vscode/settings.json
+.claude/
+.codex/
+.github/prompts/
+.github/skills/

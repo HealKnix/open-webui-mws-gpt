@@ -27,6 +27,7 @@
   import ColonFenceBlock from './ColonFenceBlock.svelte';
   import AgentUIRenderer from '$lib/components/common/agentui/AgentUIRenderer.svelte';
   import WidgetMapper from '$lib/components/common/agentui/WidgetMapper.svelte';
+  import WidgetTemplateResolver from '$lib/components/common/agentui/WidgetTemplateResolver.svelte';
 
   export let id: string;
   export let tokens: Token[];
@@ -563,7 +564,15 @@
     />
   {:else if token.type === 'widgetUI'}
     <div class="my-2">
-      <WidgetMapper content={token.data} onAction={(payload) => onAgentAction(payload)} />
+      {#if token.widget}
+        <WidgetTemplateResolver
+          widgetId={token.widget}
+          data={token.data}
+          onAction={(payload) => onAgentAction(payload)}
+        />
+      {:else}
+        <WidgetMapper content={token.data} onAction={(payload) => onAgentAction(payload)} />
+      {/if}
     </div>
   {:else if token.type === 'space'}
     <div class="my-2" />

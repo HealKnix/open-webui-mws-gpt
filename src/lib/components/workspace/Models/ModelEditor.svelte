@@ -96,6 +96,8 @@
 
   let knowledge = [];
   let toolIds = [];
+  let toolApprovalIds = [];
+  let availableApprovalTools = [];
   let skillIds = [];
   let widgetIds = [];
 
@@ -109,6 +111,26 @@
   let actionIds = [];
   let accessGrants = [];
   let tts = { voice: '' };
+
+  // Agent backend: when set, the model bypasses the built-in tool-calling
+  // loop and is driven by an external agent framework that streams
+  // AG UI events over Socket.IO.
+  let agentBackend: string = '';
+
+  $: availableApprovalTools = ($tools ?? []).filter((tool) => toolIds.includes(tool.id));
+  $: {
+    const filteredToolApprovalIds =
+      agentBackend === 'langgraph'
+        ? toolApprovalIds.filter((toolId) => toolIds.includes(toolId))
+        : [];
+
+    if (
+      filteredToolApprovalIds.length !== toolApprovalIds.length ||
+      filteredToolApprovalIds.some((toolId, idx) => toolId !== toolApprovalIds[idx])
+    ) {
+      toolApprovalIds = filteredToolApprovalIds;
+    }
+  }
 
   const submitHandler = async () => {
     loading = true;
@@ -162,6 +184,18 @@
       if (info.meta.toolIds) {
         delete info.meta.toolIds;
       }
+    }
+
+    const nextToolApprovalIds =
+      agentBackend === 'langgraph'
+        ? toolApprovalIds.filter((toolId) => toolIds.includes(toolId))
+        : [];
+    toolApprovalIds = nextToolApprovalIds;
+
+    if (nextToolApprovalIds.length > 0) {
+      info.meta.toolApprovalIds = nextToolApprovalIds;
+    } else if (info.meta.toolApprovalIds) {
+      delete info.meta.toolApprovalIds;
     }
 
     if (skillIds.length > 0) {
@@ -230,6 +264,12 @@
           delete info.meta.tts;
         }
       }
+    }
+
+    if (agentBackend) {
+      info.params.agent_backend = agentBackend;
+    } else if (info.params?.agent_backend !== undefined) {
+      delete info.params.agent_backend;
     }
 
     info.params.system = system.trim() === '' ? null : system;
@@ -320,7 +360,10 @@
         }
       });
 
+      agentBackend = model?.params?.agent_backend ?? '';
+
       toolIds = model?.meta?.toolIds ?? [];
+      toolApprovalIds = model?.meta?.toolApprovalIds ?? [];
       skillIds = model?.meta?.skillIds ?? [];
       widgetIds = model?.meta?.widgetIds ?? [];
       filterIds = model?.meta?.filterIds ?? [];
@@ -778,11 +821,42 @@
             <Knowledge bind:selectedItems={knowledge} />
           </div>
 
+          <div class="my-4">
+            <div class="mb-1 flex w-full items-center justify-between">
+              <div class="self-center text-xs font-medium text-gray-500">
+                {$i18n.t('Agent Backend')}
+              </div>
+            </div>
+            <select
+              class="w-full rounded-lg bg-transparent px-3 py-2 text-sm outline-hidden dark:bg-gray-900"
+              bind:value={agentBackend}
+            >
+              <option value="">{$i18n.t('Built-in (default)')}</option>
+              <option value="langgraph">{$i18n.t('LangGraph (AG UI)')}</option>
+            </select>
+            <div class="mt-1 text-xs text-gray-500">
+              {$i18n.t(
+                'When set, this model bypasses the built-in tool-calling loop and is driven by an external agent that streams AG UI events.',
+              )}
+            </div>
+          </div>
+
           <hr class="border-border/70 dark:border-border/50" />
 
           <div class="my-4">
             <ToolsSelector bind:selectedToolIds={toolIds} tools={$tools ?? []} />
           </div>
+
+          {#if agentBackend === 'langgraph'}
+            <div class="my-4">
+              <ToolsSelector
+                bind:selectedToolIds={toolApprovalIds}
+                tools={availableApprovalTools}
+                title="Tools Requiring Approval"
+                helperText="Only tools selected above can require approval before execution."
+              />
+            </div>
+          {/if}
 
           <hr class="border-border/70 dark:border-border/50" />
 
