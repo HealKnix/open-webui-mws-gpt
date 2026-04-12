@@ -1,31 +1,30 @@
 <script lang="ts">
   import Checkbox from '$lib/components/common/Checkbox.svelte';
   import Tooltip from '$lib/components/common/Tooltip.svelte';
-  import { getContext, onMount } from 'svelte';
+  import { getContext } from 'svelte';
 
   export let tools = [];
-
-  let _tools = {};
-
   export let selectedToolIds = [];
+  export let title = 'Tools';
+  export let helperText = 'To select toolkits here, add them to the "Tools" workspace first.';
+
+  let _tools: Record<string, any> = {};
 
   const i18n = getContext('i18n');
 
-  onMount(() => {
-    _tools = tools.reduce((acc, tool) => {
-      acc[tool.id] = {
-        ...tool,
-        selected: selectedToolIds.includes(tool.id),
-      };
+  $: _tools = tools.reduce((acc, tool) => {
+    acc[tool.id] = {
+      ...tool,
+      selected: selectedToolIds.includes(tool.id),
+    };
 
-      return acc;
-    }, {});
-  });
+    return acc;
+  }, {});
 </script>
 
 <div>
   <div class="mb-1 flex w-full justify-between">
-    <div class=" self-center text-xs font-medium text-gray-500">{$i18n.t('Tools')}</div>
+    <div class=" self-center text-xs font-medium text-gray-500">{$i18n.t(title)}</div>
   </div>
 
   <div class="mb-1 flex flex-col">
@@ -55,6 +54,6 @@
   </div>
 
   <div class=" text-xs dark:text-gray-700">
-    {$i18n.t('To select toolkits here, add them to the "Tools" workspace first.')}
+    {$i18n.t(helperText)}
   </div>
 </div>

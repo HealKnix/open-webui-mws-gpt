@@ -44,6 +44,7 @@ class ModelMeta(BaseModel):
     """
 
     capabilities: Optional[dict] = None
+    toolApprovalIds: Optional[list[str]] = None
 
     model_config = ConfigDict(extra='allow')
 

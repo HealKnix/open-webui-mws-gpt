@@ -107,6 +107,11 @@
   import Sidebar from '../icons/Sidebar.svelte';
   import Image from '../common/Image.svelte';
   import { getBanners } from '$lib/apis/configs';
+  import {
+    formatToolApprovalMessage,
+    isToolApprovalRequestEvent,
+    toToolApprovalResponse,
+  } from '$lib/utils/agui';
 
   export let chatIdProp = '';
 
@@ -131,6 +136,8 @@
   let eventConfirmationInputPlaceholder = '';
   let eventConfirmationInputValue = '';
   let eventConfirmationInputType = '';
+  let eventConfirmationConfirmLabel = $i18n.t('Confirm');
+  let eventConfirmationCancelLabel = $i18n.t('Cancel');
   let eventCallback = null;
 
   let selectedModels = [''];
@@ -413,17 +420,98 @@
     }
   };
 
+  const resetEventConfirmationLabels = () => {
+    eventConfirmationConfirmLabel = $i18n.t('Confirm');
+    eventConfirmationCancelLabel = $i18n.t('Cancel');
+  };
+
+  const getHistoryMessage = (messageId) => {
+    if (messageId && history.messages[messageId]) {
+      return history.messages[messageId];
+    }
+
+    if (history.currentId && history.messages[history.currentId]) {
+      return history.messages[history.currentId];
+    }
+
+    return null;
+  };
+
+  const handleSocketRpcEvent = async (type, data, cb, message, chatId) => {
+    if (type === 'chat:ag_ui') {
+      await aguiEventHandler(data, message, chatId, cb);
+      return true;
+    }
+
+    if (type === 'confirmation') {
+      resetEventConfirmationLabels();
+      eventCallback = cb;
+
+      eventConfirmationInput = false;
+      showEventConfirmation = true;
+
+      eventConfirmationTitle = data.title;
+      eventConfirmationMessage = data.message;
+      eventConfirmationConfirmLabel = data?.confirmLabel ?? $i18n.t('Confirm');
+      eventConfirmationCancelLabel = data?.cancelLabel ?? $i18n.t('Cancel');
+      return true;
+    }
+
+    if (type === 'execute') {
+      eventCallback = cb;
+
+      try {
+        const asyncFunction = new Function(`return (async () => { ${data.code} })()`);
+        const result = await asyncFunction();
+
+        if (cb) {
+          cb(result);
+        }
+      } catch (error) {
+        console.error('Error executing code:', error);
+      }
+
+      return true;
+    }
+
+    if (type === 'input') {
+      resetEventConfirmationLabels();
+      eventCallback = cb;
+
+      eventConfirmationInput = true;
+      showEventConfirmation = true;
+
+      eventConfirmationTitle = data.title;
+      eventConfirmationMessage = data.message;
+      eventConfirmationInputPlaceholder = data.placeholder;
+      eventConfirmationInputValue = data?.value ?? '';
+      eventConfirmationInputType = data?.type ?? '';
+      eventConfirmationConfirmLabel = data?.confirmLabel ?? $i18n.t('Confirm');
+      eventConfirmationCancelLabel = data?.cancelLabel ?? $i18n.t('Cancel');
+      return true;
+    }
+
+    return false;
+  };
+
   const chatEventHandler = async (event, cb) => {
     console.log(event);
 
     if (event.chat_id === $chatId) {
       await tick();
-      let message = history.messages[event.message_id];
+      const type = event?.data?.type ?? null;
+      const data = event?.data?.data ?? null;
+      let message = getHistoryMessage(event.message_id);
+
+      if (await handleSocketRpcEvent(type, data, cb, message, event.chat_id)) {
+        if (type === 'chat:ag_ui' && message) {
+          history.messages[message.id] = message;
+        }
+
+        return;
+      }
 
       if (message) {
-        const type = event?.data?.type ?? null;
-        const data = event?.data?.data ?? null;
-
         if (type === 'status') {
           if (message?.statusHistory) {
             message.statusHistory.push(data);
@@ -517,39 +605,6 @@
           } else {
             toast.info(toastContent);
           }
-        } else if (type === 'confirmation') {
-          eventCallback = cb;
-
-          eventConfirmationInput = false;
-          showEventConfirmation = true;
-
-          eventConfirmationTitle = data.title;
-          eventConfirmationMessage = data.message;
-        } else if (type === 'execute') {
-          eventCallback = cb;
-
-          try {
-            // Use Function constructor to evaluate code in a safer way
-            const asyncFunction = new Function(`return (async () => { ${data.code} })()`);
-            const result = await asyncFunction(); // Await the result of the async function
-
-            if (cb) {
-              cb(result);
-            }
-          } catch (error) {
-            console.error('Error executing code:', error);
-          }
-        } else if (type === 'input') {
-          eventCallback = cb;
-
-          eventConfirmationInput = true;
-          showEventConfirmation = true;
-
-          eventConfirmationTitle = data.title;
-          eventConfirmationMessage = data.message;
-          eventConfirmationInputPlaceholder = data.placeholder;
-          eventConfirmationInputValue = data?.value ?? '';
-          eventConfirmationInputType = data?.type ?? '';
         } else if (type.startsWith('terminal:')) {
           terminalEventHandler(type, data);
         } else {
@@ -610,6 +665,7 @@
           submitPrompt(event.data.text);
         } else {
           // Cross-origin: ask user to confirm before submitting
+          resetEventConfirmationLabels();
           eventConfirmationInput = false;
           eventConfirmationTitle = $i18n.t('Confirm Prompt from Embed');
           eventConfirmationMessage = event.data.text;
@@ -1582,6 +1638,134 @@
       await initChatHandler(history);
     } else {
       await saveChatHandler($chatId, history);
+    }
+  };
+
+  // AG UI event handler: consumes events emitted by an external agent
+  // backend (e.g. LangGraph) when a model has `params.agent_backend` set.
+  // Event shape follows https://docs.ag-ui.com — camelCase field names.
+  const aguiEventHandler = async (data, message, chatId, cb = null) => {
+    if (!data || !data.type) {
+      if (cb) cb(null);
+      return;
+    }
+
+    const evType = data.type;
+
+    if (evType === 'CUSTOM' || evType === 'CustomEvent') {
+      if (isToolApprovalRequestEvent(data)) {
+        resetEventConfirmationLabels();
+        eventConfirmationInput = false;
+        eventConfirmationTitle = $i18n.t('Approve Tool Execution');
+        eventConfirmationMessage = formatToolApprovalMessage(data.value ?? {});
+        eventConfirmationCancelLabel = $i18n.t('Reject');
+        eventConfirmationConfirmLabel = $i18n.t('Approve');
+        eventCallback = (result) => {
+          if (cb) {
+            cb(toToolApprovalResponse(result));
+          }
+        };
+        showEventConfirmation = true;
+      } else if (cb) {
+        cb(null);
+      }
+
+      return;
+    }
+
+    if (!message) {
+      console.warn('AG UI event ignored because no matching message was found', {
+        type: evType,
+        chatId,
+        event: data,
+      });
+      return;
+    }
+
+    if (!message.statusHistory) message.statusHistory = [];
+    if (!message.toolCalls) message.toolCalls = {};
+
+    if (evType === 'RUN_STARTED' || evType === 'RunStartedEvent') {
+      message.done = false;
+      message.agentRunId = data.runId ?? null;
+      message.statusHistory.push({
+        action: 'agent_run',
+        description: $i18n.t('Agent running…'),
+        done: false,
+      });
+    } else if (evType === 'TEXT_MESSAGE_START' || evType === 'TextMessageStartEvent') {
+      // no-op: content accumulator uses message.content directly
+    } else if (evType === 'TEXT_MESSAGE_CONTENT' || evType === 'TextMessageContentEvent') {
+      const delta = data.delta ?? '';
+      if (delta) {
+        message.content = (message.content ?? '') + delta;
+      }
+    } else if (evType === 'TEXT_MESSAGE_END' || evType === 'TextMessageEndEvent') {
+      // no-op
+    } else if (evType === 'TOOL_CALL_START' || evType === 'ToolCallStartEvent') {
+      const tcId = data.toolCallId;
+      const name = data.toolCallName ?? 'tool';
+      message.toolCalls[tcId] = { name, args: '', done: false };
+      message.statusHistory.push({
+        action: 'tool_call',
+        description: name,
+        tool_call_id: tcId,
+        done: false,
+      });
+    } else if (evType === 'TOOL_CALL_ARGS' || evType === 'ToolCallArgsEvent') {
+      const tcId = data.toolCallId;
+      if (tcId && message.toolCalls[tcId]) {
+        message.toolCalls[tcId].args += data.delta ?? '';
+      }
+    } else if (evType === 'TOOL_CALL_END' || evType === 'ToolCallEndEvent') {
+      const tcId = data.toolCallId;
+      if (tcId && message.toolCalls[tcId]) {
+        message.toolCalls[tcId].done = true;
+      }
+      const entry = message.statusHistory
+        .slice()
+        .reverse()
+        .find((s) => s.tool_call_id === tcId);
+      if (entry) entry.done = true;
+    } else if (evType === 'STATE_SNAPSHOT' || evType === 'StateSnapshotEvent') {
+      message.agentState = data.snapshot ?? data.state ?? null;
+    } else if (evType === 'STATE_DELTA' || evType === 'StateDeltaEvent') {
+      try {
+        const { applyPatch } = await import('fast-json-patch');
+        message.agentState = applyPatch(
+          message.agentState ?? {},
+          data.delta ?? [],
+          false,
+          false,
+        ).newDocument;
+      } catch (e) {
+        console.warn('AG UI STATE_DELTA apply failed', e);
+      }
+    } else if (evType === 'RUN_FINISHED' || evType === 'RunFinishedEvent') {
+      const runEntry = message.statusHistory
+        .slice()
+        .reverse()
+        .find((s) => s.action === 'agent_run');
+      if (runEntry) runEntry.done = true;
+      message.done = true;
+    } else if (evType === 'RUN_ERROR' || evType === 'RunErrorEvent') {
+      message.error = { content: data.message ?? 'Agent error' };
+      message.done = true;
+    }
+
+    history.messages[message.id] = message;
+    await tick();
+
+    // Persist chat and run post-completion tasks (title gen, tags, filters)
+    // when the agent run finishes, mirroring what chatCompletionEventHandler does.
+    if (message.done) {
+      chatCompletedHandler(
+        chatId,
+        message.model,
+        message.id,
+        createMessagesList(history, message.id),
+      );
+      await processNextInQueue(chatId);
     }
   };
 
@@ -2695,19 +2879,25 @@
   bind:show={showEventConfirmation}
   title={eventConfirmationTitle}
   message={eventConfirmationMessage}
+  confirmLabel={eventConfirmationConfirmLabel}
+  cancelLabel={eventConfirmationCancelLabel}
   input={eventConfirmationInput}
   inputPlaceholder={eventConfirmationInputPlaceholder}
   inputValue={eventConfirmationInputValue}
   inputType={eventConfirmationInputType}
   on:confirm={(e) => {
-    if (e.detail) {
-      eventCallback(e.detail);
-    } else {
-      eventCallback(true);
+    if (eventCallback) {
+      if (e.detail) {
+        eventCallback(e.detail);
+      } else {
+        eventCallback(true);
+      }
     }
   }}
   on:cancel={() => {
-    eventCallback(false);
+    if (eventCallback) {
+      eventCallback(false);
+    }
   }}
 />
 
