@@ -10,6 +10,7 @@
   import { mentionExtension } from '$lib/utils/marked/mention-extension';
   import colonFenceExtension from '$lib/utils/marked/colon-fence-extension';
   import agentUIExtension from '$lib/utils/marked/agentui-extension';
+  import widgetUIExtension from '$lib/utils/marked/widgetui-extension';
 
   import MarkdownTokens from './Markdown/MarkdownTokens.svelte';
   import footnoteExtension from '$lib/utils/marked/footnote-extension';
@@ -53,6 +54,7 @@
   marked.use(footnoteExtension(options));
   marked.use(colonFenceExtension(options));
   marked.use(agentUIExtension(options));
+  marked.use(widgetUIExtension(options));
   marked.use(disableSingleTilde);
   marked.use({
     extensions: [

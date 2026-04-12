@@ -30,25 +30,19 @@
 
   <div class="mb-1 flex flex-col">
     {#if tools.length > 0}
-      <div class=" flex flex-wrap items-center">
-        {#each Object.keys(_tools) as tool, toolIdx}
-          <div class=" mr-3 flex items-center gap-2">
-            <div class="flex items-center self-center">
-              <Checkbox
-                state={_tools[tool].selected ? 'checked' : 'unchecked'}
-                on:change={(e) => {
-                  _tools[tool].selected = e.detail === 'checked';
-                  selectedToolIds = Object.keys(_tools).filter((t) => _tools[t].selected);
-                }}
-              />
-            </div>
-
-            <Tooltip content={_tools[tool]?.meta?.description ?? _tools[tool].id}>
-              <div class=" w-full py-0.5 text-sm font-medium capitalize">
-                {_tools[tool].name}
-              </div>
-            </Tooltip>
-          </div>
+      <div class="flex flex-wrap items-center gap-2">
+        {#each Object.keys(_tools) as tool}
+          <Checkbox
+            state={_tools[tool].selected ? 'checked' : 'unchecked'}
+            on:change={(e) => {
+              _tools[tool].selected = e.detail === 'checked';
+              selectedToolIds = Object.keys(_tools).filter((t) => _tools[t].selected);
+            }}
+            tooltip={{
+              label: _tools[tool].name,
+              description: _tools[tool]?.meta?.description ?? _tools[tool].id,
+            }}
+          />
         {/each}
       </div>
     {/if}

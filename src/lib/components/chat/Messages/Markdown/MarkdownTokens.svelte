@@ -26,6 +26,7 @@
   import Clipboard from '$lib/components/icons/Clipboard.svelte';
   import ColonFenceBlock from './ColonFenceBlock.svelte';
   import AgentUIRenderer from '$lib/components/common/agentui/AgentUIRenderer.svelte';
+  import WidgetMapper from '$lib/components/common/agentui/WidgetMapper.svelte';
 
   export let id: string;
   export let tokens: Token[];
@@ -560,6 +561,10 @@
       data={token.data}
       onAction={(payload) => onAgentAction(payload)}
     />
+  {:else if token.type === 'widgetUI'}
+    <div class="my-2">
+      <WidgetMapper content={token.data} onAction={(payload) => onAgentAction(payload)} />
+    </div>
   {:else if token.type === 'space'}
     <div class="my-2" />
   {:else}

@@ -47,6 +47,7 @@
     showFileNavPath,
     showFileNavDir,
     chatRequestQueues,
+    widgets as widgetStore,
   } from '$lib/stores';
 
   import { WEBUI_API_BASE_URL } from '$lib/constants';
@@ -92,6 +93,7 @@
   import { createOpenAITextStream } from '$lib/apis/streaming';
   import { getFunctions } from '$lib/apis/functions';
   import { updateFolderById } from '$lib/apis/folders';
+  import { getWidgetById } from '$lib/apis/widgets';
 
   import Banner from '../common/Banner.svelte';
   import MessageInput from '$lib/components/chat/MessageInput.svelte';
@@ -144,6 +146,7 @@
 
   let selectedToolIds = [];
   let selectedFilterIds = [];
+  let selectedWidgetIds = [];
   let pendingOAuthTools = [];
 
   let imageGenerationEnabled = false;
@@ -185,6 +188,7 @@
     files = [];
     selectedToolIds = [];
     selectedFilterIds = [];
+    selectedWidgetIds = [];
     webSearchEnabled = false;
     imageGenerationEnabled = false;
 
@@ -215,6 +219,7 @@
             files = input.files;
             selectedToolIds = input.selectedToolIds;
             selectedFilterIds = input.selectedFilterIds;
+            selectedWidgetIds = input.selectedWidgetIds ?? [];
             webSearchEnabled = input.webSearchEnabled;
             imageGenerationEnabled = input.imageGenerationEnabled;
             codeInterpreterEnabled = input.codeInterpreterEnabled;
@@ -275,6 +280,7 @@
   const resetInput = () => {
     selectedToolIds = [];
     selectedFilterIds = [];
+    selectedWidgetIds = [];
     pendingOAuthTools = [];
     webSearchEnabled = false;
     imageGenerationEnabled = false;
@@ -327,6 +333,11 @@
         selectedToolIds = $settings.tools;
       } else {
         selectedToolIds = selectedToolIds.filter((id) => !id.startsWith('direct_server:'));
+      }
+
+      // Set Default Widgets
+      if (model?.info?.meta?.widgetIds) {
+        selectedWidgetIds = model.info.meta.widgetIds;
       }
 
       // Set Default Filters (Toggleable only)
@@ -2124,11 +2135,42 @@
       params?.stream_response ??
       true;
 
+    const widgetContexts = [];
+    if (selectedWidgetIds.length > 0) {
+      for (const widgetId of selectedWidgetIds) {
+        const widget = await getWidgetById(localStorage.token, widgetId).catch(() => null);
+        if (widget) {
+          widgetContexts.push(`
+WIDGET_ID: ${widget.id}
+DESCRIPTION: ${widget.description || 'No description'}
+JSON_BLUEPRINT:
+${widget.content}
+`);
+        }
+      }
+    }
+
+    let widgetSystemPrompt = '';
+    if (widgetContexts.length > 0) {
+      widgetSystemPrompt = `
+### AVAILABLE UI WIDGETS
+You have access to the following UI widgets. To display a widget to the user, include it in your response using the following format:
+
+\`\`\`widgetui
+<INSERT_WIDGET_JSON_HERE>
+\`\`\`
+
+Populate the {{data.key}} placeholders in the widget JSON with relevant real-time data from your context.
+
+${widgetContexts.join('\n---\n')}
+`;
+    }
+
     let messages = [
-      params?.system || $settings.system
+      params?.system || $settings.system || widgetSystemPrompt
         ? {
             role: 'system',
-            content: `${params?.system ?? $settings?.system ?? ''}`,
+            content: `${params?.system ?? $settings?.system ?? ''}${widgetSystemPrompt}`,
           }
         : undefined,
       ..._messages.map((message) => ({

@@ -32,7 +32,7 @@
 
   <div class="mb-1 flex flex-col">
     {#if Object.keys(_skills).length > 0}
-      <div class=" flex flex-wrap items-center">
+      <div class="flex flex-wrap items-center gap-2">
         {#each Object.keys(_skills) as skill, skillIdx}
           <Checkbox
             state={_skills[skill].selected ? 'checked' : 'unchecked'}

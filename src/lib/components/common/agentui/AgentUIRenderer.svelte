@@ -18,7 +18,12 @@
 {#if component === 'hotel-cards'}
   <HotelCards
     cards={Array.isArray(data) ? data : []}
-    onSelect={(card) => onAction({ component: 'hotel-cards', action: 'select', item: card })}
+    onSelect={(card) =>
+      onAction({
+        component: 'hotel-cards',
+        action: 'select',
+        item: card,
+      })}
   />
 {:else}
   <!-- Unknown agent-UI component — render a subtle fallback -->

@@ -14,6 +14,7 @@
   import Knowledge from '$lib/components/workspace/Models/Knowledge.svelte';
   import ToolsSelector from '$lib/components/workspace/Models/ToolsSelector.svelte';
   import SkillsSelector from '$lib/components/workspace/Models/SkillsSelector.svelte';
+  import WidgetsSelector from '$lib/components/workspace/Models/WidgetsSelector.svelte';
   import FiltersSelector from '$lib/components/workspace/Models/FiltersSelector.svelte';
   import ActionsSelector from '$lib/components/workspace/Models/ActionsSelector.svelte';
   import Capabilities from '$lib/components/workspace/Models/Capabilities.svelte';
@@ -96,6 +97,7 @@
   let knowledge = [];
   let toolIds = [];
   let skillIds = [];
+  let widgetIds = [];
 
   let filterIds = [];
   let defaultFilterIds = [];
@@ -167,6 +169,14 @@
     } else {
       if (info.meta.skillIds) {
         delete info.meta.skillIds;
+      }
+    }
+
+    if (widgetIds.length > 0) {
+      info.meta.widgetIds = widgetIds;
+    } else {
+      if (info.meta.widgetIds) {
+        delete info.meta.widgetIds;
       }
     }
 
@@ -312,6 +322,7 @@
 
       toolIds = model?.meta?.toolIds ?? [];
       skillIds = model?.meta?.skillIds ?? [];
+      widgetIds = model?.meta?.widgetIds ?? [];
       filterIds = model?.meta?.filterIds ?? [];
       defaultFilterIds = model?.meta?.defaultFilterIds ?? [];
       actionIds = model?.meta?.actionIds ?? [];
@@ -777,6 +788,12 @@
 
           <div class="my-4">
             <SkillsSelector bind:selectedSkillIds={skillIds} />
+          </div>
+
+          <hr class="border-border/70 dark:border-border/50" />
+
+          <div class="my-4">
+            <WidgetsSelector bind:selectedWidgetIds={widgetIds} />
           </div>
 
           {#if ($functions ?? []).filter((func) => func.type === 'filter').length > 0 || ($functions ?? []).filter((func) => func.type === 'action').length > 0}
