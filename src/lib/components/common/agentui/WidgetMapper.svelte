@@ -1,5 +1,7 @@
 <script lang="ts">
+  import { cn } from '$lib/utils';
   import { getContext } from 'svelte';
+  import Button from '../Button.svelte';
   const i18n = getContext('i18n');
 
   export let content: any = {};
@@ -34,33 +36,33 @@
 </script>
 
 {#if parsedContent && typeof parsedContent === 'object' && Object.keys(parsedContent).length > 0}
+  <!-- Container -->
   {#if parsedContent.type === 'container' || (!parsedContent.type && parsedContent.children)}
-    <div class="bg-background space-y-4 {parsedContent.props?.class || ''}">
+    <div class="space-y-4">
       {#each parsedContent.children || [] as child}
         <svelte:self content={child} {data} {onAction} />
       {/each}
     </div>
+    <!-- Flex -->
   {:else if parsedContent.type === 'flex'}
-    <div class="flex flex-wrap gap-4 {parsedContent.props?.class || ''}">
+    <div class="flex flex-wrap gap-4">
       {#each parsedContent.children || [] as child}
         <svelte:self content={child} {data} {onAction} />
       {/each}
     </div>
+    <!-- Card -->
   {:else if parsedContent.type === 'card'}
     <div
-      class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xs transition hover:shadow-sm dark:border-gray-800 dark:bg-gray-900 {parsedContent
-        .props?.class || ''}"
+      class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xs transition hover:shadow-sm dark:border-gray-800 dark:bg-gray-900"
     >
       {#if parsedContent.props?.image}
         <div class="relative h-48 w-full overflow-hidden bg-gray-100 dark:bg-gray-800">
           <img src={parsedContent.props.image} alt="Cover" class="h-full w-full object-cover" />
           {#if parsedContent.props?.badge}
-            <div class="absolute top-3 left-3">
-              <svelte:self
-                content={{ type: 'badge', props: parsedContent.props.badge }}
-                {data}
-                {onAction}
-              />
+            <div
+              class="absolute top-3 left-3 inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold tracking-wider text-blue-700 uppercase ring-1 ring-blue-700/10 ring-inset dark:bg-blue-400/10 dark:text-blue-400 dark:ring-blue-400/20"
+            >
+              {template(parsedContent.props.badge, data)}
             </div>
           {/if}
           {#if parsedContent.props?.price}
@@ -103,7 +105,7 @@
                   clip-rule="evenodd"
                 />
               </svg>
-              {parsedContent.props.rating}
+              {template(parsedContent.props.rating, data)}
             </div>
           {/if}
         </div>
@@ -123,11 +125,9 @@
         {/if}
       </div>
     </div>
+    <!-- Card Grid -->
   {:else if parsedContent.type === 'card-grid'}
-    <div
-      class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 {parsedContent.props?.class ||
-        ''}"
-    >
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {#if parsedContent.children}
         {#each parsedContent.children as child}
           <div class="h-full">
@@ -136,8 +136,9 @@
         {/each}
       {/if}
     </div>
+    <!-- Button -->
   {:else if parsedContent.type === 'button'}
-    <button
+    <Button
       on:click={(e) => {
         e.stopPropagation();
         onAction({
@@ -149,65 +150,29 @@
           props: parsedContent.props,
         });
       }}
-      class="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition active:scale-[0.98] {parsedContent
-        .props?.class || ''} 
-      {(parsedContent.props?.variant || 'primary') === 'primary'
-        ? 'bg-blue-600 text-white shadow-xs hover:bg-blue-700'
-        : (parsedContent.props?.variant || 'primary') === 'secondary'
-          ? 'bg-gray-100 text-gray-900 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700'
-          : 'border border-gray-200 bg-transparent text-gray-600 hover:bg-gray-50'}"
+      color={parsedContent.props?.color || 'primary'}
+      variant={parsedContent.props?.variant || 'solid'}
     >
-      {#if parsedContent.props?.icon}
-        <div class="size-4 opacity-80">
-          {#if parsedContent.props.icon === 'calendar-check'}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="2"
-              stroke="currentColor"
-              ><path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5m-9-6h.008v.008H12v-.008ZM12 15h.008v.008H12V15Zm0 2.25h.008v.008H12v-.008ZM9.75 15h.008v.008H9.75V15Zm0 2.25h.008v.008H9.75v-.008ZM7.5 15h.008v.008H7.5V15Zm0 2.25h.008v.008H7.5v-.008Zm6.75-4.5h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V15Zm0 2.25h.008v.008h-.008v-.008Zm2.25-4.5h.008v.008H16.5v-.008Zm0 2.25h.008v.008H16.5V15Z"
-              /></svg
-            >
-          {:else if parsedContent.props.icon === 'info'}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="2"
-              stroke="currentColor"
-              ><path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"
-              /></svg
-            >
-          {:else}
-            <span class="text-[10px]">{parsedContent.props.icon}</span>
-          {/if}
-        </div>
-      {/if}
       {template(parsedContent.props?.label || parsedContent.props?.value || 'Button', data)}
-    </button>
+    </Button>
+    <!-- Text -->
   {:else if parsedContent.type === 'text'}
-    <div class="text-sm text-gray-600 dark:text-gray-300 {parsedContent.props?.class || ''}">
+    <div class="text-sm text-gray-600 dark:text-gray-300">
       {template(parsedContent.props?.value || parsedContent.props?.text || '', data)}
     </div>
+    <!-- Badge -->
   {:else if parsedContent.type === 'badge'}
     <span
-      class="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold tracking-wider text-blue-700 uppercase ring-1 ring-blue-700/10 ring-inset dark:bg-blue-400/10 dark:text-blue-400 dark:ring-blue-400/20 {parsedContent
-        .props?.class || ''}"
+      class="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold tracking-wider text-blue-700 uppercase ring-1 ring-blue-700/10 ring-inset dark:bg-blue-400/10 dark:text-blue-400 dark:ring-blue-400/20"
     >
       {template(
         parsedContent.props?.value || parsedContent.props?.label || parsedContent.props?.text || '',
         data,
       )}
     </span>
+    <!-- Divider -->
   {:else if parsedContent.type === 'divider'}
-    <hr class="border-gray-100 dark:border-gray-800 {parsedContent.props?.class || ''}" />
+    <hr class="border-gray-100 dark:border-gray-800" />
   {/if}
 {:else}
   <div

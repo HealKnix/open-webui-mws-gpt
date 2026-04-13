@@ -169,10 +169,7 @@
       </div>
     </nav>
 
-    <div
-      class="  max-h-full flex-1 overflow-y-auto px-3 pb-1 md:px-[18px]"
-      id="workspace-container"
-    >
+    <div class="max-h-full flex-1 overflow-y-auto px-3 pb-1 md:px-[18px]" id="workspace-container">
       <slot />
     </div>
   </div>

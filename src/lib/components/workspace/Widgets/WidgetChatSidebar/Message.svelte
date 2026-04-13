@@ -6,6 +6,7 @@
   import Markdown from '$lib/components/chat/Messages/Markdown.svelte';
   import Tooltip from '$lib/components/common/Tooltip.svelte';
   import CheckCircle from '$lib/components/icons/CheckCircle.svelte';
+  import { cn } from '$lib/utils';
 
   export let message;
   export let idx;
@@ -19,7 +20,7 @@
 </script>
 
 <div class="group flex flex-col gap-1.5">
-  <div class="flex items-center justify-between">
+  <div class={'flex items-center justify-between'}>
     <div class="rounded-lg text-left text-[10px] font-bold tracking-widest text-gray-400 uppercase">
       {$i18n.t(message.role === 'user' ? 'You' : 'Assistant')}
     </div>
@@ -51,9 +52,10 @@
       <Skeleton size="sm" />
     {:else}
       <div
-        class="markdown-prose-sm text-sm {message.role === 'assistant'
-          ? 'rounded-2xl border border-gray-100/50 bg-gray-50/50 p-3 dark:border-gray-800/50 dark:bg-gray-800/30'
-          : ''}"
+        class={cn(
+          'markdown-prose-sm text-sm',
+          message.role === 'assistant' && 'border-border bg-background rounded-2xl border p-3',
+        )}
       >
         <Markdown id={`widget-message-${idx}`} content={displayContent} />
 
