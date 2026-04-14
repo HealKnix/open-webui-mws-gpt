@@ -1,48 +1,60 @@
 <script lang="ts">
-	import { getContext } from 'svelte';
+  import { getContext } from 'svelte';
+  import RichSelector from '$lib/components/common/RichSelector.svelte';
 
-	import ChevronDown from '$lib/components/icons/ChevronDown.svelte';
-	import Check from '$lib/components/icons/Check.svelte';
-	import Select from '$lib/components/common/Select.svelte';
+  import Grid from '$lib/components/icons/Grid.svelte';
+  import CheckCircle from '$lib/components/icons/CheckCircle.svelte';
+  import Minus from '$lib/components/icons/Minus.svelte';
+  import Eye from '$lib/components/icons/Eye.svelte';
+  import EyeSlash from '$lib/components/icons/EyeSlash.svelte';
+  import GlobeAlt from '$lib/components/icons/GlobeAlt.svelte';
+  import LockClosed from '$lib/components/icons/LockClosed.svelte';
 
-	const i18n = getContext('i18n');
+  const i18n = getContext('i18n');
 
-	export let value = '';
-	export let placeholder = $i18n.t('Select view');
-	export let onChange: (value: string) => void = () => {};
+  export let value = '';
+  export let placeholder = $i18n.t('Select view');
+  export let onChange: (value: string) => void = () => {};
 
-	const items = [
-		{ value: '', label: $i18n.t('All') },
-		{ value: 'enabled', label: $i18n.t('Enabled') },
-		{ value: 'disabled', label: $i18n.t('Disabled') },
-		{ value: 'visible', label: $i18n.t('Visible') },
-		{ value: 'hidden', label: $i18n.t('Hidden') },
-		{ value: 'public', label: $i18n.t('Public') },
-		{ value: 'private', label: $i18n.t('Private') }
-	];
+  const items = [
+    { value: '', label: $i18n.t('All'), icon: Grid, description: $i18n.t('Show all models') },
+    {
+      value: 'enabled',
+      label: $i18n.t('Enabled'),
+      icon: CheckCircle,
+      description: $i18n.t('Show only active models'),
+    },
+    {
+      value: 'disabled',
+      label: $i18n.t('Disabled'),
+      icon: Minus,
+      description: $i18n.t('Show only inactive models'),
+    },
+    {
+      value: 'visible',
+      label: $i18n.t('Visible'),
+      icon: Eye,
+      description: $i18n.t('Show only visible models'),
+    },
+    {
+      value: 'hidden',
+      label: $i18n.t('Hidden'),
+      icon: EyeSlash,
+      description: $i18n.t('Show only hidden models'),
+    },
+    {
+      value: 'public',
+      label: $i18n.t('Public'),
+      icon: GlobeAlt,
+      description: $i18n.t('Show only public models'),
+    },
+    {
+      value: 'private',
+      label: $i18n.t('Private'),
+      icon: LockClosed,
+      description: $i18n.t('Show only private models'),
+    },
+  ];
 </script>
 
-<Select
-	bind:value
-	{items}
-	{placeholder}
-	triggerClass="relative w-full flex items-center gap-0.5 px-2.5 py-1.5 bg-gray-50 dark:bg-gray-850 rounded-xl"
-	labelClass="inline-flex h-input px-0.5 w-full outline-hidden bg-transparent truncate placeholder-gray-400 focus:outline-hidden"
-	onChange={() => onChange(value)}
->
-	<svelte:fragment slot="trigger" let:selectedLabel>
-		<span
-			class="inline-flex h-input px-0.5 w-full outline-hidden bg-transparent truncate placeholder-gray-400 focus:outline-hidden"
-		>
-			{selectedLabel}
-		</span>
-		<ChevronDown className="size-3.5" strokeWidth="2.5" />
-	</svelte:fragment>
-
-	<svelte:fragment slot="item" let:item let:selected>
-		{item.label}
-		<div class="ml-auto {selected ? '' : 'invisible'}">
-			<Check />
-		</div>
-	</svelte:fragment>
-</Select>
+<RichSelector bind:value {items} {placeholder} {onChange} triggerClass="px-2.5 py-1.5" />

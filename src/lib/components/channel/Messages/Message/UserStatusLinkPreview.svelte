@@ -1,38 +1,38 @@
 <script lang="ts">
-	import { getContext, onMount } from 'svelte';
-	import { LinkPreview } from 'bits-ui';
+  import { getContext, onMount } from 'svelte';
+  import { LinkPreview } from 'bits-ui';
 
-	const i18n = getContext('i18n');
-	import { getUserInfoById } from '$lib/apis/users';
+  const i18n = getContext('i18n');
+  import { getUserInfoById } from '$lib/apis/users';
 
-	import UserStatus from './UserStatus.svelte';
+  import UserStatus from './UserStatus.svelte';
 
-	export let id = null;
+  export let id = null;
 
-	export let side = 'top';
-	export let align = 'start';
-	export let sideOffset = 6;
+  export let side = 'top';
+  export let align = 'start';
+  export let sideOffset = 6;
 
-	let user = null;
-	onMount(async () => {
-		if (id) {
-			user = await getUserInfoById(localStorage.token, id).catch((error) => {
-				console.error('Error fetching user by ID:', error);
-				return null;
-			});
-		}
-	});
+  let user = null;
+  onMount(async () => {
+    if (id) {
+      user = await getUserInfoById(localStorage.token, id).catch((error) => {
+        console.error('Error fetching user by ID:', error);
+        return null;
+      });
+    }
+  });
 </script>
 
 {#if user}
-	<LinkPreview.Portal>
-		<LinkPreview.Content
-			class="w-[260px] rounded-2xl border border-gray-100  dark:border-gray-800 z-[9999] bg-white dark:bg-gray-850 dark:text-white shadow-lg transition"
-			{side}
-			{align}
-			{sideOffset}
-		>
-			<UserStatus {user} />
-		</LinkPreview.Content>
-	</LinkPreview.Portal>
+  <LinkPreview.Portal>
+    <LinkPreview.Content
+      class="dark:bg-gray-850 z-[9999] w-[260px] rounded-2xl  border border-gray-100 bg-white shadow-lg transition dark:border-gray-800 dark:text-white"
+      {side}
+      {align}
+      {sideOffset}
+    >
+      <UserStatus {user} />
+    </LinkPreview.Content>
+  </LinkPreview.Portal>
 {/if}

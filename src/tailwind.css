@@ -1,21 +1,10 @@
 @import 'tailwindcss';
+@import 'tw-animate-css';
 
 @config '../tailwind.config.js';
 
-@theme {
-	--color-gray-50: oklch(0.98 0 0);
-	--color-gray-100: oklch(0.94 0 0);
-	--color-gray-200: oklch(0.92 0 0);
-	--color-gray-300: oklch(0.85 0 0);
-	--color-gray-400: oklch(0.77 0 0);
-	--color-gray-500: oklch(0.69 0 0);
-	--color-gray-600: oklch(0.51 0 0);
-	--color-gray-700: oklch(0.42 0 0);
-	--color-gray-800: oklch(0.32 0 0);
-	--color-gray-850: oklch(0.27 0 0);
-	--color-gray-900: oklch(0.2 0 0);
-	--color-gray-950: oklch(0.16 0 0);
-}
+@custom-variant dark (&:is(.dark *));
+@custom-variant hover (&:hover);
 
 /*
   The default border color has changed to `currentColor` in Tailwind CSS v4,
@@ -26,68 +15,204 @@
   color utility to any element that depends on these defaults.
 */
 @layer base {
-	*,
-	::after,
-	::before,
-	::backdrop,
-	::file-selector-button {
-		border-color: var(--color-gray-200, currentColor);
-	}
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+
+  html,
+  pre {
+    font-family:
+      -apple-system, BlinkMacSystemFont, 'Inter', 'Vazirmatn', ui-sans-serif, system-ui, 'Segoe UI',
+      Roboto, Ubuntu, Cantarell, 'Noto Sans', sans-serif, 'Helvetica Neue', Arial,
+      'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  }
+
+  pre {
+    white-space: pre-wrap;
+  }
+
+  button {
+    @apply cursor-pointer;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: theme(--color-gray-400);
+  }
+
+  input[type='checkbox'] {
+    @apply size-3.5 cursor-pointer appearance-none self-center rounded border border-gray-300 bg-white align-middle transition focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800;
+    /* Center the custom mark */
+    display: inline-block;
+    position: relative;
+  }
+
+  input[type='checkbox']:checked {
+    @apply border-blue-600 bg-blue-600;
+  }
+
+  input[type='checkbox']:after {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 100%;
+    /* Hide by default */
+    opacity: 0;
+    transition: opacity 0.2s;
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    /* SVG checkmark as background image */
+    background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M4 8l3 3l5-5"/></svg>')
+      center/80% no-repeat;
+  }
+
+  input[type='checkbox']:checked:after {
+    opacity: 1;
+  }
+
+  :root {
+    --background: oklch(100% 0.00011 271.152);
+    --foreground: oklch(24.167% 0.00729 248.22);
+
+    --card: oklch(96.453% 0.00555 274.897);
+    --card-hover: oklch(93.453% 0.00555 274.897);
+    --card-foreground: oklch(24.167% 0.00729 248.22);
+
+    --primary: oklch(63.054% 0.25494 23.793);
+    --primary-hover: oklch(59.51% 0.24 23.758);
+    --primary-foreground: oklch(0.977 0.014 308.299);
+
+    --secondary: oklch(0.967 0.001 286.375);
+    --secondary-hover: oklch(0.94 0.001 286.375);
+    --secondary-foreground: oklch(0.21 0.006 285.885);
+
+    --accent-active: oklch(60.689% 0.21549 257.016);
+    --accent-success: oklch(74.353% 0.20574 147.762);
+    --accent-warning: oklch(83.83% 0.15946 84.48);
+    --accent-negative: oklch(66.952% 0.2071 37.102);
+
+    --border: oklch(0.92 0.004 286.32);
+    --input: oklch(0.92 0.004 286.32);
+    --ring: oklch(0.705 0.015 286.067);
+
+    --chart-1: oklch(0.827 0.119 306.383);
+    --chart-2: oklch(0.627 0.265 303.9);
+    --chart-3: oklch(0.558 0.288 302.321);
+    --chart-4: oklch(0.496 0.265 301.924);
+    --chart-5: oklch(0.438 0.218 303.724);
+
+    --sidebar: oklch(0.985 0 0);
+    --sidebar-foreground: oklch(0.141 0.005 285.823);
+    --sidebar-primary: oklch(0.558 0.288 302.321);
+    --sidebar-primary-foreground: oklch(0.977 0.014 308.299);
+    --sidebar-accent: oklch(0.967 0.001 286.375);
+    --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
+    --sidebar-border: oklch(0.92 0.004 286.32);
+    --sidebar-ring: oklch(0.705 0.015 286.067);
+  }
+  .dark {
+    --background: oklch(20.019% 0.00002 271.152);
+    --foreground: oklch(94.007% 0.00011 271.152);
+
+    --card: oklch(15.907% 0.00002 271.152);
+    --card-hover: oklch(24.354% 0.00002 271.152);
+    --card-foreground: oklch(94.007% 0.00011 271.152);
+
+    --primary: oklch(63.054% 0.25494 23.793);
+    --primary-foreground: oklch(0.977 0.014 308.299);
+
+    --secondary: #262626;
+    --secondary-hover: #3a3a3a;
+    --secondary-foreground: #e4e4e4;
+
+    --accent-active: oklch(60.689% 0.21549 257.016);
+    --accent-success: oklch(74.353% 0.20574 147.762);
+    --accent-warning: oklch(83.83% 0.15946 84.48);
+    --accent-negative: oklch(66.952% 0.2071 37.102);
+
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.552 0.016 285.938);
+
+    --chart-1: oklch(0.827 0.119 306.383);
+    --chart-2: oklch(0.627 0.265 303.9);
+    --chart-3: oklch(0.558 0.288 302.321);
+    --chart-4: oklch(0.496 0.265 301.924);
+    --chart-5: oklch(0.438 0.218 303.724);
+
+    --sidebar: oklch(0.21 0.006 285.885);
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: oklch(0.627 0.265 303.9);
+    --sidebar-primary-foreground: oklch(0.977 0.014 308.299);
+    --sidebar-accent: oklch(0.274 0.006 286.033);
+    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: oklch(0.552 0.016 285.938);
+  }
 }
 
-@layer base {
-	html,
-	pre {
-		font-family:
-			-apple-system, BlinkMacSystemFont, 'Inter', 'Vazirmatn', ui-sans-serif, system-ui, 'Segoe UI',
-			Roboto, Ubuntu, Cantarell, 'Noto Sans', sans-serif, 'Helvetica Neue', Arial,
-			'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-	}
+@theme {
+  --color-gray-50: oklch(0.98 0 0);
+  --color-gray-100: oklch(0.94 0 0);
+  --color-gray-200: oklch(0.92 0 0);
+  --color-gray-300: oklch(0.85 0 0);
+  --color-gray-400: oklch(0.77 0 0);
+  --color-gray-500: oklch(0.69 0 0);
+  --color-gray-600: oklch(0.51 0 0);
+  --color-gray-700: oklch(0.42 0 0);
+  --color-gray-800: oklch(0.32 0 0);
+  --color-gray-850: oklch(0.27 0 0);
+  --color-gray-900: oklch(0.2 0 0);
+  --color-gray-950: oklch(0.16 0 0);
 
-	pre {
-		white-space: pre-wrap;
-	}
-
-	button {
-		@apply cursor-pointer;
-	}
-
-	input::placeholder,
-	textarea::placeholder {
-		color: theme(--color-gray-400);
-	}
-
-	input[type='checkbox'] {
-		@apply appearance-none size-3.5 align-middle bg-white border border-gray-300 rounded transition cursor-pointer focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-gray-800 dark:border-gray-600 self-center;
-		/* Center the custom mark */
-		display: inline-block;
-		position: relative;
-	}
-
-	input[type='checkbox']:checked {
-		@apply bg-blue-600 border-blue-600;
-	}
-
-	input[type='checkbox']:after {
-		content: '';
-		display: block;
-		width: 100%;
-		height: 100%;
-		/* Hide by default */
-		opacity: 0;
-		transition: opacity 0.2s;
-		position: absolute;
-		top: 0;
-		left: 0;
-		pointer-events: none;
-		/* SVG checkmark as background image */
-		background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M4 8l3 3l5-5"/></svg>')
-			center/80% no-repeat;
-	}
-
-	input[type='checkbox']:checked:after {
-		opacity: 1;
-	}
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
 }
 
-@custom-variant hover (&:hover);
+@theme inline {
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+
+  --color-accent-negative: var(--accent-negative);
+  --color-accent-warning: var(--accent-warning);
+  --color-accent-success: var(--accent-success);
+  --color-accent-active: var(--accent-active);
+
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary-hover: var(--secondary-hover);
+  --color-secondary: var(--secondary);
+
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary: var(--primary);
+
+  --color-card-foreground: var(--card-foreground);
+  --color-card-hover: var(--card-hover);
+  --color-card: var(--card);
+
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+}

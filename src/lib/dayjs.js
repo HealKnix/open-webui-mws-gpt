@@ -22,8 +22,10 @@ import 'dayjs/locale/de';
 import 'dayjs/locale/dv';
 import 'dayjs/locale/el';
 import 'dayjs/locale/en';
+import 'dayjs/locale/en-gb';
 import 'dayjs/locale/eo';
 import 'dayjs/locale/es';
+import 'dayjs/locale/et';
 import 'dayjs/locale/eu';
 import 'dayjs/locale/fa';
 import 'dayjs/locale/fi';
@@ -100,7 +102,5 @@ import 'dayjs/locale/vi';
 import 'dayjs/locale/yo';
 import 'dayjs/locale/zh';
 import 'dayjs/locale/zh-tw';
-import 'dayjs/locale/et';
-import 'dayjs/locale/en-gb';
 
 export default dayjs;

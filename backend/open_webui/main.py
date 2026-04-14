@@ -94,6 +94,7 @@ from open_webui.routers import (
     prompts,
     evaluations,
     skills,
+    widgets,
     tools,
     users,
     utils,
@@ -1578,6 +1579,7 @@ app.include_router(knowledge.router, prefix='/api/v1/knowledge', tags=['knowledg
 app.include_router(prompts.router, prefix='/api/v1/prompts', tags=['prompts'])
 app.include_router(tools.router, prefix='/api/v1/tools', tags=['tools'])
 app.include_router(skills.router, prefix='/api/v1/skills', tags=['skills'])
+app.include_router(widgets.router, prefix='/api/v1/widgets', tags=['widgets'])
 
 app.include_router(memories.router, prefix='/api/v1/memories', tags=['memories'])
 app.include_router(chat_summaries.router, prefix='/api/v1/chat-summaries', tags=['chat-summaries'])
@@ -1802,6 +1804,7 @@ async def chat_completion(
                     )
                     else 'default'
                 ),
+                'agent_backend': model_info_params.get('agent_backend'),
             },
         }
 

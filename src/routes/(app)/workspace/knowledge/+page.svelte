@@ -1,5 +1,5 @@
 <script>
-	import Knowledge from '$lib/components/workspace/Knowledge.svelte';
+  import Knowledge from '$lib/components/workspace/Knowledge.svelte';
 </script>
 
 <Knowledge />

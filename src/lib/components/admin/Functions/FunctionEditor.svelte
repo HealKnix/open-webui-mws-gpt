@@ -1,47 +1,47 @@
 <script>
-	import { getContext, onMount, tick } from 'svelte';
-	import { goto } from '$app/navigation';
+  import { getContext, onMount, tick } from 'svelte';
+  import { goto } from '$app/navigation';
 
-	const i18n = getContext('i18n');
+  const i18n = getContext('i18n');
 
-	import { nameToId } from '$lib/utils';
-	import CodeEditor from '$lib/components/common/CodeEditor.svelte';
-	import ConfirmDialog from '$lib/components/common/ConfirmDialog.svelte';
-	import Badge from '$lib/components/common/Badge.svelte';
-	import Tooltip from '$lib/components/common/Tooltip.svelte';
-	import ChevronLeft from '$lib/components/icons/ChevronLeft.svelte';
+  import { nameToId } from '$lib/utils';
+  import CodeEditor from '$lib/components/common/CodeEditor.svelte';
+  import ConfirmDialog from '$lib/components/common/ConfirmDialog.svelte';
+  import Badge from '$lib/components/common/Badge.svelte';
+  import Tooltip from '$lib/components/common/Tooltip.svelte';
+  import ChevronLeft from '$lib/components/icons/ChevronLeft.svelte';
 
-	let formElement = null;
-	let loading = false;
-	let showConfirm = false;
+  let formElement = null;
+  let loading = false;
+  let showConfirm = false;
 
-	export let onSave = () => {};
+  export let onSave = () => {};
 
-	export let edit = false;
-	export let clone = false;
+  export let edit = false;
+  export let clone = false;
 
-	export let id = '';
-	export let name = '';
-	export let meta = {
-		description: ''
-	};
-	export let content = '';
-	let _content = '';
+  export let id = '';
+  export let name = '';
+  export let meta = {
+    description: '',
+  };
+  export let content = '';
+  let _content = '';
 
-	$: if (content) {
-		updateContent();
-	}
+  $: if (content) {
+    updateContent();
+  }
 
-	const updateContent = () => {
-		_content = content;
-	};
+  const updateContent = () => {
+    _content = content;
+  };
 
-	$: if (name && !edit && !clone) {
-		id = nameToId(name);
-	}
+  $: if (name && !edit && !clone) {
+    id = nameToId(name);
+  }
 
-	let codeEditor;
-	let boilerplate = `"""
+  let codeEditor;
+  let boilerplate = `"""
 title: Example Filter
 author: open-webui
 author_url: https://github.com/open-webui
@@ -110,7 +110,7 @@ class Filter:
         return body
 `;
 
-	const _boilerplate = `from pydantic import BaseModel
+  const _boilerplate = `from pydantic import BaseModel
 from typing import Optional, Union, Generator, Iterator
 from open_webui.utils.misc import get_last_user_message
 
@@ -256,177 +256,177 @@ class Pipe:
             return f"Error: {e}"
 `;
 
-	const saveHandler = async () => {
-		loading = true;
-		onSave({
-			id,
-			name,
-			meta,
-			content
-		});
-	};
+  const saveHandler = async () => {
+    loading = true;
+    onSave({
+      id,
+      name,
+      meta,
+      content,
+    });
+  };
 
-	const submitHandler = async () => {
-		if (codeEditor) {
-			content = _content;
-			await tick();
+  const submitHandler = async () => {
+    if (codeEditor) {
+      content = _content;
+      await tick();
 
-			const res = await codeEditor.formatPythonCodeHandler();
-			await tick();
+      const res = await codeEditor.formatPythonCodeHandler();
+      await tick();
 
-			content = _content;
-			await tick();
+      content = _content;
+      await tick();
 
-			if (!res) {
-				console.warn('Code formatting failed or was skipped, saving unformatted code');
-			}
+      if (!res) {
+        console.warn('Code formatting failed or was skipped, saving unformatted code');
+      }
 
-			saveHandler();
-		}
-	};
+      saveHandler();
+    }
+  };
 </script>
 
-<div class=" flex flex-col justify-between w-full overflow-y-auto h-full">
-	<div class="mx-auto w-full md:px-0 h-full">
-		<form
-			bind:this={formElement}
-			class=" flex flex-col max-h-[100dvh] h-full"
-			on:submit|preventDefault={() => {
-				if (edit) {
-					submitHandler();
-				} else {
-					showConfirm = true;
-				}
-			}}
-		>
-			<div class="flex flex-col flex-1 overflow-auto h-0 rounded-lg">
-				<div class="w-full mb-2 flex flex-col gap-0.5">
-					<div class="flex w-full items-center">
-						<div class=" shrink-0 mr-2">
-							<Tooltip content={$i18n.t('Back')}>
-								<button
-									class="w-full text-left text-sm py-1.5 px-1 rounded-lg dark:text-gray-300 dark:hover:text-white hover:bg-black/5 dark:hover:bg-gray-850"
-									on:click={() => {
-										goto('/admin/functions');
-									}}
-									type="button"
-								>
-									<ChevronLeft strokeWidth="2.5" />
-								</button>
-							</Tooltip>
-						</div>
+<div class=" flex h-full w-full flex-col justify-between overflow-y-auto">
+  <div class="mx-auto h-full w-full md:px-0">
+    <form
+      bind:this={formElement}
+      class=" flex h-full max-h-[100dvh] flex-col"
+      on:submit|preventDefault={() => {
+        if (edit) {
+          submitHandler();
+        } else {
+          showConfirm = true;
+        }
+      }}
+    >
+      <div class="flex h-0 flex-1 flex-col overflow-auto rounded-lg">
+        <div class="mb-2 flex w-full flex-col gap-0.5">
+          <div class="flex w-full items-center">
+            <div class=" mr-2 shrink-0">
+              <Tooltip content={$i18n.t('Back')}>
+                <button
+                  class="dark:hover:bg-gray-850 w-full rounded-lg px-1 py-1.5 text-left text-sm hover:bg-black/5 dark:text-gray-300 dark:hover:text-white"
+                  on:click={() => {
+                    goto('/admin/functions');
+                  }}
+                  type="button"
+                >
+                  <ChevronLeft strokeWidth="2.5" />
+                </button>
+              </Tooltip>
+            </div>
 
-						<div class="flex-1">
-							<Tooltip content={$i18n.t('e.g. My Filter')} placement="top-start">
-								<input
-									class="w-full text-2xl font-medium bg-transparent outline-hidden font-primary"
-									type="text"
-									placeholder={$i18n.t('Function Name')}
-									bind:value={name}
-									required
-								/>
-							</Tooltip>
-						</div>
+            <div class="flex-1">
+              <Tooltip content={$i18n.t('e.g. My Filter')} placement="top-start">
+                <input
+                  class="font-primary w-full bg-transparent text-2xl font-medium outline-hidden"
+                  type="text"
+                  placeholder={$i18n.t('Function Name')}
+                  bind:value={name}
+                  required
+                />
+              </Tooltip>
+            </div>
 
-						<div>
-							<Badge type="muted" content={$i18n.t('Function')} />
-						</div>
-					</div>
+            <div>
+              <Badge type="muted" content={$i18n.t('Function')} />
+            </div>
+          </div>
 
-					<div class=" flex gap-2 px-1 items-center">
-						{#if edit}
-							<div class="text-sm text-gray-500 shrink-0">
-								{id}
-							</div>
-						{:else}
-							<Tooltip className="w-full" content={$i18n.t('e.g. my_filter')} placement="top-start">
-								<input
-									class="w-full text-sm disabled:text-gray-500 bg-transparent outline-hidden"
-									type="text"
-									placeholder={$i18n.t('Function ID')}
-									bind:value={id}
-									required
-									disabled={edit}
-								/>
-							</Tooltip>
-						{/if}
+          <div class=" flex items-center gap-2 px-1">
+            {#if edit}
+              <div class="shrink-0 text-sm text-gray-500">
+                {id}
+              </div>
+            {:else}
+              <Tooltip className="w-full" content={$i18n.t('e.g. my_filter')} placement="top-start">
+                <input
+                  class="w-full bg-transparent text-sm outline-hidden disabled:text-gray-500"
+                  type="text"
+                  placeholder={$i18n.t('Function ID')}
+                  bind:value={id}
+                  required
+                  disabled={edit}
+                />
+              </Tooltip>
+            {/if}
 
-						<Tooltip
-							className="w-full self-center items-center flex"
-							content={$i18n.t('e.g. A filter to remove profanity from text')}
-							placement="top-start"
-						>
-							<input
-								class="w-full text-sm bg-transparent outline-hidden"
-								type="text"
-								placeholder={$i18n.t('Function Description')}
-								bind:value={meta.description}
-								required
-							/>
-						</Tooltip>
-					</div>
-				</div>
+            <Tooltip
+              className="w-full self-center items-center flex"
+              content={$i18n.t('e.g. A filter to remove profanity from text')}
+              placement="top-start"
+            >
+              <input
+                class="w-full bg-transparent text-sm outline-hidden"
+                type="text"
+                placeholder={$i18n.t('Function Description')}
+                bind:value={meta.description}
+                required
+              />
+            </Tooltip>
+          </div>
+        </div>
 
-				<div class="mb-2 flex-1 overflow-auto h-0 rounded-lg">
-					<CodeEditor
-						bind:this={codeEditor}
-						value={content}
-						lang="python"
-						{boilerplate}
-						onChange={(e) => {
-							_content = e;
-						}}
-						onSave={async () => {
-							if (formElement) {
-								formElement.requestSubmit();
-							}
-						}}
-					/>
-				</div>
+        <div class="mb-2 h-0 flex-1 overflow-auto rounded-lg">
+          <CodeEditor
+            bind:this={codeEditor}
+            value={content}
+            lang="python"
+            {boilerplate}
+            onChange={(e) => {
+              _content = e;
+            }}
+            onSave={async () => {
+              if (formElement) {
+                formElement.requestSubmit();
+              }
+            }}
+          />
+        </div>
 
-				<div class="pb-3 flex justify-between">
-					<div class="flex-1 pr-3">
-						<div class="text-xs text-gray-500 line-clamp-2">
-							<span class=" font-semibold dark:text-gray-200">{$i18n.t('Warning:')}</span>
-							{$i18n.t('Functions allow arbitrary code execution.')} <br />—
-							<span class=" font-medium dark:text-gray-400"
-								>{$i18n.t(`don't install random functions from sources you don't trust.`)}</span
-							>
-						</div>
-					</div>
+        <div class="flex justify-between pb-3">
+          <div class="flex-1 pr-3">
+            <div class="line-clamp-2 text-xs text-gray-500">
+              <span class=" font-semibold dark:text-gray-200">{$i18n.t('Warning:')}</span>
+              {$i18n.t('Functions allow arbitrary code execution.')} <br />—
+              <span class=" font-medium dark:text-gray-400"
+                >{$i18n.t(`don't install random functions from sources you don't trust.`)}</span
+              >
+            </div>
+          </div>
 
-					<button
-						class="px-3.5 py-1.5 text-sm font-medium bg-black hover:bg-gray-900 text-white dark:bg-white dark:text-black dark:hover:bg-gray-100 transition rounded-full"
-						type="submit"
-					>
-						{$i18n.t('Save')}
-					</button>
-				</div>
-			</div>
-		</form>
-	</div>
+          <button
+            class="rounded-full bg-black px-3.5 py-1.5 text-sm font-medium text-white transition hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100"
+            type="submit"
+          >
+            {$i18n.t('Save')}
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
 </div>
 
 <ConfirmDialog
-	bind:show={showConfirm}
-	on:confirm={() => {
-		submitHandler();
-	}}
+  bind:show={showConfirm}
+  on:confirm={() => {
+    submitHandler();
+  }}
 >
-	<div class="text-sm text-gray-500">
-		<div class=" bg-yellow-500/20 text-yellow-700 dark:text-yellow-200 rounded-lg px-4 py-3">
-			<div>{$i18n.t('Please carefully review the following warnings:')}</div>
+  <div class="text-sm text-gray-500">
+    <div class=" rounded-lg bg-yellow-500/20 px-4 py-3 text-yellow-700 dark:text-yellow-200">
+      <div>{$i18n.t('Please carefully review the following warnings:')}</div>
 
-			<ul class=" mt-1 list-disc pl-4 text-xs">
-				<li>{$i18n.t('Functions allow arbitrary code execution.')}</li>
-				<li>{$i18n.t('Do not install functions from sources you do not fully trust.')}</li>
-			</ul>
-		</div>
+      <ul class=" mt-1 list-disc pl-4 text-xs">
+        <li>{$i18n.t('Functions allow arbitrary code execution.')}</li>
+        <li>{$i18n.t('Do not install functions from sources you do not fully trust.')}</li>
+      </ul>
+    </div>
 
-		<div class="my-3">
-			{$i18n.t(
-				'I acknowledge that I have read and I understand the implications of my action. I am aware of the risks associated with executing arbitrary code and I have verified the trustworthiness of the source.'
-			)}
-		</div>
-	</div>
+    <div class="my-3">
+      {$i18n.t(
+        'I acknowledge that I have read and I understand the implications of my action. I am aware of the risks associated with executing arbitrary code and I have verified the trustworthiness of the source.',
+      )}
+    </div>
+  </div>
 </ConfirmDialog>
