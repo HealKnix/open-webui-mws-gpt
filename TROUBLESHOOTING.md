@@ -34,3 +34,34 @@ Open WebUI has a default timeout of 5 minutes for Ollama to finish generating th
    - Confirm that the Ollama Server URL is correctly set to `[OLLAMA URL]` (e.g., `http://localhost:11434`).
 
 By following these enhanced troubleshooting steps, connection issues should be effectively resolved. For further assistance or queries, feel free to reach out to us on our community Discord.
+
+## MTS Router: PPTX Skill Renderer
+
+The presentation pipeline in MTS Router now supports two renderers:
+
+- `pptx-skill` (preferred): runs `unpack -> clean -> pack` from `backend/open_webui/orchestration/skills/pptx`
+- `python-pptx` (fallback): legacy direct PPTX generation
+
+Configure renderer mode via environment variable:
+
+```bash
+MTS_ROUTER_PPTX_RENDERER=auto
+```
+
+Supported values:
+
+- `auto` (default): try `pptx-skill`, fallback to `python-pptx`
+- `skill`: strict mode, fail if `pptx-skill` is unavailable or errors
+- `python-pptx`: force legacy renderer
+
+Optional custom skill path:
+
+```bash
+MTS_ROUTER_PPTX_SKILL_PATH=/absolute/path/to/pptx-skill
+```
+
+If you run via Docker Compose, add these variables to `open-webui` environment and restart:
+
+```bash
+docker compose restart open-webui
+```

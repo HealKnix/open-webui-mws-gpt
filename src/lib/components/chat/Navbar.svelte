@@ -39,6 +39,8 @@
   import ChatCheck from '../icons/ChatCheck.svelte';
   import Knobs from '../icons/Knobs.svelte';
   import { WEBUI_API_BASE_URL } from '$lib/constants';
+  import { cn } from '$lib/utils';
+  import Button from '../common/Button.svelte';
 
   const i18n = getContext('i18n');
 
@@ -126,7 +128,7 @@
           {/if}
         </div>
 
-        <div class="flex flex-none items-center self-start text-gray-600 dark:text-gray-400">
+        <div class="flex flex-none items-center gap-2 self-start text-gray-600 dark:text-gray-400">
           <!-- <div class="md:hidden flex self-center w-[1px] h-5 mx-2 bg-gray-300 dark:bg-stone-700" /> -->
 
           {#if $user?.role === 'user' ? ($user?.permissions?.chat?.temporary ?? true) && !($user?.permissions?.chat?.temporary_enforced ?? false) : true}
@@ -224,8 +226,14 @@
 
           {#if $user?.role === 'admin' || ($user?.permissions.chat?.controls ?? true)}
             <Tooltip content={$i18n.t('Controls')}>
-              <button
-                class=" dark:hover:bg-gray-850 flex cursor-pointer rounded-xl px-2 py-2 transition hover:bg-gray-50"
+              <Button
+                isIconOnly
+                size="sm"
+                variant="ghost"
+                color="foreground"
+                className={cn(
+                  $showControls && 'bg-primary text-primary-foreground hover:bg-primary-hover',
+                )}
                 on:click={async () => {
                   await showControls.set(!$showControls);
                 }}
@@ -234,7 +242,7 @@
                 <div class=" m-auto self-center">
                   <Knobs className=" size-5" strokeWidth="1" />
                 </div>
-              </button>
+              </Button>
             </Tooltip>
           {/if}
 

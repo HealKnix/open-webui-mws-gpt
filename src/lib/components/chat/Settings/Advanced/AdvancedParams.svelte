@@ -7,7 +7,10 @@
   import ToggleSetting from '$lib/components/common/ToggleSetting.svelte';
   import Tooltip from '$lib/components/common/Tooltip.svelte';
   import Plus from '$lib/components/icons/Plus.svelte';
+  import { cn } from '$lib/utils';
   import { getContext } from 'svelte';
+
+  export let className = '';
 
   const i18n = getContext('i18n');
 
@@ -58,7 +61,10 @@
 </script>
 
 <div
-  class="pb-safe-bottom bg-card/50 border-border max-w-2xl space-y-1 rounded-2xl border p-2 text-xs"
+  class={cn(
+    'pb-safe-bottom bg-card/50 border-border max-w-2xl space-y-1 rounded-2xl border p-2 text-xs',
+    className,
+  )}
 >
   <div>
     <Tooltip
@@ -1152,7 +1158,7 @@
         <SettingItem
           label={'use_mmap'}
           className={(params?.use_mmap ?? null) !== null
-            ? 'bg-accent-active/15 hover:bg-accent-active/20'
+            ? 'bg-accent-active/15 hover:bg-accent-active/20 rounded-b-none'
             : ''}
         >
           <button
@@ -1175,6 +1181,7 @@
         <ToggleSetting
           bind:value={params.use_mmap}
           label={params.use_mmap ? $i18n.t('Enabled') : $i18n.t('Disabled')}
+          className={(params?.use_mmap ?? null) !== null ? 'rounded-t-none' : ''}
         />
       {/if}
     </div>
@@ -1190,7 +1197,7 @@
         <SettingItem
           label={'use_mlock'}
           className={(params?.use_mlock ?? null) !== null
-            ? 'bg-accent-active/15 hover:bg-accent-active/20'
+            ? 'bg-accent-active/15 hover:bg-accent-active/20 rounded-b-none'
             : ''}
         >
           <button
@@ -1214,6 +1221,7 @@
         <ToggleSetting
           bind:value={params.use_mlock}
           label={params.use_mlock ? $i18n.t('Enabled') : $i18n.t('Disabled')}
+          className={(params?.use_mlock ?? null) !== null ? 'rounded-t-none' : ''}
         />
       {/if}
     </div>

@@ -10,6 +10,7 @@
   import Collapsible from '$lib/components/common/Collapsible.svelte';
 
   import { user, settings } from '$lib/stores';
+  import Textarea from '$lib/components/common/Textarea.svelte';
   export let models = [];
   export let chatFiles = [];
   export let params = {};
@@ -106,12 +107,9 @@
           onChange={setOpen('systemPrompt')}
           buttonClassName="w-full"
         >
-          <div class="" slot="content">
-            <textarea
+          <div class="mt-2" slot="content">
+            <Textarea
               bind:value={params.system}
-              class="resize-vertical w-full text-xs outline-hidden {$settings.highContrastMode
-                ? 'rounded-lg border-2 border-gray-300 bg-gray-50 p-2.5 dark:border-gray-700 dark:bg-gray-800'
-                : 'bg-transparent py-1.5'}"
               rows="4"
               placeholder={$i18n.t('Enter system prompt')}
             />
@@ -128,9 +126,14 @@
           onChange={setOpen('advancedParams')}
           buttonClassName="w-full"
         >
-          <div class="mt-1.5 text-sm" slot="content">
+          <div class="mt-1.5 mb-3 text-sm" slot="content">
             <div>
-              <AdvancedParams admin={$user?.role === 'admin'} custom={true} bind:params />
+              <AdvancedParams
+                className="bg-background"
+                admin={$user?.role === 'admin'}
+                custom={true}
+                bind:params
+              />
             </div>
           </div>
         </Collapsible>

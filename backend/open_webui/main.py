@@ -80,6 +80,8 @@ from open_webui.routers import (
     auths,
     channels,
     chats,
+    chat_summaries,
+    context_compression,
     notes,
     folders,
     configs,
@@ -91,6 +93,7 @@ from open_webui.routers import (
     models,
     knowledge,
     prompts,
+    orchestrator,
     evaluations,
     skills,
     widgets,
@@ -650,6 +653,71 @@ async def lifespan(app: FastAPI):
     asyncio.create_task(periodic_usage_pool_cleanup())
     asyncio.create_task(periodic_session_pool_cleanup())
 
+    # Start chat summarization background task
+    async def periodic_chat_summarization():
+        """Periodically process chats for summarization every N."""
+        while True:
+            try:
+                await asyncio.sleep(10 * 60)  # 10 minute
+
+                # Create a mock request for the summarizer
+                from fastapi import Request
+                from starlette.datastructures import Headers
+
+                mock_request = Request(
+                    {
+                        'type': 'http',
+                        'asgi.version': '3.0',
+                        'asgi.spec_version': '2.0',
+                        'method': 'GET',
+                        'path': '/internal',
+                        'query_string': b'',
+                        'headers': Headers({}).raw,
+                        'client': ('127.0.0.1', 12345),
+                        'server': ('127.0.0.1', 80),
+                        'scheme': 'http',
+                        'app': app,
+                    }
+                )
+
+                from open_webui.utils.chat_summarizer import process_pending_chats
+
+                results = await process_pending_chats(
+                    mock_request,
+                    older_than_hours=4,
+                    min_messages=3,
+                )
+
+                log.info(f"Chat summarization completed: {results}")
+
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                log.error(f"Error in periodic chat summarization: {e}")
+                await asyncio.sleep(60)  # Wait 1 minute before retrying
+
+    asyncio.create_task(periodic_chat_summarization())
+
+    # Start context compression cleanup background task
+    async def periodic_context_compression_cleanup():
+        """Periodically cleanup expired context compression segments."""
+        while True:
+            try:
+                await asyncio.sleep(24 * 60 * 60)  # 24 hours
+
+                from open_webui.models.chat_context_segments import ChatContextSegments
+
+                deleted_count = ChatContextSegments.cleanup_expired_segments()
+                log.info(f"Context compression cleanup: deleted {deleted_count} expired segments")
+
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                log.error(f"Error in context compression cleanup: {e}")
+                await asyncio.sleep(60)  # Wait 1 minute before retrying
+
+    asyncio.create_task(periodic_context_compression_cleanup())
+
     if app.state.config.ENABLE_BASE_MODELS_CACHE:
         try:
             await get_all_models(
@@ -785,6 +853,7 @@ app.state.config.ENABLE_OPENAI_API = ENABLE_OPENAI_API
 app.state.config.OPENAI_API_BASE_URLS = OPENAI_API_BASE_URLS
 app.state.config.OPENAI_API_KEYS = OPENAI_API_KEYS
 app.state.config.OPENAI_API_CONFIGS = OPENAI_API_CONFIGS
+app.state.MTS_ROUTER_DEFAULT_POLICY_MODE = 'balanced'
 
 app.state.OPENAI_MODELS = {}
 
@@ -1501,6 +1570,7 @@ app.include_router(openai.router, prefix='/openai', tags=['openai'])
 app.include_router(pipelines.router, prefix='/api/v1/pipelines', tags=['pipelines'])
 app.include_router(tasks.router, prefix='/api/v1/tasks', tags=['tasks'])
 app.include_router(images.router, prefix='/api/v1/images', tags=['images'])
+app.include_router(orchestrator.router, prefix='/api/v1/orchestrator', tags=['orchestrator'])
 
 app.include_router(audio.router, prefix='/api/v1/audio', tags=['audio'])
 app.include_router(retrieval.router, prefix='/api/v1/retrieval', tags=['retrieval'])
@@ -1525,6 +1595,8 @@ app.include_router(widgets.router, prefix='/api/v1/widgets', tags=['widgets'])
 app.include_router(mcp_apps.router, prefix='/api/v1/mcp_apps', tags=['mcp_apps'])
 
 app.include_router(memories.router, prefix='/api/v1/memories', tags=['memories'])
+app.include_router(chat_summaries.router, prefix='/api/v1/chat-summaries', tags=['chat-summaries'])
+app.include_router(context_compression.router, prefix='/api/v1/chats/{chat_id}/context', tags=['context-compression'])
 app.include_router(folders.router, prefix='/api/v1/folders', tags=['folders'])
 app.include_router(groups.router, prefix='/api/v1/groups', tags=['groups'])
 app.include_router(files.router, prefix='/api/v1/files', tags=['files'])

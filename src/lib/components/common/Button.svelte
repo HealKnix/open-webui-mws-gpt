@@ -2,10 +2,10 @@
   import { cn } from '$lib/utils';
   import Spinner from './Spinner.svelte';
 
-  export let variant: 'solid' | 'flat' | 'ghost' = 'solid';
-  export let color: 'primary' | 'secondary' | 'foreground' | string = 'primary';
+  export let variant: 'solid' | 'flat' | 'outline' | 'ghost' = 'solid';
+  export let color: 'primary' | 'secondary' | 'foreground' | (string & {}) = 'primary';
   export let size: '2xs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' = 'md';
-  export let radius: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | 'full' = 'md';
+  export let radius: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | 'full' = 'xl';
   export let isIconOnly = false;
   export let loading = false;
   export let disabled = false;
@@ -55,6 +55,14 @@
         primary: 'bg-primary/10 text-primary hover:bg-primary/15',
         secondary: 'bg-border/50 text-secondary-foreground hover:bg-secondary-hover',
         foreground: 'bg-foreground/10 text-foreground hover:bg-foreground/20',
+      },
+      outline: {
+        primary:
+          'bg-transparent border-2 border-primary text-primary hover:bg-primary-hover hover:text-primary-foreground',
+        secondary:
+          'bg-transparent border-2 border-secondary text-foreground hover:bg-secondary-hover hover:text-secondary-foreground',
+        foreground:
+          'bg-transparent border-2 border-foreground text-foreground hover:bg-foreground hover:text-background',
       },
       ghost: {
         primary: 'bg-transparent text-primary hover:bg-primary/10',

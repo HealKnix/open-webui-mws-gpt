@@ -68,6 +68,7 @@ from open_webui.tools.builtin import (
     calculate_timestamp,
     search_notes,
     search_chats,
+    smart_search,
     search_channels,
     search_channel_messages,
     view_note,
@@ -436,7 +437,7 @@ def get_builtin_tools(
 
     # Chats tools - search and fetch user's chat history
     if is_builtin_tool_enabled('chats'):
-        builtin_functions.extend([search_chats, view_chat])
+        builtin_functions.extend([search_chats, smart_search, view_chat])
 
     # Add memory tools if builtin category enabled AND enabled for this chat
     if is_builtin_tool_enabled('memory') and (features.get('memory') or get_model_capability('memory', False)):

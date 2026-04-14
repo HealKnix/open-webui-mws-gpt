@@ -60,7 +60,7 @@
     removeTerminalConnection,
   } from '$lib/utils/connections';
 
-  import { WEBUI_API_BASE_URL, WEBUI_BASE_URL, WEBUI_HOSTNAME } from '$lib/constants';
+  import { APP_NAME, WEBUI_API_BASE_URL, WEBUI_BASE_URL, WEBUI_HOSTNAME } from '$lib/constants';
   import { bestMatchingLanguage, displayFileHandler } from '$lib/utils';
   import { setTextScale } from '$lib/utils/text-scale';
 
@@ -454,7 +454,7 @@
 
           if ($isLastActiveTab) {
             if ($settings?.notificationEnabled ?? false) {
-              new Notification(`${displayTitle} • Open WebUI`, {
+              new Notification(`${displayTitle} • ${APP_NAME}`, {
                 body: content,
                 icon: `${WEBUI_BASE_URL}/static/favicon.png`,
               });
@@ -657,7 +657,7 @@
 
         if ($isLastActiveTab) {
           if ($settings?.notificationEnabled ?? false) {
-            new Notification(`${title} • Open WebUI`, {
+            new Notification(`${title} • ${APP_NAME}`, {
               body: data?.content,
               icon: `${WEBUI_API_BASE_URL}/users/${data?.user?.id}/profile/image`,
             });

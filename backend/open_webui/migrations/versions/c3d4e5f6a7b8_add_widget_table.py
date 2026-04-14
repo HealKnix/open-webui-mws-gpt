@@ -1,7 +1,7 @@
 """Add widget table
 
 Revision ID: c3d4e5f6a7b8
-Revises: b2c3d4e5f6a7
+Revises: f3a4b5c6d7e8
 Create Date: 2026-04-12 21:00:00.000000
 
 """
@@ -14,7 +14,7 @@ import sqlalchemy as sa
 from open_webui.migrations.util import get_existing_tables
 
 revision: str = 'c3d4e5f6a7b8'
-down_revision: Union[str, None] = 'b2c3d4e5f6a7'
+down_revision: Union[str, None] = 'f3a4b5c6d7e8'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

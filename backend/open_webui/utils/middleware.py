@@ -163,6 +163,72 @@ DEFAULT_REASONING_TAGS = [
 DEFAULT_SOLUTION_TAGS = [('<|begin_of_solution|>', '<|end_of_solution|>')]
 DEFAULT_CODE_INTERPRETER_TAGS = [('<code_interpreter>', '</code_interpreter>')]
 
+MTS_ROUTER_MODEL_PREFIX = 'mts-router'
+MTS_ROUTER_STYLE_PROMPT = (
+    'Ты MTS Router Assistant. Отвечай красиво и структурированно в Markdown на русском языке. '
+    'Формат ответа по умолчанию: '
+    '1) Краткий вывод, '
+    '2) Подробный разбор по шагам/пунктам, '
+    '3) Практические рекомендации или варианты действий. '
+    'Если уместно, используй таблицы и четкие подзаголовки. '
+    'Для локальных рекомендаций (рестораны, места, услуги) давай список с пояснением, адресом/районом и ссылкой, если есть. '
+    'У тебя есть доступ к интернет-поиску через встроенные инструменты. '
+    'Не пиши, что у тебя нет доступа к интернету. '
+    'Никогда не выводи пользователю JSON вызовов функций или инструкции "как вызвать tool". '
+    'Если нужен поиск, выполни его молча и покажи только итоговые результаты. '
+    'Если использовался веб-поиск, добавляй раздел "Источники" со ссылками. '
+    'Не выдумывай факты и ссылки, при недостатке данных явно укажи это.'
+)
+
+MTS_ROUTER_FORCE_WEB_SEARCH_HINTS = (
+    'найди',
+    'поиск',
+    'подбери',
+    'где',
+    'лучш',
+    'топ',
+    'ресторан',
+    'кафе',
+    'бургер',
+    'доставка',
+    'адрес',
+    'ссылк',
+    'цена',
+    'новости',
+    'курс',
+    'погода',
+    'отзыв',
+)
+MTS_ROUTER_FORCE_WEB_SEARCH_SKIP = (
+    'привет',
+    'спасибо',
+    'ок',
+    'понял',
+    'как дела',
+)
+
+
+def is_mts_router_family_model(model: dict[str, Any] | None) -> bool:
+    if not model:
+        return False
+    model_id = str(model.get('id') or '').strip().lower()
+    base_model_id = str(model.get('base_model_id') or '').strip().lower()
+    return model_id.startswith(MTS_ROUTER_MODEL_PREFIX) or base_model_id.startswith(MTS_ROUTER_MODEL_PREFIX)
+
+
+def should_force_router_web_search(user_message: str, has_files: bool = False) -> bool:
+    if has_files:
+        return False
+
+    text = (user_message or '').strip().lower()
+    if not text:
+        return False
+
+    if text in MTS_ROUTER_FORCE_WEB_SEARCH_SKIP:
+        return False
+
+    return any(hint in text for hint in MTS_ROUTER_FORCE_WEB_SEARCH_HINTS)
+
 
 def output_id(prefix: str) -> str:
     """Generate OR-style ID: prefix + 24-char hex UUID."""
@@ -1922,6 +1988,9 @@ async def chat_completion_files_handler(
         if len(queries) == 0:
             queries = [get_last_user_message(body['messages'])]
 
+        retrieval_top_k = 10
+        retrieval_top_k_reranker = max(10, int(request.app.state.config.TOP_K_RERANKER))
+
         try:
             # Directly await async get_sources_from_items (no thread needed - fully async now)
             sources = await get_sources_from_items(
@@ -1931,13 +2000,13 @@ async def chat_completion_files_handler(
                 embedding_function=lambda query, prefix: request.app.state.EMBEDDING_FUNCTION(
                     query, prefix=prefix, user=user
                 ),
-                k=request.app.state.config.TOP_K,
+                k=retrieval_top_k,
                 reranking_function=(
                     (lambda query, documents: request.app.state.RERANKING_FUNCTION(query, documents, user=user))
                     if request.app.state.RERANKING_FUNCTION
                     else None
                 ),
-                k_reranker=request.app.state.config.TOP_K_RERANKER,
+                k_reranker=retrieval_top_k_reranker,
                 r=request.app.state.config.RELEVANCE_THRESHOLD,
                 hybrid_bm25_weight=request.app.state.config.HYBRID_BM25_WEIGHT,
                 hybrid_search=request.app.state.config.ENABLE_RAG_HYBRID_SEARCH,
@@ -2319,6 +2388,46 @@ async def process_chat_payload(request, form_data, user, metadata, model):
         raise Exception(f'{e}')
 
     features = form_data.pop('features', None) or {}
+    is_router_family_model = is_mts_router_family_model(model)
+
+    # Enable deep research by default for MTS Router family.
+    # If UI explicitly sends false, respect the user's choice.
+    if is_router_family_model and features.get('deep_research') is None:
+        features = {**features, 'deep_research': True}
+
+    if features.get('deep_research'):
+        metadata.setdefault('params', {})
+        metadata['params']['deep_research'] = True
+        # Deep research assumes internet lookup when available.
+        features = {**features, 'web_search': True}
+
+    if features.get('presentation_generation'):
+        metadata.setdefault('params', {})
+        metadata['params']['presentation_generation'] = True
+        # Presentation generation relies on grounded retrieval + internet when available.
+        features = {**features, 'deep_research': True, 'web_search': True}
+        metadata['params']['deep_research'] = True
+
+    if is_router_family_model:
+        # MTS Router should be able to call web search tools directly.
+        # Native function calling + builtin web search gives reliable internet fallback.
+        features = {**features, 'web_search': True}
+        metadata.setdefault('params', {})
+        metadata['params']['function_calling'] = 'native'
+        form_data['messages'] = add_or_update_system_message(
+            MTS_ROUTER_STYLE_PROMPT,
+            form_data['messages'],
+            append=True,
+        )
+
+    model_skill_ids_for_features = set(model.get('info', {}).get('meta', {}).get('skillIds', []) or [])
+    requested_skill_ids_for_features = set(form_data.get('skill_ids') or [])
+    if 'yandex-search-api' in (model_skill_ids_for_features | requested_skill_ids_for_features):
+        # Internet-search skill: ensure web search tool is available and model can decide when to call it.
+        features = {**features, 'web_search': True}
+        metadata.setdefault('params', {})
+        metadata['params']['function_calling'] = 'native'
+
     extra_params['__features__'] = features
     if features:
         if 'voice' in features and features['voice']:
@@ -2339,8 +2448,17 @@ async def process_chat_payload(request, form_data, user, metadata, model):
                 form_data = await chat_memory_handler(request, form_data, extra_params, user)
 
         if 'web_search' in features and features['web_search']:
-            # Skip forced RAG web search when native FC is enabled - model can use web_search tool
-            if metadata.get('params', {}).get('function_calling') != 'native':
+            # For MTS Router we force web-search prefetch on search-like queries,
+            # even with native function calling enabled, because some models may
+            # explain tool usage instead of executing tool calls.
+            force_router_search = is_router_family_model and should_force_router_web_search(
+                user_message or '',
+                has_files=bool(form_data.get('files')),
+            )
+
+            # Skip forced RAG web search when native FC is enabled - model can use
+            # web_search tool, unless we explicitly force router prefetch.
+            if metadata.get('params', {}).get('function_calling') != 'native' or force_router_search:
                 form_data = await chat_web_search_handler(request, form_data, extra_params, user)
 
         if 'image_generation' in features and features['image_generation']:
@@ -2401,11 +2519,12 @@ async def process_chat_payload(request, form_data, user, metadata, model):
             for sid in all_skill_ids
             if sid in accessible_skill_ids and (s := SkillsModel.get_skill_by_id(sid)) and s.is_active
         ]
+        inject_full_model_skills = bool(model.get('orchestrator') or model.get('owned_by') == 'orchestrator')
 
         skill_descriptions = ''
         for skill in available_skills:
-            if skill.id in user_skill_ids:
-                # User-selected: inject full content
+            if skill.id in user_skill_ids or inject_full_model_skills:
+                # User-selected (or router-attached): inject full content
                 form_data['messages'] = add_or_update_system_message(
                     f'<skill name="{skill.name}">\n{skill.content}\n</skill>',
                     form_data['messages'],

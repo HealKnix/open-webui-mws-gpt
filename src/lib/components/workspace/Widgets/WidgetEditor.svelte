@@ -7,7 +7,7 @@
   import ChevronLeft from '$lib/components/icons/ChevronLeft.svelte';
   import AccessControlModal from '../common/AccessControlModal.svelte';
   import { user } from '$lib/stores';
-  import { slugify } from '$lib/utils';
+  import { cn, slugify } from '$lib/utils';
   import Spinner from '$lib/components/common/Spinner.svelte';
   import { updateWidgetAccessGrants } from '$lib/apis/widgets';
   import { goto } from '$app/navigation';
@@ -17,6 +17,8 @@
   import WidgetMapper from '$lib/components/common/agentui/WidgetMapper.svelte';
   import WidgetChatSidebar from './WidgetChatSidebar.svelte';
   import Sparkles from '$lib/components/icons/Sparkles.svelte';
+  import Input from '$lib/components/common/Input.svelte';
+  import Button from '$lib/components/common/Button.svelte';
 
   export let onSubmit: Function;
   export let edit = false;
@@ -62,6 +64,11 @@
   }
 
   const submitHandler = async () => {
+    if (!name) {
+      toast.error($i18n.t('Widget name is required.'));
+      return;
+    }
+
     if (disabled) {
       toast.error($i18n.t('You do not have permission to edit this widget.'));
       return;
@@ -146,7 +153,7 @@
         <!-- Header -->
         <div class="border-b border-gray-50 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
           <div class="flex items-center justify-between gap-4">
-            <div class="flex items-center gap-2 overflow-hidden">
+            <div class="flex w-full items-center gap-2 overflow-hidden">
               <Tooltip content={$i18n.t('Back')}>
                 <button
                   class="rounded-lg p-1.5 hover:bg-gray-50 dark:hover:bg-gray-800"
@@ -159,9 +166,11 @@
                 </button>
               </Tooltip>
 
-              <div class="flex flex-col gap-0.5 overflow-hidden">
-                <input
-                  class="w-full bg-transparent text-lg font-semibold outline-hidden"
+              <div class="flex w-full flex-col gap-0.5 py-1 pr-1">
+                <Input
+                  size="lg"
+                  variant="ghost"
+                  inputClassName="font-semibold"
                   placeholder={$i18n.t('Widget Name')}
                   bind:value={name}
                   on:input={() => (hasManualName = true)}
@@ -170,8 +179,9 @@
                 <div class="flex items-center gap-2 text-xs text-gray-400">
                   <span class="shrink-0">{id || 'widget-id'}</span>
                   <span class="text-gray-200 dark:text-gray-700">|</span>
-                  <input
-                    class="w-full bg-transparent outline-hidden"
+                  <Input
+                    size="xs"
+                    variant="ghost"
                     placeholder={$i18n.t('Brief description...')}
                     bind:value={description}
                     on:input={() => (hasManualDescription = true)}
@@ -182,34 +192,37 @@
             </div>
 
             <div class="flex shrink-0 items-center gap-2">
-              <button
-                class="dark:bg-gray-850 flex items-center gap-1.5 rounded-full border border-gray-100 bg-gray-50 px-3 py-1.5 text-sm font-medium transition hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-gray-800"
+              <Button
+                color="secondary"
+                variant="flat"
+                radius="full"
+                size="sm"
+                className={showAiSidebar ? 'bg-accent-active/15 text-accent-active' : ''}
                 on:click={() => (showAiSidebar = !showAiSidebar)}
               >
                 <Sparkles className="size-3.5 text-blue-500" />
                 <span>{$i18n.t('AI Generator')}</span>
-              </button>
+              </Button>
 
-              <button
-                class="dark:bg-gray-850 flex items-center gap-1.5 rounded-full border border-gray-100 bg-gray-50 px-3 py-1.5 text-sm font-medium transition hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-gray-800"
+              <Button
+                color="secondary"
+                variant="flat"
+                radius="full"
+                size="sm"
                 on:click={() => (showAccessControlModal = true)}
               >
                 <LockClosed strokeWidth="2.5" className="size-3.5" />
                 <span>{$i18n.t('Access')}</span>
-              </button>
+              </Button>
 
               {#if !disabled}
-                <button
-                  class="rounded-full bg-black px-4 py-1.5 text-sm font-medium text-white transition hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100"
-                  on:click={submitHandler}
-                  disabled={loading}
-                >
+                <Button radius="full" size="sm" on:click={submitHandler} {loading}>
                   {#if loading}
                     <Spinner className="size-4" />
                   {:else}
                     {$i18n.t('Save')}
                   {/if}
-                </button>
+                </Button>
               {/if}
             </div>
           </div>
@@ -282,16 +295,17 @@
       </div>
     </Pane>
 
-    {#if showAiSidebar}
-      <PaneResizer class="w-0.5 bg-gray-100 dark:bg-gray-800" />
-      <Pane defaultSize={30} minSize={20}>
-        <WidgetChatSidebar
-          onClose={() => (showAiSidebar = false)}
-          onApply={handleAiApply}
-          currentJson={_content}
-        />
-      </Pane>
-    {/if}
+    <Pane defaultSize={30} minSize={20} class={cn('relative p-2 pl-4', !showAiSidebar && 'hidden')}>
+      <PaneResizer
+        class="bg-border hover:bg-foreground/50 absolute top-1/2 left-1 z-50 h-12 w-1.5 -translate-y-1/2 cursor-grab! rounded-full transition-all active:h-10 active:cursor-grabbing"
+      />
+      <WidgetChatSidebar
+        className="bg-card rounded-2xl"
+        onClose={() => (showAiSidebar = false)}
+        onApply={handleAiApply}
+        currentJson={_content}
+      />
+    </Pane>
   </PaneGroup>
 </div>
 

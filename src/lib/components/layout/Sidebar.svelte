@@ -67,6 +67,7 @@
   import { slide } from 'svelte/transition';
   import HotkeyHint from '../common/HotkeyHint.svelte';
   import { cn } from '$lib/utils';
+  import Button from '../common/Button.svelte';
 
   const BREAKPOINT = 768;
 
@@ -707,8 +708,11 @@
             content={$showSidebar ? $i18n.t('Close Sidebar') : $i18n.t('Open Sidebar')}
             placement="right"
           >
-            <button
-              class="group hover:bg-card-hover flex rounded-xl transition {isWindows
+            <Button
+              isIconOnly
+              variant="ghost"
+              color="foreground"
+              className="group flex rounded-xl transition {isWindows
                 ? 'cursor-pointer'
                 : 'cursor-[e-resize]'}"
               aria-label={$showSidebar ? $i18n.t('Close Sidebar') : $i18n.t('Open Sidebar')}
@@ -722,7 +726,7 @@
 
                 <Sidebar className="size-5 hidden group-hover:flex" />
               </div>
-            </button>
+            </Button>
           </Tooltip>
         </div>
 
@@ -890,8 +894,11 @@
         )}
       >
         <div class="sidebar sticky top-0 z-10 -mb-3 flex justify-between p-2 pb-0">
-          <a
-            class="no-drag-region hover:bg-card-hover flex h-full items-center justify-center rounded-xl p-1.5 transition"
+          <Button
+            isIconOnly
+            variant="ghost"
+            color="foreground"
+            className="no-drag-region hover:bg-card-hover flex items-center justify-center rounded-xl transition"
             href="/"
             draggable="false"
             on:click={newChatHandler}
@@ -902,7 +909,7 @@
               class="sidebar-new-chat-icon size-6 rounded-full"
               alt=""
             />
-          </a>
+          </Button>
 
           <a href="/" class="flex flex-1 px-1.5" on:click={newChatHandler}>
             <div
@@ -916,8 +923,11 @@
             content={$showSidebar ? $i18n.t('Close Sidebar') : $i18n.t('Open Sidebar')}
             placement="bottom"
           >
-            <button
-              class="hover:bg-card-hover flex size-8.5 items-center justify-center rounded-xl transition {isWindows
+            <Button
+              isIconOnly
+              variant="ghost"
+              color="foreground"
+              className="flex items-center justify-center rounded-xl transition {isWindows
                 ? 'cursor-pointer'
                 : 'cursor-[w-resize]'}"
               on:click={() => {
@@ -928,7 +938,7 @@
               <div class=" self-center p-1.5">
                 <Sidebar />
               </div>
-            </button>
+            </Button>
           </Tooltip>
 
           <div
@@ -1277,7 +1287,7 @@
                     name={$i18n.t('Pinned')}
                   >
                     <div
-                      class="scrollbar-hidden mt-[1px] ml-3 flex flex-col overflow-y-auto border-s border-gray-100 pl-1 text-gray-900 dark:border-gray-900 dark:text-gray-200"
+                      class="scrollbar-hidden mt-[1px] ml-3 flex flex-col space-y-0.5 overflow-y-auto border-s border-gray-100 pl-1 text-gray-900 dark:border-gray-900 dark:text-gray-200"
                     >
                       {#each $pinnedChats as chat, idx (`pinned-chat-${chat?.id ?? idx}`)}
                         <ChatItem
@@ -1309,7 +1319,7 @@
             {/if}
 
             <div class=" scrollbar-hidden flex flex-1 flex-col overflow-y-auto">
-              <div class="pt-1.5">
+              <div class="space-y-0.5 pt-1.5">
                 {#if $chats}
                   {#each $chats as chat, idx (`chat-${chat?.id ?? idx}`)}
                     {#if idx === 0 || (idx > 0 && chat.time_range !== $chats[idx - 1].time_range)}
@@ -1409,7 +1419,7 @@
                 }}
               >
                 <div
-                  class=" hover:bg-card-hover flex w-full items-center rounded-2xl px-1.5 py-2 transition"
+                  class="hover:bg-card-hover bg-card flex w-full items-center rounded-2xl px-1.5 py-2 transition active:scale-[0.99]"
                 >
                   <div class=" relative mr-3 self-center">
                     <img

@@ -134,6 +134,8 @@
 
   export let imageGenerationEnabled = false;
   export let webSearchEnabled = false;
+  export let deepResearchEnabled = false;
+  export let presentationEnabled = false;
   export let codeInterpreterEnabled = false;
 
   export let pendingOAuthTools = [];
@@ -176,6 +178,8 @@
     selectedFilterIds,
     imageGenerationEnabled,
     webSearchEnabled,
+    deepResearchEnabled,
+    presentationEnabled,
     codeInterpreterEnabled,
   });
 
@@ -474,6 +478,34 @@
     (model) => $models.find((m) => m.id === model)?.info?.meta?.capabilities?.web_search ?? true,
   );
 
+  let deepResearchCapableModels = [];
+  $: deepResearchCapableModels = (atSelectedModel?.id ? [atSelectedModel.id] : selectedModels).filter((modelId) => {
+    const model = $models.find((m) => m.id === modelId);
+    const capabilities = model?.info?.meta?.capabilities ?? {};
+    const currentModelId = String(model?.id ?? '').toLowerCase();
+    const baseModelId = String(model?.base_model_id ?? '').toLowerCase();
+    return Boolean(
+      model?.orchestrator ||
+        capabilities?.deep_research ||
+        currentModelId.startsWith('mts-router') ||
+        baseModelId.startsWith('mts-router'),
+    );
+  });
+
+  let presentationCapableModels = [];
+  $: presentationCapableModels = (atSelectedModel?.id ? [atSelectedModel.id] : selectedModels).filter((modelId) => {
+    const model = $models.find((m) => m.id === modelId);
+    const capabilities = model?.info?.meta?.capabilities ?? {};
+    const currentModelId = String(model?.id ?? '').toLowerCase();
+    const baseModelId = String(model?.base_model_id ?? '').toLowerCase();
+    return Boolean(
+      model?.orchestrator ||
+        capabilities?.presentation_generation ||
+        currentModelId.startsWith('mts-router') ||
+        baseModelId.startsWith('mts-router'),
+    );
+  });
+
   let imageGenerationCapableModels = [];
   $: imageGenerationCapableModels = (
     atSelectedModel?.id ? [atSelectedModel.id] : selectedModels
@@ -502,6 +534,22 @@
   $: showWebSearchButton =
     (atSelectedModel?.id ? [atSelectedModel.id] : selectedModels).length ===
       webSearchCapableModels.length &&
+    $config?.features?.enable_web_search &&
+    ($_user.role === 'admin' || $_user?.permissions?.features?.web_search);
+
+  let showDeepResearchButton = false;
+  $: showDeepResearchButton =
+    deepResearchCapableModels.length > 0 &&
+    (atSelectedModel?.id ? [atSelectedModel.id] : selectedModels).length ===
+      deepResearchCapableModels.length &&
+    $config?.features?.enable_web_search &&
+    ($_user.role === 'admin' || $_user?.permissions?.features?.web_search);
+
+  let showPresentationButton = false;
+  $: showPresentationButton =
+    presentationCapableModels.length > 0 &&
+    (atSelectedModel?.id ? [atSelectedModel.id] : selectedModels).length ===
+      presentationCapableModels.length &&
     $config?.features?.enable_web_search &&
     ($_user.role === 'admin' || $_user?.permissions?.features?.web_search);
 
@@ -639,6 +687,14 @@
             uploadedFile?.meta?.collection_name || uploadedFile?.collection_name;
           fileItem.content_type = uploadedFile.meta?.content_type || uploadedFile.content_type;
           fileItem.url = `${uploadedFile.id}`;
+          if (
+            !fileItem.context &&
+            (uploadedFile?.meta?.context === 'full' ||
+              uploadedFile?.meta?.auto_full_context ||
+              uploadedFile?.data?.processing_mode === 'full_context')
+          ) {
+            fileItem.context = 'full';
+          }
 
           files = files;
         } else {
@@ -1243,7 +1299,7 @@
             <div
               id="message-input-container"
               class={cn(
-                'border-border bg-secondary ring-primary ring-offset-background relative flex w-full flex-1 flex-col rounded-3xl border px-1 shadow-lg ring-0 ring-offset-0 transition-all focus-within:ring-2 focus-within:ring-offset-2',
+                'border-border bg-secondary ring-primary ring-offset-background focus-within:shadow-primary/25 relative flex w-full flex-1 flex-col rounded-3xl border px-1 ring-0 ring-offset-0 transition-all focus-within:shadow-[0_0_24px_12px_var(--color-primary)]/25 focus-within:ring-2 focus-within:ring-offset-2 dark:focus-within:shadow-[0_0_24px_12px_var(--color-primary)]/50',
                 $temporaryChatEnabled && 'bg-card',
               )}
               dir={$settings?.chatDirection ?? 'auto'}
@@ -1519,6 +1575,8 @@
                               selectedFilterIds = [];
 
                               webSearchEnabled = false;
+                              deepResearchEnabled = false;
+                              presentationEnabled = false;
                               imageGenerationEnabled = false;
                               codeInterpreterEnabled = false;
                             }
@@ -1628,7 +1686,7 @@
                     </div>
                   </InputMenu>
 
-                  {#if showWebSearchButton || showImageGenerationButton || showCodeInterpreterButton || showToolsButton || (toggleFilters && toggleFilters.length > 0)}
+                  {#if showWebSearchButton || showDeepResearchButton || showPresentationButton || showImageGenerationButton || showCodeInterpreterButton || showToolsButton || (toggleFilters && toggleFilters.length > 0)}
                     <div
                       class="mx-1 flex h-4 w-[1px] self-center bg-gray-200/50 dark:bg-gray-800/50"
                     />
@@ -1637,11 +1695,15 @@
                       selectedModels={atSelectedModel ? [atSelectedModel.id] : selectedModels}
                       {toggleFilters}
                       {showWebSearchButton}
+                      {showDeepResearchButton}
+                      {showPresentationButton}
                       {showImageGenerationButton}
                       {showCodeInterpreterButton}
                       bind:selectedToolIds
                       bind:selectedFilterIds
                       bind:webSearchEnabled
+                      bind:deepResearchEnabled
+                      bind:presentationEnabled
                       bind:imageGenerationEnabled
                       bind:codeInterpreterEnabled
                       closeOnOutsideClick={integrationsMenuCloseOnOutsideClick}
@@ -1776,6 +1838,40 @@
                             : 'bg-transparent text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800 '}"
                         >
                           <GlobeAlt className="size-4" strokeWidth="1.75" />
+                          <div class="hidden group-hover:block">
+                            <XMark className="size-4" strokeWidth="1.75" />
+                          </div>
+                        </button>
+                      </Tooltip>
+                    {/if}
+
+                    {#if deepResearchEnabled}
+                      <Tooltip content={$i18n.t('Deep Research')} placement="top">
+                        <button
+                          on:click|preventDefault={() => (deepResearchEnabled = !deepResearchEnabled)}
+                          type="button"
+                          class="group flex max-w-full items-center gap-1.5 overflow-hidden rounded-full p-[7px] text-sm transition-colors duration-300 focus:outline-hidden {deepResearchEnabled
+                            ? ' border border-sky-200/40 bg-sky-50 text-sky-500 hover:bg-sky-100 dark:border-sky-500/20 dark:bg-sky-400/10 dark:text-sky-300 dark:hover:bg-sky-600/10'
+                            : 'bg-transparent text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800 '}"
+                        >
+                          <Sparkles className="size-4" strokeWidth="1.75" />
+                          <div class="hidden group-hover:block">
+                            <XMark className="size-4" strokeWidth="1.75" />
+                          </div>
+                        </button>
+                      </Tooltip>
+                    {/if}
+
+                    {#if presentationEnabled}
+                      <Tooltip content={$i18n.t('Presentation')} placement="top">
+                        <button
+                          on:click|preventDefault={() => (presentationEnabled = !presentationEnabled)}
+                          type="button"
+                          class="group flex max-w-full items-center gap-1.5 overflow-hidden rounded-full p-[7px] text-sm transition-colors duration-300 focus:outline-hidden {presentationEnabled
+                            ? ' border border-sky-200/40 bg-sky-50 text-sky-500 hover:bg-sky-100 dark:border-sky-500/20 dark:bg-sky-400/10 dark:text-sky-300 dark:hover:bg-sky-600/10'
+                            : 'bg-transparent text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800 '}"
+                        >
+                          <Sparkles className="size-4" strokeWidth="1.75" />
                           <div class="hidden group-hover:block">
                             <XMark className="size-4" strokeWidth="1.75" />
                           </div>
