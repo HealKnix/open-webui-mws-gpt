@@ -48,6 +48,7 @@
     showFileNavDir,
     chatRequestQueues,
     widgets as widgetStore,
+    activeMcpApp,
   } from '$lib/stores';
 
   import { WEBUI_API_BASE_URL } from '$lib/constants';
@@ -570,6 +571,12 @@
         } else if (type === 'chat:message:favorite') {
           // Update message favorite status
           message.favorite = data.favorite;
+        } else if (type === 'chat:message:mcp-ui') {
+          // MCP Apps UI resource emitted alongside a tool call result.
+          if (!Array.isArray(message.mcp_ui_resources)) {
+            message.mcp_ui_resources = [];
+          }
+          message.mcp_ui_resources = [...message.mcp_ui_resources, data];
         } else if (type === 'chat:title') {
           chatTitle.set(data);
           currentChatPage.set(1);
@@ -1334,6 +1341,23 @@
 
         params = chatContent?.params ?? {};
         chatFiles = chatContent?.files ?? [];
+
+        // Restore active MCP App
+        if (chatContent?.mcp_app_id) {
+          try {
+            const { getMcpAppById } = await import('$lib/apis/mcp_apps');
+            const app = await getMcpAppById(localStorage.token, chatContent.mcp_app_id);
+            if (app && app.is_active) {
+              activeMcpApp.set(app);
+            } else {
+              activeMcpApp.set(null);
+            }
+          } catch {
+            activeMcpApp.set(null);
+          }
+        } else {
+          activeMcpApp.set(null);
+        }
 
         autoScroll = true;
         await tick();
@@ -2476,6 +2500,7 @@ ${widgetContexts.join('\n')}
 
         filter_ids: selectedFilterIds.length > 0 ? selectedFilterIds : undefined,
         tool_ids: toolIds.length > 0 ? toolIds : undefined,
+        mcp_app_id: $activeMcpApp?.id ?? undefined,
         skill_ids: skillIds.length > 0 ? skillIds : undefined,
         terminal_id: activeTerminalId ?? undefined,
         tool_servers: [
@@ -2813,6 +2838,7 @@ ${widgetContexts.join('\n')}
           messages: createMessagesList(history, history.currentId),
           tags: [],
           timestamp: Date.now(),
+          mcp_app_id: $activeMcpApp?.id ?? null,
         },
         $selectedFolder?.id,
       );
@@ -2846,6 +2872,7 @@ ${widgetContexts.join('\n')}
           messages: createMessagesList(history, history.currentId),
           params: params,
           files: chatFiles,
+          mcp_app_id: $activeMcpApp?.id ?? null,
         });
       }
     }

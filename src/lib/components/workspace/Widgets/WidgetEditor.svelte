@@ -11,6 +11,7 @@
   import Spinner from '$lib/components/common/Spinner.svelte';
   import { updateWidgetAccessGrants } from '$lib/apis/widgets';
   import { goto } from '$app/navigation';
+  import { page } from '$app/stores';
 
   import CodeEditor from '$lib/components/common/CodeEditor.svelte';
   import WidgetMapper from '$lib/components/common/agentui/WidgetMapper.svelte';
@@ -149,7 +150,10 @@
               <Tooltip content={$i18n.t('Back')}>
                 <button
                   class="rounded-lg p-1.5 hover:bg-gray-50 dark:hover:bg-gray-800"
-                  on:click={() => goto('/workspace/widgets')}
+                  on:click={() => {
+                    const returnTo = $page.url.searchParams.get('returnTo');
+                    goto(returnTo || '/workspace/widgets');
+                  }}
                 >
                   <ChevronLeft strokeWidth="2.5" className="size-5" />
                 </button>

@@ -86,6 +86,7 @@ from open_webui.routers import (
     groups,
     files,
     functions,
+    mcp_apps,
     memories,
     models,
     knowledge,
@@ -700,10 +701,18 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             log.warning(f'Failed to initialize tool/terminal servers at startup: {e}')
 
+    # Start MCP stdio process cleanup loop
+    from open_webui.utils.mcp.process_manager import mcp_process_registry
+    mcp_process_registry.start_cleanup_loop()
+
     # Mark application as ready to accept traffic from a startup perspective.
     app.state.startup_complete = True
 
     yield
+
+    # Shutdown: clean up MCP stdio processes
+    mcp_process_registry.stop_cleanup_loop()
+    await mcp_process_registry.cleanup_all()
 
     if hasattr(app.state, 'redis_task_command_listener'):
         app.state.redis_task_command_listener.cancel()
@@ -1513,6 +1522,7 @@ app.include_router(prompts.router, prefix='/api/v1/prompts', tags=['prompts'])
 app.include_router(tools.router, prefix='/api/v1/tools', tags=['tools'])
 app.include_router(skills.router, prefix='/api/v1/skills', tags=['skills'])
 app.include_router(widgets.router, prefix='/api/v1/widgets', tags=['widgets'])
+app.include_router(mcp_apps.router, prefix='/api/v1/mcp_apps', tags=['mcp_apps'])
 
 app.include_router(memories.router, prefix='/api/v1/memories', tags=['memories'])
 app.include_router(folders.router, prefix='/api/v1/folders', tags=['folders'])

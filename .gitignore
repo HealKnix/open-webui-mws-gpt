@@ -314,3 +314,4 @@ cypress/screenshots
 .codex/
 .github/prompts/
 .github/skills/
+openspec/

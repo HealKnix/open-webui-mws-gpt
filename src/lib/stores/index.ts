@@ -72,6 +72,9 @@ export const skills = writable(null);
 export const widgets = writable(null);
 export const functions = writable(null);
 
+export const mcpApps = writable([]);
+export const activeMcpApp: Writable<any | null> = writable(null);
+
 export const toolServers = writable([]);
 export const terminalServers = writable([]);
 

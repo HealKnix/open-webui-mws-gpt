@@ -2378,6 +2378,7 @@ async def process_chat_payload(request, form_data, user, metadata, model):
                     )
 
     tool_ids = form_data.pop('tool_ids', None)
+    mcp_app_id = form_data.pop('mcp_app_id', None)
     terminal_id = form_data.pop('terminal_id', None)
     files = form_data.pop('files', None)
 
@@ -2448,6 +2449,7 @@ async def process_chat_payload(request, form_data, user, metadata, model):
     metadata = {
         **metadata,
         'tool_ids': tool_ids,
+        'mcp_app_id': mcp_app_id,
         'terminal_id': terminal_id,
         'files': files,
     }
@@ -2567,9 +2569,12 @@ async def process_chat_payload(request, form_data, user, metadata, model):
 
                             tool_function = make_tool_function(mcp_clients[server_id], tool_spec['name'])
 
+                            clean_legacy_spec = {
+                                k: v for k, v in tool_spec.items() if k != 'meta'
+                            }
                             mcp_tools_dict[f'{server_id}_{tool_spec["name"]}'] = {
                                 'spec': {
-                                    **tool_spec,
+                                    **clean_legacy_spec,
                                     'name': f'{server_id}_{tool_spec["name"]}',
                                 },
                                 'callable': tool_function,
@@ -2602,6 +2607,265 @@ async def process_chat_payload(request, form_data, user, metadata, model):
 
             if mcp_tools_dict:
                 tools_dict = {**tools_dict, **mcp_tools_dict}
+
+        # ── MCP App resolution ──────────────────────────────────────────
+        mcp_app_id = metadata.get('mcp_app_id', None)
+        if mcp_app_id:
+            try:
+                from open_webui.models.mcp_apps import McpApps
+                from open_webui.utils.mcp.process_manager import mcp_process_registry
+                from open_webui.utils.oauth import decrypt_data
+
+                mcp_app = McpApps.get_mcp_app_by_id(mcp_app_id)
+                if not mcp_app:
+                    log.warning(f'MCP App {mcp_app_id} not found')
+                elif not mcp_app.is_active:
+                    log.warning(f'MCP App {mcp_app_id} is not active')
+                else:
+                    # Validate AG UI model
+                    from open_webui.utils.agents.dispatcher import is_agent_backend_enabled
+                    agent_backend = is_agent_backend_enabled(model, metadata)
+                    if not agent_backend:
+                        log.warning(f'MCP App {mcp_app_id} requires AG UI model — ignoring')
+                        if event_emitter:
+                            await event_emitter({
+                                'type': 'chat:message:error',
+                                'data': {'error': {'content': 'MCP Apps require a model with AG UI agent backend enabled.'}},
+                            })
+                    else:
+                        # Connect to MCP server
+                        mcp_app_client = None
+                        if mcp_app.transport == 'stdio':
+                            # Use process registry for stdio
+                            entry = mcp_process_registry.get(user.id, mcp_app.id)
+                            if entry:
+                                mcp_app_client = entry.client
+                            else:
+                                env = {}
+                                if mcp_app.env_encrypted:
+                                    env = decrypt_data(mcp_app.env_encrypted)
+                                entry = await mcp_process_registry.spawn(
+                                    user_id=user.id,
+                                    app_id=mcp_app.id,
+                                    command=mcp_app.command or '',
+                                    args=mcp_app.args or [],
+                                    env=env,
+                                )
+                                mcp_app_client = entry.client
+                        else:
+                            # HTTP Streamable or SSE
+                            headers = {}
+                            if mcp_app.auth_type == 'bearer' and mcp_app.auth_config_encrypted:
+                                auth_config = decrypt_data(mcp_app.auth_config_encrypted)
+                                headers['Authorization'] = f'Bearer {auth_config.get("key", "")}'
+                            elif mcp_app.auth_type == 'session':
+                                headers['Authorization'] = f'Bearer {request.state.token.credentials}'
+
+                            mcp_app_client = MCPClient()
+                            await mcp_app_client.connect(
+                                url=mcp_app.url,
+                                headers=headers if headers else None,
+                                transport=mcp_app.transport,
+                            )
+                            mcp_clients[f'mcp_app:{mcp_app.id}'] = mcp_app_client
+
+                        if mcp_app_client:
+                            # Build tool configs lookup
+                            tool_configs = {}
+                            for tc in (mcp_app.tool_configs or []):
+                                tc_name = tc.get('name') or tc.get('tool_name', '')
+                                tool_configs[tc_name] = tc
+
+                            # Fetch tools and apply configs
+                            app_tool_specs = await mcp_app_client.list_tool_specs()
+                            mcp_app_confirmation_ids = set()
+
+                            for tool_spec in app_tool_specs:
+                                tool_name = tool_spec['name']
+                                tc = tool_configs.get(tool_name, {})
+
+                                # Skip disabled tools
+                                if not tc.get('enabled', True):
+                                    continue
+
+                                # Track confirmation tools
+                                if tc.get('requires_confirmation', False):
+                                    mcp_app_confirmation_ids.add(f'mcp_app:{mcp_app.id}_{tool_name}')
+
+                                # Tool-level _meta (from tools/list) — used as
+                                # fallback when the call result doesn't carry
+                                # its own _meta.ui.resourceUri.
+                                tool_level_meta = tool_spec.get('meta') or {}
+                                tool_level_ui = (
+                                    tool_level_meta.get('ui') or {}
+                                ) if isinstance(tool_level_meta, dict) else {}
+                                tool_level_resource_uri = (
+                                    tool_level_ui.get('resourceUri')
+                                    if isinstance(tool_level_ui, dict)
+                                    else None
+                                )
+
+                                def make_mcp_app_tool_function(
+                                    client,
+                                    function_name,
+                                    app_id,
+                                    default_resource_uri=None,
+                                ):
+                                    async def tool_function(**kwargs):
+                                        result = await client.call_tool_with_meta(
+                                            function_name,
+                                            function_args=kwargs,
+                                        )
+                                        content = result.get('content')
+                                        meta = result.get('meta') or {}
+                                        structured_content = result.get('structuredContent')
+                                        log.warning(
+                                            f'[MCP-UI debug] tool={function_name} '
+                                            f'input_preview={str(kwargs)[:5000]} '
+                                            f'content_type={type(content).__name__} '
+                                            f'content_preview={str(content)[:2000]} '
+                                            f'structured_preview={str(structured_content)[:2000]} '
+                                            f'meta={meta}'
+                                        )
+
+                                        # MCP Apps spec: if tool attaches a UI
+                                        # resource reference via _meta.ui.resourceUri,
+                                        # read the resource and emit an event so
+                                        # the frontend can render it inline. Prefer
+                                        # result-level meta, fall back to tool-level
+                                        # meta (declared at tools/list time).
+                                        # The UI payload is intentionally not added
+                                        # to the LLM-facing tool content.
+                                        ui_meta = (meta.get('ui') or {}) if isinstance(meta, dict) else {}
+                                        resource_uri = (
+                                            ui_meta.get('resourceUri')
+                                            if isinstance(ui_meta, dict)
+                                            else None
+                                        ) or default_resource_uri
+                                        if resource_uri and event_emitter:
+                                            try:
+                                                read_result = await client.read_resource(resource_uri)
+                                                contents = (read_result or {}).get('contents') or []
+                                                first = contents[0] if contents else None
+                                                log.warning(
+                                                    f'[MCP-UI debug] resource uri={resource_uri} '
+                                                    f'contents_count={len(contents)} '
+                                                    f'first_mime={first.get("mimeType") if first else None} '
+                                                    f'first_text_preview={str(first.get("text"))[:300] if first else None}'
+                                                )
+                                                if first:
+                                                    resource_payload = {
+                                                        'uri': first.get('uri') or resource_uri,
+                                                        'mimeType': first.get('mimeType'),
+                                                    }
+                                                    if first.get('text') is not None:
+                                                        resource_payload['text'] = first.get('text')
+                                                    if first.get('blob') is not None:
+                                                        resource_payload['blob'] = first.get('blob')
+                                                    await event_emitter({
+                                                        'type': 'chat:message:mcp-ui',
+                                                        'data': {
+                                                            'app_id': app_id,
+                                                            'tool_name': function_name,
+                                                            'tool_input': kwargs,
+                                                            'tool_output': {
+                                                                'content': content,
+                                                                'structuredContent': structured_content,
+                                                            },
+                                                            'resource': resource_payload,
+                                                        },
+                                                    })
+                                            except Exception as ui_err:
+                                                log.warning(
+                                                    f'MCP UI resource read failed for {function_name} '
+                                                    f'({resource_uri}): {ui_err}'
+                                                )
+
+                                        return content
+                                    return tool_function
+
+                                namespaced_name = f'mcp_app:{mcp_app.id}_{tool_name}'
+                                # Strip internal `meta` field — it is not a
+                                # valid part of an OpenAI/Ollama function
+                                # definition and would be sent to the LLM.
+                                clean_tool_spec = {
+                                    k: v for k, v in tool_spec.items() if k != 'meta'
+                                }
+                                tools_dict[namespaced_name] = {
+                                    'spec': {
+                                        **clean_tool_spec,
+                                        'name': namespaced_name,
+                                    },
+                                    'callable': make_mcp_app_tool_function(
+                                        mcp_app_client,
+                                        tool_name,
+                                        mcp_app.id,
+                                        default_resource_uri=tool_level_resource_uri,
+                                    ),
+                                    'type': 'mcp',
+                                    'client': mcp_app_client,
+                                    'direct': False,
+                                    'tool_id': namespaced_name,
+                                }
+
+                            # Store confirmation IDs and tool configs in metadata for agent adapter
+                            metadata['mcp_app_confirmation_ids'] = mcp_app_confirmation_ids
+                            metadata['mcp_app_tool_configs'] = tool_configs
+
+                            # Compose and inject skill prompt
+                            skill_prompt_parts = []
+                            skill_prompt_parts.append(f'## {mcp_app.name}')
+                            if mcp_app.skill_prompt:
+                                skill_prompt_parts.append(mcp_app.skill_prompt)
+
+                            # Auto-generated tools section
+                            tool_lines = ['## Available Tools', '']
+                            for tool_spec in app_tool_specs:
+                                tool_name = tool_spec['name']
+                                tc = tool_configs.get(tool_name, {})
+                                if not tc.get('enabled', True):
+                                    continue
+                                desc = tool_spec.get('description', '')
+                                mode = 'requires user confirmation' if tc.get('requires_confirmation', False) else 'automatic'
+                                params = tool_spec.get('parameters', {}).get('properties', {})
+                                param_names = list(params.keys())[:10]
+                                param_str = ', '.join(param_names)
+                                if len(params) > 10:
+                                    param_str += f', ... and {len(params) - 10} more'
+                                display = tc.get('display_name', tool_name)
+                                tool_lines.append(f'- `{display}`: {desc}')
+                                if param_str:
+                                    tool_lines.append(f'  Parameters: {param_str}')
+                                tool_lines.append(f'  Mode: {mode}')
+                            skill_prompt_parts.append('\n'.join(tool_lines))
+
+                            # Auto-generated widgets section
+                            widget_lines = ['## Available Widgets', '']
+                            if mcp_app.widget_ids:
+                                from open_webui.models.widgets import Widgets
+                                for wid in mcp_app.widget_ids:
+                                    widget = Widgets.get_widget_by_id(wid)
+                                    if widget:
+                                        widget_lines.append(f'- `{widget.name}`: {widget.description or ""}')
+                                        widget_lines.append(f'  Usage: ```widgetui {{ "widget": "{wid}", "data": {{...}} }} ```')
+                            widget_lines.append('')
+                            widget_lines.append('Generic widgets are also available: card, button, text, badge, divider, card-grid, flex')
+                            skill_prompt_parts.append('\n'.join(widget_lines))
+
+                            composed_skill = '\n\n'.join(skill_prompt_parts)
+                            form_data['messages'] = add_or_update_system_message(
+                                composed_skill,
+                                form_data['messages'],
+                                append=True,
+                            )
+
+            except Exception as e:
+                log.exception(f'Failed to resolve MCP App {mcp_app_id}: {e}')
+                if event_emitter:
+                    await event_emitter({
+                        'type': 'chat:message:error',
+                        'data': {'error': {'content': f'Failed to connect to MCP App: {str(e)}'}},
+                    })
 
         # Resolve terminal tools if terminal_id is set (outside tool_ids check
         # so system terminals work even when no other tools are selected)
