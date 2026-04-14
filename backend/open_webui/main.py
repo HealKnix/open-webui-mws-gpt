@@ -81,6 +81,7 @@ from open_webui.routers import (
     channels,
     chats,
     chat_summaries,
+    context_compression,
     notes,
     folders,
     configs,
@@ -651,10 +652,10 @@ async def lifespan(app: FastAPI):
 
     # Start chat summarization background task
     async def periodic_chat_summarization():
-        """Periodically process chats for summarization every 4 hours."""
+        """Periodically process chats for summarization every N."""
         while True:
             try:
-                await asyncio.sleep(1 * 60)  # 4 hours
+                await asyncio.sleep(10 * 60)  # 10 minute
 
                 # Create a mock request for the summarizer
                 from fastapi import Request
@@ -693,6 +694,26 @@ async def lifespan(app: FastAPI):
                 await asyncio.sleep(60)  # Wait 1 minute before retrying
 
     asyncio.create_task(periodic_chat_summarization())
+
+    # Start context compression cleanup background task
+    async def periodic_context_compression_cleanup():
+        """Periodically cleanup expired context compression segments."""
+        while True:
+            try:
+                await asyncio.sleep(24 * 60 * 60)  # 24 hours
+
+                from open_webui.models.chat_context_segments import ChatContextSegments
+
+                deleted_count = ChatContextSegments.cleanup_expired_segments()
+                log.info(f"Context compression cleanup: deleted {deleted_count} expired segments")
+
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                log.error(f"Error in context compression cleanup: {e}")
+                await asyncio.sleep(60)  # Wait 1 minute before retrying
+
+    asyncio.create_task(periodic_context_compression_cleanup())
 
     if app.state.config.ENABLE_BASE_MODELS_CACHE:
         try:
@@ -1560,6 +1581,7 @@ app.include_router(skills.router, prefix='/api/v1/skills', tags=['skills'])
 
 app.include_router(memories.router, prefix='/api/v1/memories', tags=['memories'])
 app.include_router(chat_summaries.router, prefix='/api/v1/chat-summaries', tags=['chat-summaries'])
+app.include_router(context_compression.router, prefix='/api/v1/chats/{chat_id}/context', tags=['context-compression'])
 app.include_router(folders.router, prefix='/api/v1/folders', tags=['folders'])
 app.include_router(groups.router, prefix='/api/v1/groups', tags=['groups'])
 app.include_router(files.router, prefix='/api/v1/files', tags=['files'])
