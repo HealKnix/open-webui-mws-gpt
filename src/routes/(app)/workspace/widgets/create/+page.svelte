@@ -1,6 +1,7 @@
 <script lang="ts">
   import { toast } from 'svelte-sonner';
   import { goto } from '$app/navigation';
+  import { page } from '$app/stores';
   import { widgets } from '$lib/stores';
   import { onMount, getContext } from 'svelte';
 
@@ -29,7 +30,14 @@
     if (res) {
       toast.success($i18n.t('Widget created successfully'));
       await widgets.set(await getWidgets(localStorage.token));
-      await goto('/workspace/widgets');
+
+      const returnTo = $page.url.searchParams.get('returnTo');
+      if (returnTo) {
+        sessionStorage.setItem('mcp_app_editor_new_widget_id', res.id || _widget.id);
+        await goto(returnTo);
+      } else {
+        await goto('/workspace/widgets');
+      }
     }
   };
 

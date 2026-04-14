@@ -760,6 +760,9 @@ AIOHTTP_CLIENT_SESSION_TOOL_SERVER_SSL = (
     os.environ.get('AIOHTTP_CLIENT_SESSION_TOOL_SERVER_SSL', 'True').lower() == 'true'
 )
 
+# MCP Apps: enable stdio transport (disabled by default for security)
+ENABLE_MCP_STDIO = os.environ.get('ENABLE_MCP_STDIO', 'false').lower() == 'true'
+
 AIOHTTP_CLIENT_TIMEOUT_TOOL_SERVER = os.environ.get('AIOHTTP_CLIENT_TIMEOUT_TOOL_SERVER', '')
 
 if AIOHTTP_CLIENT_TIMEOUT_TOOL_SERVER == '':

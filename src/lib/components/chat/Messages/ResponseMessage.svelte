@@ -62,6 +62,8 @@
   import RegenerateMenu from './ResponseMessage/RegenerateMenu.svelte';
   import StatusHistory from './ResponseMessage/StatusHistory.svelte';
   import FullHeightIframe from '$lib/components/common/FullHeightIframe.svelte';
+  import McpUiResource from '$lib/components/common/mcpui/McpUiResource.svelte';
+  import { callMcpAppTool } from '$lib/apis/mcp_apps';
 
   interface MessageType {
     id: string;
@@ -112,6 +114,12 @@
       usage?: unknown;
     };
     annotation?: { type: string; rating: number };
+    mcp_ui_resources?: Array<{
+      app_id: string;
+      tool_name: string;
+      tool_input?: Record<string, any>;
+      resource: { uri?: string; mimeType?: string; text?: string; blob?: string };
+    }>;
   }
 
   export let chatId = '';
@@ -158,6 +166,88 @@
   export let readOnly = false;
   export let editCodeBlock = true;
   export let topPadding = false;
+
+  // Keeps a handle to each rendered McpUiResource so tool-action responses
+  // can be patched back into the same iframe when the tool returns another
+  // UI resource (update-in-place behavior from the mcp-ui spec).
+  let mcpUiResourceStates: Array<{
+    app_id: string;
+    tool_name: string;
+    resource: { uri?: string; mimeType?: string; text?: string; blob?: string };
+  } | null> = [];
+
+  async function handleMcpUiAction(
+    idx: number,
+    entry: NonNullable<MessageType['mcp_ui_resources']>[number],
+    event: CustomEvent<{ type: string; payload: any }>,
+  ) {
+    const { type, payload } = event.detail;
+    if (!type) return;
+
+    if (type === 'prompt' || type === 'intent') {
+      const prompt =
+        typeof payload?.prompt === 'string'
+          ? payload.prompt
+          : typeof payload?.intent === 'string'
+            ? payload.intent
+            : '';
+      if (prompt) {
+        setInputText(prompt);
+      }
+      return;
+    }
+
+    if (type === 'tool') {
+      const toolName = payload?.toolName;
+      if (!entry.app_id || !toolName) {
+        return;
+      }
+      let toolParams = payload?.params ?? {};
+      let confirmed = false;
+      while (true) {
+        try {
+          const res = await callMcpAppTool(
+            localStorage.token,
+            entry.app_id,
+            toolName,
+            toolParams,
+            confirmed,
+          );
+          if (res?.requires_confirmation) {
+            const label = res.display_name || toolName;
+            const ok = window.confirm(
+              $i18n.t('The MCP UI is requesting to run "{{label}}". Allow it?', { label }) ??
+                `Allow "${label}" to run?`,
+            );
+            if (!ok) return;
+            confirmed = true;
+            continue;
+          }
+          if (res?.ui_resource) {
+            const current = mcpUiResourceStates[idx] ?? { ...entry };
+            mcpUiResourceStates[idx] = {
+              ...current,
+              resource: res.ui_resource,
+            };
+            mcpUiResourceStates = [...mcpUiResourceStates];
+          }
+          return;
+        } catch (err: any) {
+          toast.error(typeof err === 'string' ? err : err?.detail || 'Tool call failed');
+          return;
+        }
+      }
+    }
+  }
+
+  $: if (message?.mcp_ui_resources) {
+    // Seed per-resource state so update-in-place reflects tool-action responses
+    // but still falls back to the event-provided resource when nothing has
+    // been replaced yet.
+    if (mcpUiResourceStates.length !== message.mcp_ui_resources.length) {
+      mcpUiResourceStates = message.mcp_ui_resources.map((_, i) => mcpUiResourceStates[i] ?? null);
+    }
+  }
 
   let citationsElement: HTMLDivElement;
 
@@ -708,6 +798,22 @@
                       allowPopups={true}
                     />
                   </div>
+                {/each}
+              </div>
+            {/if}
+
+            {#if message?.mcp_ui_resources && message.mcp_ui_resources.length > 0}
+              <div class="my-1 flex w-full flex-col gap-2" id={`${message.id}-mcp-ui-container`}>
+                {#each message.mcp_ui_resources as entry, idx (idx)}
+                  <McpUiResource
+                    resource={mcpUiResourceStates[idx]?.resource ?? entry.resource}
+                    appId={entry.app_id}
+                    toolCallId={`${entry.tool_name}-${idx}`}
+                    toolName={entry.tool_name}
+                    toolInput={entry.tool_input}
+                    toolOutput={entry.tool_output}
+                    on:action={(ev) => handleMcpUiAction(idx, entry, ev)}
+                  />
                 {/each}
               </div>
             {/if}

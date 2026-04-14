@@ -100,6 +100,11 @@ def wrap_owui_tool_as_structured_tool(
     args_schema = _jsonschema_to_pydantic(tool_name, spec.get('parameters') or {})
 
     async def _invoke(**kwargs: Any) -> Any:
+        # Drop None values: the pydantic args model fills optional fields with
+        # None by default, but MCP servers typically reject `null` for optional
+        # string/number parameters ("None is not of type 'string'"). Absence
+        # and None are equivalent from the LLM's perspective.
+        kwargs = {k: v for k, v in kwargs.items() if v is not None}
         result = await owui_callable(**kwargs)
 
         # Handle (HTMLResponse, result_context) tuples returned by tools
@@ -208,18 +213,23 @@ def _build_tool_approval_event(
     tool_call: dict[str, Any],
     tool_id: str,
     parent_message_id: str | None,
+    confirmation_widget_id: str | None = None,
 ) -> dict[str, Any]:
+    value = {
+        'requestId': f'tool_approval_{uuid.uuid4().hex[:12]}',
+        'runId': run_id,
+        'toolId': tool_id,
+        'toolName': tool_call.get('name') or tool_id,
+        'args': tool_call.get('args') or {},
+        'parentMessageId': parent_message_id,
+    }
+    if confirmation_widget_id:
+        value['confirmationWidgetId'] = confirmation_widget_id
+
     return {
         'type': 'CUSTOM',
         'name': TOOL_APPROVAL_EVENT_NAME,
-        'value': {
-            'requestId': f'tool_approval_{uuid.uuid4().hex[:12]}',
-            'runId': run_id,
-            'toolId': tool_id,
-            'toolName': tool_call.get('name') or tool_id,
-            'args': tool_call.get('args') or {},
-            'parentMessageId': parent_message_id,
-        },
+        'value': value,
     }
 
 
@@ -275,6 +285,7 @@ async def _request_tool_approval(
     tool_id: str,
     parent_message_id: str | None,
     timeout: float | None = DEFAULT_TOOL_APPROVAL_TIMEOUT,
+    confirmation_widget_id: str | None = None,
 ) -> tuple[bool, str | None]:
     if event_caller is None:
         return False, TOOL_APPROVAL_TIMED_OUT_MESSAGE
@@ -288,6 +299,7 @@ async def _request_tool_approval(
                     tool_call=tool_call,
                     tool_id=tool_id,
                     parent_message_id=parent_message_id,
+                    confirmation_widget_id=confirmation_widget_id,
                 ),
             )
         except Exception:
@@ -348,6 +360,7 @@ async def _tools_node(
     tools_by_name: dict[str, StructuredTool | dict[str, Any]],
     *,
     tool_approval_ids: set[str] | None = None,
+    mcp_app_tool_configs: dict[str, dict] | None = None,
     event_caller=None,
     event_emitter=None,
     run_id: str = 'run',
@@ -385,6 +398,16 @@ async def _tools_node(
         tool_id = tool_runtime.get('tool_id') or tool_name
 
         if tool_approval_ids and tool_id in tool_approval_ids:
+            # Look up confirmation widget ID from MCP App tool configs
+            confirmation_widget_id = None
+            if mcp_app_tool_configs:
+                # tool_id format: mcp_app:{app_id}_{tool_name}
+                # tool_configs key: tool_name
+                for tc_name, tc in mcp_app_tool_configs.items():
+                    if tool_id.endswith(f'_{tc_name}') and tc.get('confirmation_widget_id'):
+                        confirmation_widget_id = tc['confirmation_widget_id']
+                        break
+
             approved, approval_error = await _request_tool_approval(
                 event_caller=event_caller,
                 event_emitter=event_emitter,
@@ -393,6 +416,7 @@ async def _tools_node(
                 tool_id=tool_id,
                 parent_message_id=parent_message_id,
                 timeout=approval_timeout,
+                confirmation_widget_id=confirmation_widget_id,
             )
             if not approved:
                 if event_emitter is not None:
@@ -497,6 +521,7 @@ def _build_graph(
     event_caller=None,
     event_emitter=None,
     tool_approval_ids: set[str] | None = None,
+    mcp_app_tool_configs: dict[str, dict] | None = None,
     run_id: str = 'run',
 ):
     from langgraph.checkpoint.memory import MemorySaver
@@ -515,6 +540,7 @@ def _build_graph(
             state,
             tools_by_name,
             tool_approval_ids=tool_approval_ids,
+            mcp_app_tool_configs=mcp_app_tool_configs,
             event_caller=event_caller,
             event_emitter=event_emitter,
             run_id=run_id,
@@ -585,6 +611,13 @@ async def run_langgraph_agent(
         ]
         tool_approval_ids = _get_model_tool_approval_ids(form_data, model)
 
+        # Merge MCP App confirmation IDs
+        mcp_app_confirmation_ids = metadata.get('mcp_app_confirmation_ids')
+        if mcp_app_confirmation_ids:
+            tool_approval_ids = tool_approval_ids | mcp_app_confirmation_ids
+
+        mcp_app_tool_configs = metadata.get('mcp_app_tool_configs')
+
         llm = _build_llm(request, model, form_data)
         app = _build_graph(
             llm,
@@ -592,6 +625,7 @@ async def run_langgraph_agent(
             event_caller=event_caller,
             event_emitter=event_emitter,
             tool_approval_ids=tool_approval_ids,
+            mcp_app_tool_configs=mcp_app_tool_configs,
             run_id=translator.run_id,
         )
 

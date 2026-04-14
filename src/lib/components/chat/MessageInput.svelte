@@ -29,6 +29,7 @@
     tools,
     toolServers,
     terminalServers,
+    activeMcpApp,
     user as _user,
     showControls,
     showSettings,
@@ -87,8 +88,11 @@
   import Voice from '../icons/Voice.svelte';
   import Terminal from '../icons/Terminal.svelte';
   import IntegrationsMenu from './MessageInput/IntegrationsMenu.svelte';
+  import McpAppPicker from './MessageInput/McpAppPicker.svelte';
+  import McpAppBadge from './MessageInput/McpAppBadge.svelte';
   import TerminalMenu from './MessageInput/TerminalMenu.svelte';
   import Component from '../icons/Component.svelte';
+  import Bolt from '../icons/Bolt.svelte';
   import PlusAlt from '../icons/PlusAlt.svelte';
   import Dropdown from '../common/Dropdown.svelte';
 
@@ -1726,6 +1730,21 @@
                     </IntegrationsMenu>
                   {/if}
 
+                  <McpAppPicker
+                    onClose={async () => {
+                      await tick();
+                      const chatInput = document.getElementById('chat-input');
+                      chatInput?.focus();
+                    }}
+                  >
+                    <div
+                      id="mcp-app-picker-button"
+                      class="flex size-8 items-center justify-center rounded-full bg-transparent text-gray-700 outline-hidden hover:bg-gray-100 focus:outline-hidden dark:text-white dark:hover:bg-gray-800"
+                    >
+                      <Bolt className="size-4" strokeWidth="1.5" />
+                    </div>
+                  </McpAppPicker>
+
                   {#if selectedModelIds.length === 1 && $models.find((m) => m.id === selectedModelIds[0])?.has_user_valves}
                     <div class="ml-1 flex gap-1.5">
                       <Tooltip content={$i18n.t('Valves')} placement="top">
@@ -1768,6 +1787,8 @@
                         </button>
                       </Tooltip>
                     {/if}
+
+                    <McpAppBadge />
 
                     {#each selectedFilterIds as filterId (filterId)}
                       {@const filter = toggleFilters.find((f) => f.id === filterId)}
