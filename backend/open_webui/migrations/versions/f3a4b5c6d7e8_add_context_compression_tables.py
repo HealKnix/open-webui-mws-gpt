@@ -1,7 +1,7 @@
 """Add context compression tables
 
 Revision ID: f3a4b5c6d7e8
-Revises: 9f9e855d2ba7
+Revises: 20ec0241e978
 Create Date: 2026-04-14 12:00:00.000000
 
 """
@@ -14,7 +14,7 @@ import open_webui.internal.db
 
 # revision identifiers, used by Alembic.
 revision: str = 'f3a4b5c6d7e8'
-down_revision: Union[str, None] = '9f9e855d2ba7'
+down_revision: Union[str, None] = '20ec0241e978'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
