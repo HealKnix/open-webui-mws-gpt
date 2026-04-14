@@ -333,7 +333,9 @@
 
   <div class=" max-h-[28rem] space-y-4 overflow-y-scroll md:max-h-full">
     <div class="space-y-1 px-1">
-      <div class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+      <div
+        class="my-2 mb-4 border-b border-gray-300 pb-1 text-base font-medium dark:border-gray-800"
+      >
         {$i18n.t('UI')}
       </div>
 
@@ -497,7 +499,9 @@
         />
       {/if}
 
-      <div class=" my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+      <div
+        class="my-2 mb-4 border-b border-gray-300 pb-1 text-base font-medium dark:border-gray-800"
+      >
         {$i18n.t('Chat')}
       </div>
 
@@ -763,7 +767,9 @@
         </button>
       </SettingItem>
 
-      <div class=" my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+      <div
+        class="my-2 mb-4 border-b border-gray-300 pb-1 text-base font-medium dark:border-gray-800"
+      >
         {$i18n.t('Input')}
       </div>
 
@@ -831,7 +837,9 @@
         tooltip={true}
       />
 
-      <div class=" my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+      <div
+        class="my-2 mb-4 border-b border-gray-300 pb-1 text-base font-medium dark:border-gray-800"
+      >
         {$i18n.t('Artifacts')}
       </div>
 
@@ -862,7 +870,9 @@
         tooltip={true}
       />
 
-      <div class=" my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+      <div
+        class="my-2 mb-4 border-b border-gray-300 pb-1 text-base font-medium dark:border-gray-800"
+      >
         {$i18n.t('Voice')}
       </div>
 
@@ -884,7 +894,9 @@
         tooltip={true}
       />
 
-      <div class=" my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+      <div
+        class="my-2 mb-4 border-b border-gray-300 pb-1 text-base font-medium dark:border-gray-800"
+      >
         {$i18n.t('File')}
       </div>
 

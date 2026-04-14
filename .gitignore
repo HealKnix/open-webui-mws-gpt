@@ -315,3 +315,9 @@ cypress/screenshots
 .openspec/
 .github/prompts/
 .github/skills/
+.claude/
+.codex/
+.github/prompts/
+.github/skills/
+/deployment
+docker-compose.dev.yaml

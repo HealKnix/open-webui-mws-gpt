@@ -1,9 +1,8 @@
 <script lang="ts">
   import { cn } from '$lib/utils';
-  import { onMount, tick } from 'svelte';
 
   export let variant: 'solid' | 'flat' | 'ghost' = 'solid';
-  export let color: 'primary' | 'secondary' | 'foreground' | string = 'secondary';
+  export let color: 'default' | 'primary' | 'secondary' | 'foreground' | (string & {}) = 'default';
   export let size: 'xs' | 'sm' | 'md' | 'lg' | 'xl' = 'sm';
   export let radius: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full' = 'md';
   export let disabled = false;
@@ -13,16 +12,11 @@
 
   export let value = '';
   export let placeholder = '';
-  export let rows = 1;
-  export let minHeight: number | null = null;
-  export let maxHeight: number | null = null;
   export let required = false;
   export let ariaLabel: string | null = null;
 
-  const isPredefinedColor = ['primary', 'secondary', 'foreground'].includes(color);
-
   // Radius mapping (matching Button/Input)
-  const radii = {
+  const mappedRadius = {
     xs: 'rounded-xs',
     sm: 'rounded-sm',
     md: 'rounded-md',
@@ -33,32 +27,32 @@
 
   // Variant & Color logic (matching Input)
   const getVariantClasses = () => {
-    if (!isPredefinedColor) return '';
-
-    const base = {
+    const base: Record<typeof variant, Record<typeof color, string>> = {
       solid: {
+        default: 'bg-background border-border text-foreground',
         primary: 'bg-primary/5 border-primary/20 text-foreground',
-        secondary: 'bg-border/30 border-border text-foreground',
-        foreground: 'bg-foreground/5 border-foreground/10 text-foreground',
+        secondary: 'bg-card border-border text-foreground',
+        foreground: 'bg-foreground border-foreground/10 text-background',
       },
       flat: {
+        default: 'bg-background border-transparent text-foreground',
         primary: 'bg-primary/10 border-transparent text-foreground',
-        secondary: 'bg-border/50 border-transparent text-foreground',
-        foreground: 'bg-foreground/10 border-transparent text-foreground',
+        secondary: 'bg-card/50 border-transparent text-foreground',
+        foreground: 'bg-foreground/10 border-transparent text-background',
       },
       ghost: {
+        default: 'bg-transparent border-border text-background',
         primary: 'bg-transparent border-transparent text-foreground',
         secondary: 'bg-transparent border-transparent text-foreground',
-        foreground: 'bg-transparent border-transparent text-foreground',
+        foreground: 'bg-transparent border-transparent text-background',
       },
     };
-
-    return base[variant][color as keyof (typeof base)['solid']];
+    return base[variant][color];
   };
 
   $: wrapperClasses = cn(
     'relative flex flex-col transition-all duration-200 border ring-primary focus-within:ring-2 ring-offset-0 focus-within:ring-offset-2 ring-offset-background outline-none overflow-hidden w-full',
-    radii[radius],
+    mappedRadius[radius],
     getVariantClasses(),
     disabled && 'opacity-50 pointer-events-none',
     className,
@@ -69,44 +63,17 @@
     size === 'xs' || size === 'sm' ? 'text-xs' : 'text-sm',
     textareaClassName,
   );
-
-  let textareaElement: HTMLTextAreaElement;
-
-  const resize = () => {
-    if (textareaElement) {
-      textareaElement.style.height = '0px';
-      let height = textareaElement.scrollHeight;
-
-      if (maxHeight && height > maxHeight) height = maxHeight;
-      if (minHeight && height < minHeight) height = minHeight;
-
-      textareaElement.style.height = `${height}px`;
-    }
-  };
-
-  $: if (value !== undefined) {
-    tick().then(resize);
-  }
-
-  onMount(() => {
-    resize();
-  });
 </script>
 
 <div class={wrapperClasses}>
   <textarea
-    bind:this={textareaElement}
     bind:value
     {placeholder}
     {disabled}
     {readonly}
     {required}
-    {rows}
     aria-label={ariaLabel || placeholder}
     class={textareaClasses}
-    style="field-sizing: content;"
-    on:input={resize}
-    on:focus={resize}
     {...$$restProps}
   ></textarea>
 </div>

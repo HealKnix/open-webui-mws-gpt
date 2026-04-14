@@ -25,7 +25,7 @@
 {#if actions.length > 0}
   <div>
     <div class="mb-1 flex w-full justify-between">
-      <div class=" self-center text-xs font-medium text-gray-500">{$i18n.t('Actions')}</div>
+      <div class="mb-1 text-xs font-medium">{$i18n.t('Actions')}</div>
     </div>
 
     <div class="flex flex-col">

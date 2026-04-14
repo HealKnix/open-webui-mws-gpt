@@ -631,9 +631,10 @@
                 aria-selected={selectedTab === 'general'}
                 variant="ghost"
                 color="foreground"
+                size="sm"
                 className={cn(
-                  'flex min-w-fit flex-1 justify-start rounded-xl py-1 text-left transition md:flex-none',
-                  selectedTab === 'general' && 'text-primary bg-primary/15! font-medium',
+                  'flex min-w-fit flex-1 justify-start rounded-xl py-1 text-left transition md:flex-none border-border',
+                  selectedTab === 'general' && 'bg-background! text-primary border font-medium',
                 )}
                 on:click={() => {
                   selectedTab = 'general';
@@ -651,9 +652,10 @@
                 aria-selected={selectedTab === 'interface'}
                 variant="ghost"
                 color="foreground"
+                size="sm"
                 className={cn(
-                  'flex min-w-fit flex-1 justify-start rounded-xl py-1 text-left transition md:flex-none',
-                  selectedTab === 'interface' && 'text-primary bg-primary/15! font-medium',
+                  'flex min-w-fit flex-1 justify-start rounded-xl py-1 text-left transition md:flex-none border-border',
+                  selectedTab === 'interface' && 'bg-background! text-primary border font-medium',
                 )}
                 on:click={() => {
                   selectedTab = 'interface';
@@ -672,9 +674,11 @@
                   aria-selected={selectedTab === 'connections'}
                   variant="ghost"
                   color="foreground"
+                  size="sm"
                   className={cn(
-                    'flex min-w-fit flex-1 justify-start rounded-xl py-1 text-left transition md:flex-none',
-                    selectedTab === 'connections' && 'text-primary bg-primary/15! font-medium',
+                    'flex min-w-fit flex-1 justify-start rounded-xl py-1 text-left transition md:flex-none border-border',
+                    selectedTab === 'connections' &&
+                      'bg-background! text-primary border font-medium',
                   )}
                   on:click={() => {
                     selectedTab = 'connections';
@@ -694,9 +698,10 @@
                   aria-selected={selectedTab === 'tools'}
                   variant="ghost"
                   color="foreground"
+                  size="sm"
                   className={cn(
-                    'flex min-w-fit flex-1 justify-start rounded-xl py-1 text-left transition md:flex-none',
-                    selectedTab === 'tools' && 'text-primary bg-primary/15! font-medium',
+                    'flex min-w-fit flex-1 justify-start rounded-xl py-1 text-left transition md:flex-none border-border',
+                    selectedTab === 'tools' && 'bg-background! text-primary border font-medium',
                   )}
                   on:click={() => {
                     selectedTab = 'tools';
@@ -715,9 +720,11 @@
                 aria-selected={selectedTab === 'personalization'}
                 variant="ghost"
                 color="foreground"
+                size="sm"
                 className={cn(
-                  'flex min-w-fit flex-1 justify-start rounded-xl py-1 text-left transition md:flex-none',
-                  selectedTab === 'personalization' && 'text-primary bg-primary/15! font-medium',
+                  'flex min-w-fit flex-1 justify-start rounded-xl py-1 text-left transition md:flex-none border-border',
+                  selectedTab === 'personalization' &&
+                    'bg-background! text-primary border font-medium',
                 )}
                 on:click={() => {
                   selectedTab = 'personalization';
@@ -735,9 +742,10 @@
                 aria-selected={selectedTab === 'audio'}
                 variant="ghost"
                 color="foreground"
+                size="sm"
                 className={cn(
-                  'flex min-w-fit flex-1 justify-start rounded-xl py-1 text-left transition md:flex-none',
-                  selectedTab === 'audio' && 'text-primary bg-primary/15! font-medium',
+                  'flex min-w-fit flex-1 justify-start rounded-xl py-1 text-left transition md:flex-none border-border',
+                  selectedTab === 'audio' && 'bg-background! text-primary border font-medium',
                 )}
                 on:click={() => {
                   selectedTab = 'audio';
@@ -755,9 +763,11 @@
                 aria-selected={selectedTab === 'data_controls'}
                 variant="ghost"
                 color="foreground"
+                size="sm"
                 className={cn(
-                  'flex min-w-fit flex-1 justify-start rounded-xl py-1 text-left transition md:flex-none',
-                  selectedTab === 'data_controls' && 'text-primary bg-primary/15! font-medium',
+                  'flex min-w-fit flex-1 justify-start rounded-xl py-1 text-left transition md:flex-none border-border',
+                  selectedTab === 'data_controls' &&
+                    'bg-background! text-primary border font-medium',
                 )}
                 on:click={() => {
                   selectedTab = 'data_controls';
@@ -775,9 +785,10 @@
                 aria-selected={selectedTab === 'account'}
                 variant="ghost"
                 color="foreground"
+                size="sm"
                 className={cn(
-                  'flex min-w-fit flex-1 justify-start rounded-xl py-1 text-left transition md:flex-none',
-                  selectedTab === 'account' && 'text-primary bg-primary/15! font-medium',
+                  'flex min-w-fit flex-1 justify-start rounded-xl py-1 text-left transition md:flex-none border-border',
+                  selectedTab === 'account' && 'bg-background! text-primary border font-medium',
                 )}
                 on:click={() => {
                   selectedTab = 'account';
@@ -795,9 +806,10 @@
                 aria-selected={selectedTab === 'about'}
                 variant="ghost"
                 color="foreground"
+                size="sm"
                 className={cn(
-                  'flex min-w-fit flex-1 justify-start rounded-xl py-1 text-left transition md:flex-none',
-                  selectedTab === 'about' && 'text-primary bg-primary/15! font-medium',
+                  'flex min-w-fit flex-1 justify-start rounded-xl py-1 text-left transition md:flex-none border-border',
+                  selectedTab === 'about' && 'bg-background! text-primary border font-medium',
                 )}
                 on:click={() => {
                   selectedTab = 'about';

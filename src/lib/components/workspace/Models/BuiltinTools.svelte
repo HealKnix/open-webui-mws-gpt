@@ -61,27 +61,23 @@
 
 <div>
   <div class="mb-1 flex w-full justify-between">
-    <div class="self-center text-xs font-medium text-gray-500">{$i18n.t('Builtin Tools')}</div>
+    <div class="mb-1 text-xs font-medium">{$i18n.t('Builtin Tools')}</div>
   </div>
-  <div class="mt-2 flex flex-wrap items-center">
+  <div class="mt-2 flex flex-wrap items-center gap-2">
     {#each allTools as tool}
-      <div class="mr-3 flex items-center gap-2">
-        <Checkbox
-          state={builtinTools[tool] !== false ? 'checked' : 'unchecked'}
-          on:change={(e) => {
-            builtinTools = {
-              ...builtinTools,
-              [tool]: e.detail === 'checked',
-            };
-          }}
-        />
-
-        <div class="py-0.5 text-sm">
-          <Tooltip content={marked.parse(toolLabels[tool].description)}>
-            {$i18n.t(toolLabels[tool].label)}
-          </Tooltip>
-        </div>
-      </div>
+      <Checkbox
+        state={builtinTools[tool] !== false ? 'checked' : 'unchecked'}
+        on:change={(e) => {
+          builtinTools = {
+            ...builtinTools,
+            [tool]: e.detail === 'checked',
+          };
+        }}
+        tooltip={{
+          label: $i18n.t(toolLabels[tool].label),
+          description: marked.parse(toolLabels[tool].description),
+        }}
+      />
     {/each}
   </div>
 </div>

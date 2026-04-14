@@ -1,9 +1,16 @@
 <script lang="ts">
+  import Button from '$lib/components/common/Button.svelte';
+  import Input from '$lib/components/common/Input.svelte';
+  import SettingItem from '$lib/components/common/SettingItem.svelte';
   import Switch from '$lib/components/common/Switch.svelte';
   import Textarea from '$lib/components/common/Textarea.svelte';
+  import ToggleSetting from '$lib/components/common/ToggleSetting.svelte';
   import Tooltip from '$lib/components/common/Tooltip.svelte';
   import Plus from '$lib/components/icons/Plus.svelte';
+  import { cn } from '$lib/utils';
   import { getContext } from 'svelte';
+
+  export let className = '';
 
   const i18n = getContext('i18n');
 
@@ -14,37 +21,37 @@
 
   const defaultParams = {
     // Advanced
-    stream_response: null, // Set stream responses for this model individually
-    stream_delta_chunk_size: null, // Set the chunk size for streaming responses
-    function_calling: null,
-    reasoning_tags: null,
-    seed: null,
-    stop: null,
-    temperature: null,
-    reasoning_effort: null,
-    logit_bias: null,
-    max_tokens: null,
-    top_k: null,
-    top_p: null,
-    min_p: null,
-    frequency_penalty: null,
-    presence_penalty: null,
-    mirostat: null,
-    mirostat_eta: null,
-    mirostat_tau: null,
-    repeat_last_n: null,
-    tfs_z: null,
-    repeat_penalty: null,
-    use_mmap: null,
-    use_mlock: null,
-    think: null,
-    format: null,
-    keep_alive: null,
-    num_keep: null,
-    num_ctx: null,
-    num_batch: null,
-    num_thread: null,
-    num_gpu: null,
+    stream_response: true, // Set stream responses for this model individually
+    stream_delta_chunk_size: 1, // Set the chunk size for streaming responses
+    function_calling: 'native',
+    reasoning_tags: ['', ''],
+    seed: 0,
+    stop: '',
+    temperature: 0.8,
+    reasoning_effort: 'medium',
+    logit_bias: '',
+    max_tokens: 128,
+    top_k: 40,
+    top_p: 0.9,
+    min_p: 0.0,
+    frequency_penalty: 1.1,
+    presence_penalty: 0.0,
+    mirostat: 0,
+    mirostat_eta: 0.1,
+    mirostat_tau: 5.0,
+    repeat_last_n: 64,
+    tfs_z: 1,
+    repeat_penalty: 1.1,
+    use_mmap: true,
+    use_mlock: true,
+    think: true,
+    format: 'json',
+    num_keep: 24,
+    num_ctx: 2048,
+    num_batch: 512,
+    num_thread: 2,
+    num_gpu: 0,
+    keep_alive: '5m',
   };
 
   export let params = defaultParams;
@@ -53,7 +60,12 @@
   }
 </script>
 
-<div class=" pb-safe-bottom space-y-1 text-xs">
+<div
+  class={cn(
+    'pb-safe-bottom bg-card/50 border-border max-w-2xl space-y-1 rounded-2xl border p-2 text-xs',
+    className,
+  )}
+>
   <div>
     <Tooltip
       content={$i18n.t(
@@ -62,18 +74,20 @@
       placement="top-start"
       className="inline-tooltip"
     >
-      <div class=" flex w-full justify-between py-0.5">
-        <div class=" self-center text-xs">
-          {$i18n.t('Stream Chat Response')}
-        </div>
+      <SettingItem
+        label={$i18n.t('Stream Chat Response')}
+        className={(params?.stream_response ?? null) !== null
+          ? 'bg-accent-active/15 hover:bg-accent-active/20'
+          : ''}
+      >
         <button
           class="flex rounded-sm p-1 px-3 text-xs transition"
           on:click={() => {
             params.stream_response =
               (params?.stream_response ?? null) === null
-                ? true
-                : params.stream_response
-                  ? false
+                ? defaultParams.stream_response
+                : params.stream_response === defaultParams.stream_response
+                  ? !defaultParams.stream_response
                   : null;
           }}
           type="button"
@@ -86,7 +100,7 @@
             <span class="ml-2 self-center">{$i18n.t('Default')}</span>
           {/if}
         </button>
-      </div>
+      </SettingItem>
     </Tooltip>
   </div>
 
@@ -99,16 +113,20 @@
         placement="top-start"
         className="inline-tooltip"
       >
-        <div class="flex w-full justify-between">
-          <div class=" self-center text-xs">
-            {$i18n.t('Stream Delta Chunk Size')}
-          </div>
+        <SettingItem
+          label={$i18n.t('Stream Delta Chunk Size')}
+          className={(params?.stream_delta_chunk_size ?? null) !== null
+            ? 'bg-accent-active/15 hover:bg-accent-active/20'
+            : ''}
+        >
           <button
             class="flex shrink-0 rounded-sm p-1 px-3 text-xs outline-hidden transition"
             type="button"
             on:click={() => {
               params.stream_delta_chunk_size =
-                (params?.stream_delta_chunk_size ?? null) === null ? 1 : null;
+                (params?.stream_delta_chunk_size ?? null) === null
+                  ? defaultParams.stream_delta_chunk_size
+                  : null;
             }}
           >
             {#if (params?.stream_delta_chunk_size ?? null) === null}
@@ -117,11 +135,11 @@
               <span class="ml-2 self-center"> {$i18n.t('Custom')} </span>
             {/if}
           </button>
-        </div>
+        </SettingItem>
       </Tooltip>
 
       {#if (params?.stream_delta_chunk_size ?? null) !== null}
-        <div class="mt-0.5 flex space-x-2">
+        <div class="mt-1 mb-4 flex space-x-2">
           <div class=" flex-1">
             <input
               id="steps-range"
@@ -130,16 +148,15 @@
               max="128"
               step="1"
               bind:value={params.stream_delta_chunk_size}
-              class="h-2 w-full cursor-pointer appearance-none rounded-lg dark:bg-gray-700"
+              class="h-2 w-full cursor-pointer rounded-lg dark:bg-gray-700"
             />
           </div>
           <div>
-            <input
+            <Input
               bind:value={params.stream_delta_chunk_size}
+              className="max-w-16"
               type="number"
-              class=" w-14 bg-transparent text-center"
               min="1"
-              step="any"
             />
           </div>
         </div>
@@ -155,24 +172,27 @@
       placement="top-start"
       className="inline-tooltip"
     >
-      <div class=" flex w-full justify-between py-0.5">
-        <div class=" self-center text-xs">
-          {$i18n.t('Function Calling')}
-        </div>
+      <SettingItem
+        label={$i18n.t('Function Calling')}
+        className={(params?.function_calling ?? null) !== null
+          ? 'bg-accent-active/15 hover:bg-accent-active/20'
+          : ''}
+      >
         <button
           class="flex rounded-sm p-1 px-3 text-xs transition"
           on:click={() => {
-            params.function_calling = (params?.function_calling ?? null) === null ? 'native' : null;
+            params.function_calling =
+              (params?.function_calling ?? null) === null ? defaultParams.function_calling : null;
           }}
           type="button"
         >
-          {#if params.function_calling === 'native'}
+          {#if params.function_calling === defaultParams.function_calling}
             <span class="ml-2 self-center">{$i18n.t('Native')}</span>
           {:else}
             <span class="ml-2 self-center">{$i18n.t('Default')}</span>
           {/if}
         </button>
-      </div>
+      </SettingItem>
     </Tooltip>
   </div>
 
@@ -184,16 +204,18 @@
       placement="top-start"
       className="inline-tooltip"
     >
-      <div class="flex w-full justify-between">
-        <div class=" self-center text-xs">
-          {$i18n.t('Reasoning Tags')}
-        </div>
+      <SettingItem
+        label={$i18n.t('Reasoning Tags')}
+        className={(params?.reasoning_tags ?? null) !== null
+          ? 'bg-accent-active/15 hover:bg-accent-active/20'
+          : ''}
+      >
         <button
           class="flex shrink-0 rounded-sm p-1 px-3 text-xs outline-hidden transition"
           type="button"
           on:click={() => {
             if ((params?.reasoning_tags ?? null) === null) {
-              params.reasoning_tags = ['', ''];
+              params.reasoning_tags = defaultParams.reasoning_tags;
             } else if ((params?.reasoning_tags ?? []).length === 2) {
               params.reasoning_tags = true;
             } else if ((params?.reasoning_tags ?? null) !== false) {
@@ -213,14 +235,13 @@
             <span class="ml-2 self-center"> {$i18n.t('Custom')} </span>
           {/if}
         </button>
-      </div>
+      </SettingItem>
     </Tooltip>
 
     {#if ![true, false, null].includes(params?.reasoning_tags ?? null) && (params?.reasoning_tags ?? []).length === 2}
-      <div class="mt-0.5 flex space-x-2">
+      <div class="mt-1 mb-4 flex space-x-2">
         <div class=" flex-1">
-          <input
-            class="w-full bg-transparent text-sm outline-hidden outline-none"
+          <Input
             type="text"
             placeholder={$i18n.t('Start Tag')}
             bind:value={params.reasoning_tags[0]}
@@ -229,8 +250,7 @@
         </div>
 
         <div class=" flex-1">
-          <input
-            class="w-full bg-transparent text-sm outline-hidden outline-none"
+          <Input
             type="text"
             placeholder={$i18n.t('End Tag')}
             bind:value={params.reasoning_tags[1]}
@@ -249,16 +269,17 @@
       placement="top-start"
       className="inline-tooltip"
     >
-      <div class="flex w-full justify-between">
-        <div class=" self-center text-xs">
-          {$i18n.t('Seed')}
-        </div>
-
+      <SettingItem
+        label={$i18n.t('Seed')}
+        className={(params?.seed ?? null) !== null
+          ? 'bg-accent-active/15 hover:bg-accent-active/20'
+          : ''}
+      >
         <button
           class="flex shrink-0 rounded-sm p-1 px-3 text-xs outline-hidden transition"
           type="button"
           on:click={() => {
-            params.seed = (params?.seed ?? null) === null ? 0 : null;
+            params.seed = (params?.seed ?? null) === null ? defaultParams.seed : null;
           }}
         >
           {#if (params?.seed ?? null) === null}
@@ -267,14 +288,13 @@
             <span class="ml-2 self-center"> {$i18n.t('Custom')} </span>
           {/if}
         </button>
-      </div>
+      </SettingItem>
     </Tooltip>
 
     {#if (params?.seed ?? null) !== null}
-      <div class="mt-0.5 flex space-x-2">
+      <div class="mt-1 mb-4 flex space-x-2">
         <div class=" flex-1">
-          <input
-            class="w-full bg-transparent text-sm outline-hidden outline-none"
+          <Input
             type="number"
             placeholder={$i18n.t('Enter Seed')}
             bind:value={params.seed}
@@ -294,16 +314,17 @@
       placement="top-start"
       className="inline-tooltip"
     >
-      <div class="flex w-full justify-between">
-        <div class=" self-center text-xs">
-          {$i18n.t('Stop Sequence')}
-        </div>
-
+      <SettingItem
+        label={$i18n.t('Stop Sequence')}
+        className={(params?.stop ?? null) !== null
+          ? 'bg-accent-active/15 hover:bg-accent-active/20'
+          : ''}
+      >
         <button
           class="flex shrink-0 rounded-sm p-1 px-3 text-xs outline-hidden transition"
           type="button"
           on:click={() => {
-            params.stop = (params?.stop ?? null) === null ? '' : null;
+            params.stop = (params?.stop ?? null) === null ? defaultParams.stop : null;
           }}
         >
           {#if (params?.stop ?? null) === null}
@@ -312,14 +333,13 @@
             <span class="ml-2 self-center"> {$i18n.t('Custom')} </span>
           {/if}
         </button>
-      </div>
+      </SettingItem>
     </Tooltip>
 
     {#if (params?.stop ?? null) !== null}
-      <div class="mt-0.5 flex space-x-2">
+      <div class="mt-1 mb-4 flex space-x-2">
         <div class=" flex-1">
-          <input
-            class="w-full bg-transparent text-sm outline-hidden outline-none"
+          <Input
             type="text"
             placeholder={$i18n.t('Enter stop sequence')}
             bind:value={params.stop}
@@ -338,15 +358,18 @@
       placement="top-start"
       className="inline-tooltip"
     >
-      <div class="flex w-full justify-between">
-        <div class=" self-center text-xs">
-          {$i18n.t('Temperature')}
-        </div>
+      <SettingItem
+        label={$i18n.t('Temperature')}
+        className={(params?.temperature ?? null) !== null
+          ? 'bg-accent-active/15 hover:bg-accent-active/20'
+          : ''}
+      >
         <button
           class="flex shrink-0 rounded-sm p-1 px-3 text-xs outline-hidden transition"
           type="button"
           on:click={() => {
-            params.temperature = (params?.temperature ?? null) === null ? 0.8 : null;
+            params.temperature =
+              (params?.temperature ?? null) === null ? defaultParams.temperature : null;
           }}
         >
           {#if (params?.temperature ?? null) === null}
@@ -355,11 +378,11 @@
             <span class="ml-2 self-center"> {$i18n.t('Custom')} </span>
           {/if}
         </button>
-      </div>
+      </SettingItem>
     </Tooltip>
 
     {#if (params?.temperature ?? null) !== null}
-      <div class="mt-0.5 flex space-x-2">
+      <div class="mt-1 mb-4 flex space-x-2">
         <div class=" flex-1">
           <input
             id="steps-range"
@@ -368,18 +391,11 @@
             max="2"
             step="0.05"
             bind:value={params.temperature}
-            class="h-2 w-full cursor-pointer appearance-none rounded-lg dark:bg-gray-700"
+            class="h-2 w-full cursor-pointer rounded-lg dark:bg-gray-700"
           />
         </div>
         <div>
-          <input
-            bind:value={params.temperature}
-            type="number"
-            class=" w-14 bg-transparent text-center"
-            min="0"
-            max="2"
-            step="any"
-          />
+          <Input bind:value={params.temperature} type="number" min="0" max="2" />
         </div>
       </div>
     {/if}
@@ -393,15 +409,18 @@
       placement="top-start"
       className="inline-tooltip"
     >
-      <div class="flex w-full justify-between">
-        <div class=" self-center text-xs">
-          {$i18n.t('Reasoning Effort')}
-        </div>
+      <SettingItem
+        label={$i18n.t('Reasoning Effort')}
+        className={(params?.reasoning_effort ?? null) !== null
+          ? 'bg-accent-active/15 hover:bg-accent-active/20'
+          : ''}
+      >
         <button
           class="flex shrink-0 rounded-sm p-1 px-3 text-xs outline-hidden transition"
           type="button"
           on:click={() => {
-            params.reasoning_effort = (params?.reasoning_effort ?? null) === null ? 'medium' : null;
+            params.reasoning_effort =
+              (params?.reasoning_effort ?? null) === null ? defaultParams.reasoning_effort : null;
           }}
         >
           {#if (params?.reasoning_effort ?? null) === null}
@@ -410,14 +429,13 @@
             <span class="ml-2 self-center"> {$i18n.t('Custom')} </span>
           {/if}
         </button>
-      </div>
+      </SettingItem>
     </Tooltip>
 
     {#if (params?.reasoning_effort ?? null) !== null}
-      <div class="mt-0.5 flex space-x-2">
+      <div class="mt-1 mb-4 flex space-x-2">
         <div class=" flex-1">
-          <input
-            class="w-full bg-transparent text-sm outline-hidden outline-none"
+          <Input
             type="text"
             placeholder={$i18n.t('Enter reasoning effort')}
             bind:value={params.reasoning_effort}
@@ -436,15 +454,18 @@
       placement="top-start"
       className="inline-tooltip"
     >
-      <div class="flex w-full justify-between">
-        <div class=" self-center text-xs">
-          {'logit_bias'}
-        </div>
+      <SettingItem
+        label={'logit_bias'}
+        className={(params?.logit_bias ?? null) !== null
+          ? 'bg-accent-active/15 hover:bg-accent-active/20'
+          : ''}
+      >
         <button
           class="flex shrink-0 rounded-sm p-1 px-3 text-xs outline-hidden transition"
           type="button"
           on:click={() => {
-            params.logit_bias = (params?.logit_bias ?? null) === null ? '' : null;
+            params.logit_bias =
+              (params?.logit_bias ?? null) === null ? defaultParams.logit_bias : null;
           }}
         >
           {#if (params?.logit_bias ?? null) === null}
@@ -453,14 +474,13 @@
             <span class="ml-2 self-center"> {$i18n.t('Custom')} </span>
           {/if}
         </button>
-      </div>
+      </SettingItem>
     </Tooltip>
 
     {#if (params?.logit_bias ?? null) !== null}
-      <div class="mt-0.5 flex space-x-2">
+      <div class="mt-1 mb-4 flex space-x-2">
         <div class=" flex-1">
-          <input
-            class="w-full bg-transparent text-sm outline-hidden outline-none"
+          <Input
             type="text"
             placeholder={$i18n.t(
               'Enter comma-separated "token:bias_value" pairs (example: 5432:100, 413:-100)',
@@ -481,16 +501,18 @@
       placement="top-start"
       className="inline-tooltip"
     >
-      <div class="flex w-full justify-between">
-        <div class=" self-center text-xs">
-          {'max_tokens'}
-        </div>
-
+      <SettingItem
+        label={'max_tokens'}
+        className={(params?.max_tokens ?? null) !== null
+          ? 'bg-accent-active/15 hover:bg-accent-active/20'
+          : ''}
+      >
         <button
           class="flex shrink-0 rounded-sm p-1 px-3 text-xs outline-hidden transition"
           type="button"
           on:click={() => {
-            params.max_tokens = (params?.max_tokens ?? null) === null ? 128 : null;
+            params.max_tokens =
+              (params?.max_tokens ?? null) === null ? defaultParams.max_tokens : null;
           }}
         >
           {#if (params?.max_tokens ?? null) === null}
@@ -499,11 +521,11 @@
             <span class="ml-2 self-center">{$i18n.t('Custom')}</span>
           {/if}
         </button>
-      </div>
+      </SettingItem>
     </Tooltip>
 
     {#if (params?.max_tokens ?? null) !== null}
-      <div class="mt-0.5 flex space-x-2">
+      <div class="mt-1 mb-4 flex space-x-2">
         <div class=" flex-1">
           <input
             id="steps-range"
@@ -512,14 +534,14 @@
             max="131072"
             step="1"
             bind:value={params.max_tokens}
-            class="h-2 w-full cursor-pointer appearance-none rounded-lg dark:bg-gray-700"
+            class="h-2 w-full cursor-pointer rounded-lg dark:bg-gray-700"
           />
         </div>
         <div>
-          <input
+          <Input
             bind:value={params.max_tokens}
+            className="max-w-24"
             type="number"
-            class=" w-14 bg-transparent text-center"
             min="-2"
             step="1"
           />
@@ -536,15 +558,17 @@
       placement="top-start"
       className="inline-tooltip"
     >
-      <div class="flex w-full justify-between">
-        <div class=" self-center text-xs">
-          {'top_k'}
-        </div>
+      <SettingItem
+        label={'top_k'}
+        className={(params?.top_k ?? null) !== null
+          ? 'bg-accent-active/15 hover:bg-accent-active/20'
+          : ''}
+      >
         <button
           class="flex shrink-0 rounded-sm p-1 px-3 text-xs outline-hidden transition"
           type="button"
           on:click={() => {
-            params.top_k = (params?.top_k ?? null) === null ? 40 : null;
+            params.top_k = (params?.top_k ?? null) === null ? defaultParams.top_k : null;
           }}
         >
           {#if (params?.top_k ?? null) === null}
@@ -553,11 +577,11 @@
             <span class="ml-2 self-center">{$i18n.t('Custom')}</span>
           {/if}
         </button>
-      </div>
+      </SettingItem>
     </Tooltip>
 
     {#if (params?.top_k ?? null) !== null}
-      <div class="mt-0.5 flex space-x-2">
+      <div class="mt-1 mb-4 flex space-x-2">
         <div class=" flex-1">
           <input
             id="steps-range"
@@ -566,18 +590,11 @@
             max="1000"
             step="0.5"
             bind:value={params.top_k}
-            class="h-2 w-full cursor-pointer appearance-none rounded-lg dark:bg-gray-700"
+            class="h-2 w-full cursor-pointer rounded-lg dark:bg-gray-700"
           />
         </div>
         <div>
-          <input
-            bind:value={params.top_k}
-            type="number"
-            class=" w-14 bg-transparent text-center"
-            min="0"
-            max="100"
-            step="any"
-          />
+          <Input bind:value={params.top_k} type="number" className="max-w-16" min="0" max="100" />
         </div>
       </div>
     {/if}
@@ -591,16 +608,17 @@
       placement="top-start"
       className="inline-tooltip"
     >
-      <div class="flex w-full justify-between">
-        <div class=" self-center text-xs">
-          {'top_p'}
-        </div>
-
+      <SettingItem
+        label={'top_p'}
+        className={(params?.top_p ?? null) !== null
+          ? 'bg-accent-active/15 hover:bg-accent-active/20'
+          : ''}
+      >
         <button
           class="flex shrink-0 rounded-sm p-1 px-3 text-xs outline-hidden transition"
           type="button"
           on:click={() => {
-            params.top_p = (params?.top_p ?? null) === null ? 0.9 : null;
+            params.top_p = (params?.top_p ?? null) === null ? defaultParams.top_p : null;
           }}
         >
           {#if (params?.top_p ?? null) === null}
@@ -609,11 +627,11 @@
             <span class="ml-2 self-center">{$i18n.t('Custom')}</span>
           {/if}
         </button>
-      </div>
+      </SettingItem>
     </Tooltip>
 
     {#if (params?.top_p ?? null) !== null}
-      <div class="mt-0.5 flex space-x-2">
+      <div class="mt-1 mb-4 flex space-x-2">
         <div class=" flex-1">
           <input
             id="steps-range"
@@ -622,18 +640,11 @@
             max="1"
             step="0.05"
             bind:value={params.top_p}
-            class="h-2 w-full cursor-pointer appearance-none rounded-lg dark:bg-gray-700"
+            class="h-2 w-full cursor-pointer rounded-lg dark:bg-gray-700"
           />
         </div>
         <div>
-          <input
-            bind:value={params.top_p}
-            type="number"
-            class=" w-14 bg-transparent text-center"
-            min="0"
-            max="1"
-            step="any"
-          />
+          <Input bind:value={params.top_p} type="number" className="max-w-16" min="0" max="1" />
         </div>
       </div>
     {/if}
@@ -647,15 +658,17 @@
       placement="top-start"
       className="inline-tooltip"
     >
-      <div class="flex w-full justify-between">
-        <div class=" self-center text-xs">
-          {'min_p'}
-        </div>
+      <SettingItem
+        label={'min_p'}
+        className={(params?.min_p ?? null) !== null
+          ? 'bg-accent-active/15 hover:bg-accent-active/20'
+          : ''}
+      >
         <button
           class="flex shrink-0 rounded-sm p-1 px-3 text-xs outline-hidden transition"
           type="button"
           on:click={() => {
-            params.min_p = (params?.min_p ?? null) === null ? 0.0 : null;
+            params.min_p = (params?.min_p ?? null) === null ? defaultParams.min_p : null;
           }}
         >
           {#if (params?.min_p ?? null) === null}
@@ -664,11 +677,11 @@
             <span class="ml-2 self-center">{$i18n.t('Custom')}</span>
           {/if}
         </button>
-      </div>
+      </SettingItem>
     </Tooltip>
 
     {#if (params?.min_p ?? null) !== null}
-      <div class="mt-0.5 flex space-x-2">
+      <div class="mt-1 mb-4 flex space-x-2">
         <div class=" flex-1">
           <input
             id="steps-range"
@@ -677,18 +690,11 @@
             max="1"
             step="0.05"
             bind:value={params.min_p}
-            class="h-2 w-full cursor-pointer appearance-none rounded-lg dark:bg-gray-700"
+            class="h-2 w-full cursor-pointer rounded-lg dark:bg-gray-700"
           />
         </div>
         <div>
-          <input
-            bind:value={params.min_p}
-            type="number"
-            class=" w-14 bg-transparent text-center"
-            min="0"
-            max="1"
-            step="any"
-          />
+          <Input bind:value={params.min_p} type="number" className="max-w-16" min="0" max="1" />
         </div>
       </div>
     {/if}
@@ -702,16 +708,18 @@
       placement="top-start"
       className="inline-tooltip"
     >
-      <div class="flex w-full justify-between">
-        <div class=" self-center text-xs">
-          {'frequency_penalty'}
-        </div>
-
+      <SettingItem
+        label={'frequency_penalty'}
+        className={(params?.frequency_penalty ?? null) !== null
+          ? 'bg-accent-active/15 hover:bg-accent-active/20'
+          : ''}
+      >
         <button
           class="flex shrink-0 rounded-sm p-1 px-3 text-xs outline-hidden transition"
           type="button"
           on:click={() => {
-            params.frequency_penalty = (params?.frequency_penalty ?? null) === null ? 1.1 : null;
+            params.frequency_penalty =
+              (params?.frequency_penalty ?? null) === null ? defaultParams.frequency_penalty : null;
           }}
         >
           {#if (params?.frequency_penalty ?? null) === null}
@@ -720,11 +728,11 @@
             <span class="ml-2 self-center">{$i18n.t('Custom')}</span>
           {/if}
         </button>
-      </div>
+      </SettingItem>
     </Tooltip>
 
     {#if (params?.frequency_penalty ?? null) !== null}
-      <div class="mt-0.5 flex space-x-2">
+      <div class="mt-1 mb-4 flex space-x-2">
         <div class=" flex-1">
           <input
             id="steps-range"
@@ -733,17 +741,16 @@
             max="2"
             step="0.05"
             bind:value={params.frequency_penalty}
-            class="h-2 w-full cursor-pointer appearance-none rounded-lg dark:bg-gray-700"
+            class="h-2 w-full cursor-pointer rounded-lg dark:bg-gray-700"
           />
         </div>
         <div>
-          <input
+          <Input
             bind:value={params.frequency_penalty}
             type="number"
-            class=" w-14 bg-transparent text-center"
+            className="max-w-16"
             min="-2"
             max="2"
-            step="any"
           />
         </div>
       </div>
@@ -758,16 +765,18 @@
       placement="top-start"
       className="inline-tooltip"
     >
-      <div class="flex w-full justify-between">
-        <div class=" self-center text-xs">
-          {'presence_penalty'}
-        </div>
-
+      <SettingItem
+        label={'presence_penalty'}
+        className={(params?.presence_penalty ?? null) !== null
+          ? 'bg-accent-active/15 hover:bg-accent-active/20'
+          : ''}
+      >
         <button
           class="flex flex-shrink-0 rounded p-1 px-3 text-xs transition outline-none"
           type="button"
           on:click={() => {
-            params.presence_penalty = (params?.presence_penalty ?? null) === null ? 0.0 : null;
+            params.presence_penalty =
+              (params?.presence_penalty ?? null) === null ? defaultParams.presence_penalty : null;
           }}
         >
           {#if (params?.presence_penalty ?? null) === null}
@@ -776,11 +785,11 @@
             <span class="ml-2 self-center">{$i18n.t('Custom')}</span>
           {/if}
         </button>
-      </div>
+      </SettingItem>
     </Tooltip>
 
     {#if (params?.presence_penalty ?? null) !== null}
-      <div class="mt-0.5 flex space-x-2">
+      <div class="mt-1 mb-4 flex space-x-2">
         <div class=" flex-1">
           <input
             id="steps-range"
@@ -789,17 +798,16 @@
             max="2"
             step="0.05"
             bind:value={params.presence_penalty}
-            class="h-2 w-full cursor-pointer appearance-none rounded-lg dark:bg-gray-700"
+            class="h-2 w-full cursor-pointer rounded-lg dark:bg-gray-700"
           />
         </div>
         <div>
-          <input
+          <Input
             bind:value={params.presence_penalty}
             type="number"
-            class=" w-14 bg-transparent text-center"
+            className="max-w-16"
             min="-2"
             max="2"
-            step="any"
           />
         </div>
       </div>
@@ -812,15 +820,17 @@
       placement="top-start"
       className="inline-tooltip"
     >
-      <div class="flex w-full justify-between">
-        <div class=" self-center text-xs">
-          {'mirostat'}
-        </div>
+      <SettingItem
+        label={'mirostat'}
+        className={(params?.mirostat ?? null) !== null
+          ? 'bg-accent-active/15 hover:bg-accent-active/20'
+          : ''}
+      >
         <button
           class="flex shrink-0 rounded-sm p-1 px-3 text-xs outline-hidden transition"
           type="button"
           on:click={() => {
-            params.mirostat = (params?.mirostat ?? null) === null ? 0 : null;
+            params.mirostat = (params?.mirostat ?? null) === null ? defaultParams.mirostat : null;
           }}
         >
           {#if (params?.mirostat ?? null) === null}
@@ -829,11 +839,11 @@
             <span class="ml-2 self-center">{$i18n.t('Custom')}</span>
           {/if}
         </button>
-      </div>
+      </SettingItem>
     </Tooltip>
 
     {#if (params?.mirostat ?? null) !== null}
-      <div class="mt-0.5 flex space-x-2">
+      <div class="mt-1 mb-4 flex space-x-2">
         <div class=" flex-1">
           <input
             id="steps-range"
@@ -842,14 +852,14 @@
             max="2"
             step="1"
             bind:value={params.mirostat}
-            class="h-2 w-full cursor-pointer appearance-none rounded-lg dark:bg-gray-700"
+            class="h-2 w-full cursor-pointer rounded-lg dark:bg-gray-700"
           />
         </div>
         <div>
-          <input
+          <Input
             bind:value={params.mirostat}
             type="number"
-            class=" w-14 bg-transparent text-center"
+            className="max-w-16"
             min="0"
             max="2"
             step="1"
@@ -867,15 +877,18 @@
       placement="top-start"
       className="inline-tooltip"
     >
-      <div class="flex w-full justify-between">
-        <div class=" self-center text-xs">
-          {'mirostat_eta'}
-        </div>
+      <SettingItem
+        label={'mirostat_eta'}
+        className={(params?.mirostat_eta ?? null) !== null
+          ? 'bg-accent-active/15 hover:bg-accent-active/20'
+          : ''}
+      >
         <button
           class="flex shrink-0 rounded-sm p-1 px-3 text-xs outline-hidden transition"
           type="button"
           on:click={() => {
-            params.mirostat_eta = (params?.mirostat_eta ?? null) === null ? 0.1 : null;
+            params.mirostat_eta =
+              (params?.mirostat_eta ?? null) === null ? defaultParams.mirostat_eta : null;
           }}
         >
           {#if (params?.mirostat_eta ?? null) === null}
@@ -884,11 +897,11 @@
             <span class="ml-2 self-center">{$i18n.t('Custom')}</span>
           {/if}
         </button>
-      </div>
+      </SettingItem>
     </Tooltip>
 
     {#if (params?.mirostat_eta ?? null) !== null}
-      <div class="mt-0.5 flex space-x-2">
+      <div class="mt-1 mb-4 flex space-x-2">
         <div class=" flex-1">
           <input
             id="steps-range"
@@ -897,17 +910,16 @@
             max="1"
             step="0.05"
             bind:value={params.mirostat_eta}
-            class="h-2 w-full cursor-pointer appearance-none rounded-lg dark:bg-gray-700"
+            class="h-2 w-full cursor-pointer rounded-lg dark:bg-gray-700"
           />
         </div>
         <div>
-          <input
+          <Input
             bind:value={params.mirostat_eta}
             type="number"
-            class=" w-14 bg-transparent text-center"
+            className="max-w-16"
             min="0"
             max="1"
-            step="any"
           />
         </div>
       </div>
@@ -922,16 +934,18 @@
       placement="top-start"
       className="inline-tooltip"
     >
-      <div class="flex w-full justify-between">
-        <div class=" self-center text-xs">
-          {'mirostat_tau'}
-        </div>
-
+      <SettingItem
+        label={'mirostat_tau'}
+        className={(params?.mirostat_tau ?? null) !== null
+          ? 'bg-accent-active/15 hover:bg-accent-active/20'
+          : ''}
+      >
         <button
           class="flex shrink-0 rounded-sm p-1 px-3 text-xs outline-hidden transition"
           type="button"
           on:click={() => {
-            params.mirostat_tau = (params?.mirostat_tau ?? null) === null ? 5.0 : null;
+            params.mirostat_tau =
+              (params?.mirostat_tau ?? null) === null ? defaultParams.mirostat_tau : null;
           }}
         >
           {#if (params?.mirostat_tau ?? null) === null}
@@ -940,11 +954,11 @@
             <span class="ml-2 self-center">{$i18n.t('Custom')}</span>
           {/if}
         </button>
-      </div>
+      </SettingItem>
     </Tooltip>
 
     {#if (params?.mirostat_tau ?? null) !== null}
-      <div class="mt-0.5 flex space-x-2">
+      <div class="mt-1 mb-4 flex space-x-2">
         <div class=" flex-1">
           <input
             id="steps-range"
@@ -953,17 +967,16 @@
             max="10"
             step="0.5"
             bind:value={params.mirostat_tau}
-            class="h-2 w-full cursor-pointer appearance-none rounded-lg dark:bg-gray-700"
+            class="h-2 w-full cursor-pointer rounded-lg dark:bg-gray-700"
           />
         </div>
         <div>
-          <input
+          <Input
             bind:value={params.mirostat_tau}
             type="number"
-            class=" w-14 bg-transparent text-center"
+            className="max-w-16"
             min="0"
             max="10"
-            step="any"
           />
         </div>
       </div>
@@ -976,16 +989,18 @@
       placement="top-start"
       className="inline-tooltip"
     >
-      <div class="flex w-full justify-between">
-        <div class=" self-center text-xs">
-          {'repeat_last_n'}
-        </div>
-
+      <SettingItem
+        label={'repeat_last_n'}
+        className={(params?.repeat_last_n ?? null) !== null
+          ? 'bg-accent-active/15 hover:bg-accent-active/20'
+          : ''}
+      >
         <button
           class="flex shrink-0 rounded-sm p-1 px-3 text-xs outline-hidden transition"
           type="button"
           on:click={() => {
-            params.repeat_last_n = (params?.repeat_last_n ?? null) === null ? 64 : null;
+            params.repeat_last_n =
+              (params?.repeat_last_n ?? null) === null ? defaultParams.repeat_last_n : null;
           }}
         >
           {#if (params?.repeat_last_n ?? null) === null}
@@ -994,11 +1009,11 @@
             <span class="ml-2 self-center">{$i18n.t('Custom')}</span>
           {/if}
         </button>
-      </div>
+      </SettingItem>
     </Tooltip>
 
     {#if (params?.repeat_last_n ?? null) !== null}
-      <div class="mt-0.5 flex space-x-2">
+      <div class="mt-1 mb-4 flex space-x-2">
         <div class=" flex-1">
           <input
             id="steps-range"
@@ -1007,14 +1022,14 @@
             max="128"
             step="1"
             bind:value={params.repeat_last_n}
-            class="h-2 w-full cursor-pointer appearance-none rounded-lg dark:bg-gray-700"
+            class="h-2 w-full cursor-pointer rounded-lg dark:bg-gray-700"
           />
         </div>
         <div>
-          <input
+          <Input
             bind:value={params.repeat_last_n}
             type="number"
-            class=" w-14 bg-transparent text-center"
+            className="max-w-16"
             min="-1"
             max="128"
             step="1"
@@ -1032,16 +1047,17 @@
       placement="top-start"
       className="inline-tooltip"
     >
-      <div class="flex w-full justify-between">
-        <div class=" self-center text-xs">
-          {'tfs_z'}
-        </div>
-
+      <SettingItem
+        label={'tfs_z'}
+        className={(params?.tfs_z ?? null) !== null
+          ? 'bg-accent-active/15 hover:bg-accent-active/20'
+          : ''}
+      >
         <button
           class="flex shrink-0 rounded-sm p-1 px-3 text-xs outline-hidden transition"
           type="button"
           on:click={() => {
-            params.tfs_z = (params?.tfs_z ?? null) === null ? 1 : null;
+            params.tfs_z = (params?.tfs_z ?? null) === null ? defaultParams.tfs_z : null;
           }}
         >
           {#if (params?.tfs_z ?? null) === null}
@@ -1050,11 +1066,11 @@
             <span class="ml-2 self-center">{$i18n.t('Custom')}</span>
           {/if}
         </button>
-      </div>
+      </SettingItem>
     </Tooltip>
 
     {#if (params?.tfs_z ?? null) !== null}
-      <div class="mt-0.5 flex space-x-2">
+      <div class="mt-1 mb-4 flex space-x-2">
         <div class=" flex-1">
           <input
             id="steps-range"
@@ -1063,18 +1079,11 @@
             max="2"
             step="0.05"
             bind:value={params.tfs_z}
-            class="h-2 w-full cursor-pointer appearance-none rounded-lg dark:bg-gray-700"
+            class="h-2 w-full cursor-pointer rounded-lg dark:bg-gray-700"
           />
         </div>
         <div>
-          <input
-            bind:value={params.tfs_z}
-            type="number"
-            class=" w-14 bg-transparent text-center"
-            min="0"
-            max="2"
-            step="any"
-          />
+          <Input bind:value={params.tfs_z} type="number" className="max-w-16" min="0" max="2" />
         </div>
       </div>
     {/if}
@@ -1088,16 +1097,18 @@
       placement="top-start"
       className="inline-tooltip"
     >
-      <div class="flex w-full justify-between">
-        <div class=" self-center text-xs">
-          {'repeat_penalty'}
-        </div>
-
+      <SettingItem
+        label={'repeat_penalty'}
+        className={(params?.repeat_penalty ?? null) !== null
+          ? 'bg-accent-active/15 hover:bg-accent-active/20'
+          : ''}
+      >
         <button
           class="flex flex-shrink-0 rounded p-1 px-3 text-xs transition outline-none"
           type="button"
           on:click={() => {
-            params.repeat_penalty = (params?.repeat_penalty ?? null) === null ? 1.1 : null;
+            params.repeat_penalty =
+              (params?.repeat_penalty ?? null) === null ? defaultParams.repeat_penalty : null;
           }}
         >
           {#if (params?.repeat_penalty ?? null) === null}
@@ -1106,11 +1117,11 @@
             <span class="ml-2 self-center">{$i18n.t('Custom')}</span>
           {/if}
         </button>
-      </div>
+      </SettingItem>
     </Tooltip>
 
     {#if (params?.repeat_penalty ?? null) !== null}
-      <div class="mt-0.5 flex space-x-2">
+      <div class="mt-1 mb-4 flex space-x-2">
         <div class=" flex-1">
           <input
             id="steps-range"
@@ -1119,17 +1130,16 @@
             max="2"
             step="0.05"
             bind:value={params.repeat_penalty}
-            class="h-2 w-full cursor-pointer appearance-none rounded-lg dark:bg-gray-700"
+            class="h-2 w-full cursor-pointer rounded-lg dark:bg-gray-700"
           />
         </div>
         <div>
-          <input
+          <Input
             bind:value={params.repeat_penalty}
             type="number"
-            class=" w-14 bg-transparent text-center"
+            className="max-w-16"
             min="-2"
             max="2"
-            step="any"
           />
         </div>
       </div>
@@ -1145,15 +1155,17 @@
         placement="top-start"
         className="inline-tooltip"
       >
-        <div class="flex w-full justify-between">
-          <div class=" self-center text-xs">
-            {'use_mmap'}
-          </div>
+        <SettingItem
+          label={'use_mmap'}
+          className={(params?.use_mmap ?? null) !== null
+            ? 'bg-accent-active/15 hover:bg-accent-active/20 rounded-b-none'
+            : ''}
+        >
           <button
             class="flex shrink-0 rounded-sm p-1 px-3 text-xs outline-hidden transition"
             type="button"
             on:click={() => {
-              params.use_mmap = (params?.use_mmap ?? null) === null ? true : null;
+              params.use_mmap = (params?.use_mmap ?? null) === null ? defaultParams.use_mmap : null;
             }}
           >
             {#if (params?.use_mmap ?? null) === null}
@@ -1162,18 +1174,15 @@
               <span class="ml-2 self-center">{$i18n.t('Custom')}</span>
             {/if}
           </button>
-        </div>
+        </SettingItem>
       </Tooltip>
 
       {#if (params?.use_mmap ?? null) !== null}
-        <div class="mt-1 flex items-center justify-between">
-          <div class="text-xs text-gray-500">
-            {params.use_mmap ? $i18n.t('Enabled') : $i18n.t('Disabled')}
-          </div>
-          <div class=" pr-2">
-            <Switch bind:state={params.use_mmap} />
-          </div>
-        </div>
+        <ToggleSetting
+          bind:value={params.use_mmap}
+          label={params.use_mmap ? $i18n.t('Enabled') : $i18n.t('Disabled')}
+          className={(params?.use_mmap ?? null) !== null ? 'rounded-t-none' : ''}
+        />
       {/if}
     </div>
 
@@ -1185,16 +1194,18 @@
         placement="top-start"
         className="inline-tooltip"
       >
-        <div class="flex w-full justify-between">
-          <div class=" self-center text-xs">
-            {'use_mlock'}
-          </div>
-
+        <SettingItem
+          label={'use_mlock'}
+          className={(params?.use_mlock ?? null) !== null
+            ? 'bg-accent-active/15 hover:bg-accent-active/20 rounded-b-none'
+            : ''}
+        >
           <button
             class="flex shrink-0 rounded-sm p-1 px-3 text-xs outline-hidden transition"
             type="button"
             on:click={() => {
-              params.use_mlock = (params?.use_mlock ?? null) === null ? true : null;
+              params.use_mlock =
+                (params?.use_mlock ?? null) === null ? defaultParams.use_mlock : null;
             }}
           >
             {#if (params?.use_mlock ?? null) === null}
@@ -1203,19 +1214,15 @@
               <span class="ml-2 self-center">{$i18n.t('Custom')}</span>
             {/if}
           </button>
-        </div>
+        </SettingItem>
       </Tooltip>
 
       {#if (params?.use_mlock ?? null) !== null}
-        <div class="mt-1 flex items-center justify-between">
-          <div class="text-xs text-gray-500">
-            {params.use_mlock ? $i18n.t('Enabled') : $i18n.t('Disabled')}
-          </div>
-
-          <div class=" pr-2">
-            <Switch bind:state={params.use_mlock} />
-          </div>
-        </div>
+        <ToggleSetting
+          bind:value={params.use_mlock}
+          label={params.use_mlock ? $i18n.t('Enabled') : $i18n.t('Disabled')}
+          className={(params?.use_mlock ?? null) !== null ? 'rounded-t-none' : ''}
+        />
       {/if}
     </div>
   {/if}
@@ -1228,15 +1235,17 @@
       placement="top-start"
       className="inline-tooltip"
     >
-      <div class=" flex w-full justify-between py-0.5">
-        <div class=" self-center text-xs">
-          {'think'} ({$i18n.t('Ollama')})
-        </div>
+      <SettingItem
+        label={`think (${$i18n.t('Ollama')})`}
+        className={(params?.think ?? null) !== null
+          ? 'bg-accent-active/15 hover:bg-accent-active/20'
+          : ''}
+      >
         <button
           class="flex rounded-sm p-1 px-3 text-xs transition"
           on:click={() => {
             if ((params?.think ?? null) === null) {
-              params.think = true;
+              params.think = defaultParams.think;
             } else if (params.think === true) {
               params.think = 'medium';
             } else if (typeof params.think === 'string') {
@@ -1257,14 +1266,13 @@
             <span class="ml-2 self-center">{$i18n.t('Default')}</span>
           {/if}
         </button>
-      </div>
+      </SettingItem>
     </Tooltip>
 
     {#if typeof params.think === 'string'}
-      <div class="mt-0.5 flex space-x-2">
+      <div class="mt-1 mb-4 flex space-x-2">
         <div class=" flex-1">
-          <input
-            class="w-full bg-transparent text-sm outline-hidden outline-none"
+          <Input
             type="text"
             placeholder={$i18n.t("e.g. 'low', 'medium', 'high'")}
             bind:value={params.think}
@@ -1281,14 +1289,16 @@
       placement="top-start"
       className="inline-tooltip"
     >
-      <div class=" flex w-full justify-between py-0.5">
-        <div class=" self-center text-xs">
-          {'format'} ({$i18n.t('Ollama')})
-        </div>
+      <SettingItem
+        label={`format (${$i18n.t('Ollama')})`}
+        className={(params?.format ?? null) !== null
+          ? 'bg-accent-active/15 hover:bg-accent-active/20'
+          : ''}
+      >
         <button
           class="flex rounded-sm p-1 px-3 text-xs transition"
           on:click={() => {
-            params.format = (params?.format ?? null) === null ? 'json' : null;
+            params.format = (params?.format ?? null) === null ? defaultParams.format : null;
           }}
           type="button"
         >
@@ -1298,13 +1308,12 @@
             <span class="ml-2 self-center">{$i18n.t('JSON')}</span>
           {/if}
         </button>
-      </div>
+      </SettingItem>
     </Tooltip>
 
     {#if (params?.format ?? null) !== null}
-      <div class="mt-0.5 flex space-x-2">
+      <div class="mt-1 mb-4 flex space-x-2">
         <Textarea
-          className="w-full  text-sm bg-transparent outline-hidden"
           placeholder={$i18n.t('e.g. "json" or a JSON schema')}
           bind:value={params.format}
         />
@@ -1320,16 +1329,17 @@
       placement="top-start"
       className="inline-tooltip"
     >
-      <div class="flex w-full justify-between">
-        <div class=" self-center text-xs">
-          {'num_keep'} ({$i18n.t('Ollama')})
-        </div>
-
+      <SettingItem
+        label={`num_keep (${$i18n.t('Ollama')})`}
+        className={(params?.num_keep ?? null) !== null
+          ? 'bg-accent-active/15 hover:bg-accent-active/20'
+          : ''}
+      >
         <button
           class="flex shrink-0 rounded-sm p-1 px-3 text-xs outline-hidden transition"
           type="button"
           on:click={() => {
-            params.num_keep = (params?.num_keep ?? null) === null ? 24 : null;
+            params.num_keep = (params?.num_keep ?? null) === null ? defaultParams.num_keep : null;
           }}
         >
           {#if (params?.num_keep ?? null) === null}
@@ -1338,11 +1348,11 @@
             <span class="ml-2 self-center">{$i18n.t('Custom')}</span>
           {/if}
         </button>
-      </div>
+      </SettingItem>
     </Tooltip>
 
     {#if (params?.num_keep ?? null) !== null}
-      <div class="mt-0.5 flex space-x-2">
+      <div class="mt-1 mb-4 flex space-x-2">
         <div class=" flex-1">
           <input
             id="steps-range"
@@ -1351,14 +1361,14 @@
             max="10240000"
             step="1"
             bind:value={params.num_keep}
-            class="h-2 w-full cursor-pointer appearance-none rounded-lg dark:bg-gray-700"
+            class="h-2 w-full cursor-pointer rounded-lg dark:bg-gray-700"
           />
         </div>
         <div class="">
-          <input
+          <Input
             bind:value={params.num_keep}
             type="number"
-            class=" w-14 bg-transparent text-center"
+            className="max-w-16"
             min="-1"
             step="1"
           />
@@ -1373,16 +1383,17 @@
       placement="top-start"
       className="inline-tooltip"
     >
-      <div class="flex w-full justify-between">
-        <div class=" self-center text-xs">
-          {'num_ctx'} ({$i18n.t('Ollama')})
-        </div>
-
+      <SettingItem
+        label={`num_ctx (${$i18n.t('Ollama')})`}
+        className={(params?.num_ctx ?? null) !== null
+          ? 'bg-accent-active/15 hover:bg-accent-active/20'
+          : ''}
+      >
         <button
           class="flex shrink-0 rounded-sm p-1 px-3 text-xs outline-hidden transition"
           type="button"
           on:click={() => {
-            params.num_ctx = (params?.num_ctx ?? null) === null ? 2048 : null;
+            params.num_ctx = (params?.num_ctx ?? null) === null ? defaultParams.num_ctx : null;
           }}
         >
           {#if (params?.num_ctx ?? null) === null}
@@ -1391,11 +1402,11 @@
             <span class="ml-2 self-center">{$i18n.t('Custom')}</span>
           {/if}
         </button>
-      </div>
+      </SettingItem>
     </Tooltip>
 
     {#if (params?.num_ctx ?? null) !== null}
-      <div class="mt-0.5 flex space-x-2">
+      <div class="mt-1 mb-4 flex space-x-2">
         <div class=" flex-1">
           <input
             id="steps-range"
@@ -1404,17 +1415,11 @@
             max="10240000"
             step="1"
             bind:value={params.num_ctx}
-            class="h-2 w-full cursor-pointer appearance-none rounded-lg dark:bg-gray-700"
+            class="h-2 w-full cursor-pointer rounded-lg dark:bg-gray-700"
           />
         </div>
         <div class="">
-          <input
-            bind:value={params.num_ctx}
-            type="number"
-            class=" w-14 bg-transparent text-center"
-            min="-1"
-            step="1"
-          />
+          <Input bind:value={params.num_ctx} type="number" className="max-w-16" min="-1" step="1" />
         </div>
       </div>
     {/if}
@@ -1428,16 +1433,18 @@
       placement="top-start"
       className="inline-tooltip"
     >
-      <div class="flex w-full justify-between">
-        <div class=" self-center text-xs">
-          {'num_batch'} ({$i18n.t('Ollama')})
-        </div>
-
+      <SettingItem
+        label={`num_batch (${$i18n.t('Ollama')})`}
+        className={(params?.num_batch ?? null) !== null
+          ? 'bg-accent-active/15 hover:bg-accent-active/20'
+          : ''}
+      >
         <button
           class="flex shrink-0 rounded-sm p-1 px-3 text-xs outline-hidden transition"
           type="button"
           on:click={() => {
-            params.num_batch = (params?.num_batch ?? null) === null ? 512 : null;
+            params.num_batch =
+              (params?.num_batch ?? null) === null ? defaultParams.num_batch : null;
           }}
         >
           {#if (params?.num_batch ?? null) === null}
@@ -1446,11 +1453,11 @@
             <span class="ml-2 self-center">{$i18n.t('Custom')}</span>
           {/if}
         </button>
-      </div>
+      </SettingItem>
     </Tooltip>
 
     {#if (params?.num_batch ?? null) !== null}
-      <div class="mt-0.5 flex space-x-2">
+      <div class="mt-1 mb-4 flex space-x-2">
         <div class=" flex-1">
           <input
             id="steps-range"
@@ -1459,14 +1466,14 @@
             max="8192"
             step="256"
             bind:value={params.num_batch}
-            class="h-2 w-full cursor-pointer appearance-none rounded-lg dark:bg-gray-700"
+            class="h-2 w-full cursor-pointer rounded-lg dark:bg-gray-700"
           />
         </div>
         <div>
-          <input
+          <Input
             bind:value={params.num_batch}
             type="number"
-            class=" w-14 bg-transparent text-center"
+            className="max-w-16"
             min="256"
             step="256"
           />
@@ -1484,16 +1491,18 @@
         placement="top-start"
         className="inline-tooltip"
       >
-        <div class="flex w-full justify-between">
-          <div class=" self-center text-xs">
-            {'num_thread'} ({$i18n.t('Ollama')})
-          </div>
-
+        <SettingItem
+          label={`num_thread (${$i18n.t('Ollama')})`}
+          className={(params?.num_thread ?? null) !== null
+            ? 'bg-accent-active/15 hover:bg-accent-active/20'
+            : ''}
+        >
           <button
             class="flex shrink-0 rounded-sm p-1 px-3 text-xs outline-hidden transition"
             type="button"
             on:click={() => {
-              params.num_thread = (params?.num_thread ?? null) === null ? 2 : null;
+              params.num_thread =
+                (params?.num_thread ?? null) === null ? defaultParams.num_thread : null;
             }}
           >
             {#if (params?.num_thread ?? null) === null}
@@ -1502,11 +1511,11 @@
               <span class="ml-2 self-center">{$i18n.t('Custom')}</span>
             {/if}
           </button>
-        </div>
+        </SettingItem>
       </Tooltip>
 
       {#if (params?.num_thread ?? null) !== null}
-        <div class="mt-0.5 flex space-x-2">
+        <div class="mt-1 mb-4 flex space-x-2">
           <div class=" flex-1">
             <input
               id="steps-range"
@@ -1515,14 +1524,14 @@
               max="256"
               step="1"
               bind:value={params.num_thread}
-              class="h-2 w-full cursor-pointer appearance-none rounded-lg dark:bg-gray-700"
+              class="h-2 w-full cursor-pointer rounded-lg dark:bg-gray-700"
             />
           </div>
           <div class="">
-            <input
+            <Input
               bind:value={params.num_thread}
               type="number"
-              class=" w-14 bg-transparent text-center"
+              className="max-w-16"
               min="1"
               max="256"
               step="1"
@@ -1540,16 +1549,17 @@
         placement="top-start"
         className="inline-tooltip"
       >
-        <div class="flex w-full justify-between">
-          <div class=" self-center text-xs">
-            {'num_gpu'} ({$i18n.t('Ollama')})
-          </div>
-
+        <SettingItem
+          label={`num_gpu (${$i18n.t('Ollama')})`}
+          className={(params?.num_gpu ?? null) !== null
+            ? 'bg-accent-active/15 hover:bg-accent-active/20'
+            : ''}
+        >
           <button
             class="flex shrink-0 rounded-sm p-1 px-3 text-xs outline-hidden transition"
             type="button"
             on:click={() => {
-              params.num_gpu = (params?.num_gpu ?? null) === null ? 0 : null;
+              params.num_gpu = (params?.num_gpu ?? null) === null ? defaultParams.num_gpu : null;
             }}
           >
             {#if (params?.num_gpu ?? null) === null}
@@ -1558,11 +1568,11 @@
               <span class="ml-2 self-center">{$i18n.t('Custom')}</span>
             {/if}
           </button>
-        </div>
+        </SettingItem>
       </Tooltip>
 
       {#if (params?.num_gpu ?? null) !== null}
-        <div class="mt-0.5 flex space-x-2">
+        <div class="mt-1 mb-4 flex space-x-2">
           <div class=" flex-1">
             <input
               id="steps-range"
@@ -1571,14 +1581,14 @@
               max="256"
               step="1"
               bind:value={params.num_gpu}
-              class="h-2 w-full cursor-pointer appearance-none rounded-lg dark:bg-gray-700"
+              class="h-2 w-full cursor-pointer rounded-lg dark:bg-gray-700"
             />
           </div>
           <div class="">
-            <input
+            <Input
               bind:value={params.num_gpu}
               type="number"
-              class=" w-14 bg-transparent text-center"
+              className="max-w-16"
               min="0"
               max="256"
               step="1"
@@ -1596,14 +1606,17 @@
         placement="top-start"
         className="inline-tooltip"
       >
-        <div class=" flex w-full justify-between py-0.5">
-          <div class=" self-center text-xs">
-            {'keep_alive'} ({$i18n.t('Ollama')})
-          </div>
+        <SettingItem
+          label={`keep_alive (${$i18n.t('Ollama')})`}
+          className={(params?.keep_alive ?? null) !== null
+            ? 'bg-accent-active/15 hover:bg-accent-active/20'
+            : ''}
+        >
           <button
             class="flex rounded-sm p-1 px-3 text-xs transition"
             on:click={() => {
-              params.keep_alive = (params?.keep_alive ?? null) === null ? '5m' : null;
+              params.keep_alive =
+                (params?.keep_alive ?? null) === null ? defaultParams.keep_alive : null;
             }}
             type="button"
           >
@@ -1613,13 +1626,12 @@
               <span class="ml-2 self-center">{$i18n.t('Custom')}</span>
             {/if}
           </button>
-        </div>
+        </SettingItem>
       </Tooltip>
 
       {#if (params?.keep_alive ?? null) !== null}
-        <div class="mt-0.5 flex space-x-2">
-          <input
-            class="w-full bg-transparent text-sm outline-hidden"
+        <div class="mt-1 mb-4 flex space-x-2">
+          <Input
             type="text"
             placeholder={$i18n.t("e.g. '30s','10m'. Valid time units are 's', 'm', 'h'.")}
             bind:value={params.keep_alive}
@@ -1629,32 +1641,30 @@
     </div>
 
     {#if custom && admin}
-      <div class="flex flex-col justify-center">
+      <div class="flex flex-col justify-center gap-2">
         {#each Object.keys(params?.custom_params ?? {}) as key}
-          <div class=" mb-1 w-full justify-between py-0.5">
-            <div class="flex w-full justify-between">
-              <div class=" self-center text-xs">
-                <input
-                  type="text"
-                  class=" w-full bg-transparent text-xs outline-none"
-                  placeholder={$i18n.t('Custom Parameter Name')}
-                  value={key}
-                  on:change={(e) => {
-                    const newKey = e.target.value.trim();
-                    if (newKey && newKey !== key) {
-                      params.custom_params[newKey] = params.custom_params[key];
-                      delete params.custom_params[key];
-                      params = {
-                        ...params,
-                        custom_params: { ...params.custom_params },
-                      };
-                    }
-                  }}
-                />
-              </div>
-              <button
-                class="flex shrink-0 rounded-sm p-1 px-3 text-xs outline-hidden transition"
+          <div class="bg-card border-border mb-1 w-full justify-between rounded-2xl border p-2">
+            <div class="flex w-full justify-between gap-2">
+              <Input
+                type="text"
+                placeholder={$i18n.t('Custom Parameter Name')}
+                value={key}
+                on:change={(e) => {
+                  const newKey = e.target.value.trim();
+                  if (newKey && newKey !== key) {
+                    params.custom_params[newKey] = params.custom_params[key];
+                    delete params.custom_params[key];
+                    params = {
+                      ...params,
+                      custom_params: { ...params.custom_params },
+                    };
+                  }
+                }}
+              />
+              <Button
+                size="sm"
                 type="button"
+                className="shrink-0"
                 on:click={() => {
                   delete params.custom_params[key];
                   params = {
@@ -1664,14 +1674,13 @@
                 }}
               >
                 {$i18n.t('Remove')}
-              </button>
+              </Button>
             </div>
-            <div class="mt-0.5 flex space-x-2">
+            <div class="mt-1 flex space-x-2">
               <div class=" flex-1">
-                <input
+                <Input
                   bind:value={params.custom_params[key]}
                   type="text"
-                  class="w-full bg-transparent text-sm outline-hidden outline-none"
                   placeholder={$i18n.t('Custom Parameter Value')}
                 />
               </div>
@@ -1679,19 +1688,20 @@
           </div>
         {/each}
 
-        <button
-          class=" mt-1 mb-5 flex w-full items-center justify-center gap-2 text-center"
+        <Button
+          size="sm"
+          variant="ghost"
           type="button"
+          radius="lg"
+          className="mb-2"
           on:click={() => {
             params.custom_params = (params?.custom_params ?? {}) || {};
             params.custom_params['custom_param_name'] = 'custom_param_value';
           }}
         >
-          <div>
-            <Plus />
-          </div>
+          <Plus />
           <div>{$i18n.t('Add Custom Parameter')}</div>
-        </button>
+        </Button>
       </div>
     {/if}
   {/if}

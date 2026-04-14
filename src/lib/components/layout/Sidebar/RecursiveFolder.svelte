@@ -643,7 +643,7 @@
     <div slot="content" class="w-full">
       {#if (folders[folderId]?.childrenIds ?? []).length > 0 || (chats ?? []).length > 0}
         <div
-          class="scrollbar-hidden mt-[1px] ml-3 flex flex-col overflow-y-auto border-s border-gray-100 pl-1 dark:border-gray-900"
+          class="scrollbar-hidden mt-[1px] ml-3 flex flex-col space-y-0.5 overflow-y-auto border-s border-gray-100 pl-1 dark:border-gray-900"
         >
           {#if folders[folderId]?.childrenIds}
             {@const children = folders[folderId]?.childrenIds

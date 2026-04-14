@@ -57,7 +57,7 @@
   <div class="flex-1">
     <Textarea
       className="w-full text-sm bg-transparent placeholder:text-gray-300 dark:placeholder:text-gray-700 outline-hidden resize-none"
-      rows={4}
+      rows="4"
       bind:value={description}
       placeholder={$i18n.t('Group Description')}
     />

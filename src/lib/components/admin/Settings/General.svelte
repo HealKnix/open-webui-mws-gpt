@@ -146,7 +146,9 @@
   <div class="scrollbar-hidden h-full space-y-3 overflow-y-scroll p-1">
     {#if adminConfig !== null}
       <div class="space-y-1">
-        <div class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+        <div
+          class="my-2 mb-4 border-b border-gray-300 pb-1 text-base font-medium dark:border-gray-800"
+        >
           {$i18n.t('General')}
         </div>
 
@@ -304,7 +306,9 @@
       </div>
 
       <div class="space-y-1">
-        <div class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+        <div
+          class="my-2 mb-4 border-b border-gray-300 pb-1 text-base font-medium dark:border-gray-800"
+        >
           {$i18n.t('Authentication')}
         </div>
 
@@ -659,7 +663,9 @@
       </div>
 
       <div class="space-y-1">
-        <div class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+        <div
+          class="my-2 mb-4 border-b border-gray-300 pb-1 text-base font-medium dark:border-gray-800"
+        >
           {$i18n.t('Features')}
         </div>
 
@@ -766,7 +772,9 @@
       </div>
 
       <div class="space-y-1">
-        <div class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+        <div
+          class="my-2 mb-4 border-b border-gray-300 pb-1 text-base font-medium dark:border-gray-800"
+        >
           {$i18n.t('UI')}
         </div>
 
