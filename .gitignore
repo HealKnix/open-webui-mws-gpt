@@ -314,3 +314,5 @@ cypress/screenshots
 .codex/
 .github/prompts/
 .github/skills/
+/deployment
+docker-compose.dev.yaml
