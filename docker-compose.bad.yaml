@@ -30,43 +30,89 @@ services:
     image: openwebui-portable:${WEBUI_DOCKER_TAG:-portable}
     container_name: open-webui
     restart: unless-stopped
-    depends_on:
-      - ollama
-      - searxng
     ports:
-      - "${OPEN_WEBUI_PORT:-3000}:8080"
+      - "${OPEN_WEBUI_PORT:-8040}:8080"
     environment:
       ENV: prod
       PORT: 8080
-      OLLAMA_BASE_URL: http://ollama:11434
       SEARXNG_QUERY_URL: http://searxng:8080/search?q=<query>
-      WEBUI_URL: http://localhost:${OPEN_WEBUI_PORT:-3000}
+      WEBUI_URL: http://localhost:${OPEN_WEBUI_PORT:-8040}
 
       ENABLE_PERSISTENT_CONFIG: "true"
       ENABLE_RAG_WEB_SEARCH: "true"
       RAG_WEB_SEARCH_ENGINE: searxng
-      RAG_WEB_SEARCH_RESULT_COUNT: "3"
-      RAG_WEB_SEARCH_CONCURRENT_REQUESTS: "10"
+      RAG_WEB_SEARCH_RESULT_COUNT: 5
+      RAG_WEB_SEARCH_CONCURRENT_REQUESTS: 10
+
+      OPENAI_API_BASE_URL: ${OPENAI_API_BASE_URL-https://api.gpt.mws.ru/v1}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      RAG_EMBEDDING_ENGINE: openai
+      RAG_EMBEDDING_MODEL: bge-m3
+      RAG_OPENAI_API_BASE_URL: ${OPENAI_API_BASE_URL-https://api.gpt.mws.ru/v1}
+      RAG_OPENAI_API_KEY: ${OPENAI_API_KEY}
+      RAG_TEXT_SPLITTER: character
+      ENABLE_MARKDOWN_HEADER_TEXT_SPLITTER: True
+      CHUNK_SIZE: 4000
+      CHUNK_OVERLAP: 50
+      CHUNK_MIN_SIZE_TARGET: 450
+      ENABLE_WEB_SEARCH: True
+      MTS_ROUTER_PPTX_RENDERER: auto
+      MTS_ROUTER_PPTX_SKILL_PATH: /app/backend/open_webui/orchestration/skills/pptx
+
 
       # Базовые настройки
       WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY:-}
-      CORS_ALLOW_ORIGIN: http://localhost:${OPEN_WEBUI_PORT:-3000}
+      CORS_ALLOW_ORIGIN: http://localhost:${OPEN_WEBUI_PORT:-8040}
     volumes:
-      - ./backend/data:/app/backend/data
+      - ./deployment/openwebui:/app/backend/data
     extra_hosts:
       - host.docker.internal:host-gateway
 
-  open-terminal:
-    image: ghcr.io/open-webui/open-terminal:latest
-    container_name: open-terminal
+  # open-terminal:
+  #   image: ghcr.io/open-webui/open-terminal:latest
+  #   container_name: open-terminal
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     OPEN_TERMINAL_MULTI_USER: "true"
+  #     OPEN_TERMINAL_API_KEY: ${OPEN_TERMINAL_API_KEY:-your-secret-key}
+  #   volumes:
+  #     - ./deployment/open-terminal:/home
+
+  terminal-orchestrator:
+    build:
+      context: ./services/terminal-orchestrator
+      dockerfile: Dockerfile
+    image: terminal-orchestrator:local
+    container_name: terminal-orchestrator
+    environment:
+      ORCHESTRATOR_SHARED_KEY: '321'
+      TERMINAL_IMAGE: ${TERMINAL_IMAGE:-ghcr.io/open-webui/open-terminal:latest}
+      TERMINAL_INTERNAL_PORT: '8000'
+      INTERNAL_NETWORK_NAME: terminal-internal
+      EGRESS_NETWORK_NAME: terminal-egress
+      IDLE_TIMEOUT_SECONDS: '1800'
+      MEM_LIMIT: '1g'
+      CPU_LIMIT: '1.0'
+      PIDS_LIMIT: '256'
+      ALLOW_INTERNET_DEFAULT: 'false'
+      STOP_ON_SHUTDOWN: 'true'
+      SPAWN_RATE_PER_MIN: '3'
+      POLICIES_FILE: /etc/orchestrator/policies.yaml
+      POLICIES_OVERRIDES_FILE: /etc/orchestrator/state/policies-overrides.json
+      LOG_LEVEL: INFO
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./services/terminal-orchestrator/policies.yaml:/etc/orchestrator/policies.yaml:ro
+      - ./deployment/terminal-orchestrator-state:/etc/orchestrator/state
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
     restart: unless-stopped
     ports:
-      - "8000:8000"
-    environment:
-      OPEN_TERMINAL_MULTI_USER: "true"
-      OPEN_TERMINAL_API_KEY: ${OPEN_TERMINAL_API_KEY:-your-secret-key}
-    volumes:
-      - ./deployment/open-terminal:/home
+      - 8083:8000
+
 
   playwright:
     image: mcr.microsoft.com/playwright:v1.58.0-noble
