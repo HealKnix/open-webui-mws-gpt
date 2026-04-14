@@ -573,16 +573,28 @@ async def execute_code(
 
 
 async def search_memories(
-    query: str,
+    query: str | list[str],
     count: int = 5,
     __request__: Request = None,
     __user__: dict = None,
 ) -> str:
     """
-    Search the user's stored memories for relevant information.
+    CRITICAL - ALWAYS USE THIS TOOL: You MUST search user memories at the START of EVERY conversation
+    and BEFORE answering ANY user query. This is NOT optional - always call this tool first.
 
-    :param query: The search query to find relevant memories
-    :param count: Number of memories to return (default 5)
+    Pass a LIST of queries to search for multiple things at once (recommended).
+    Example: query=["предпочтения пользователя", "что нравится пользователю", "информация о пользователе"]
+
+    Recommended queries in RUSSIAN (pass as a list):
+    - "предпочтения пользователя" (user preferences - covers likes/dislikes/communication style)
+    - "информация о пользователе" (general user information)
+    - "пожелания пользователя" (user wishes/requests)
+
+    Use the retrieved memories to personalize your response according to the user's
+    established preferences, likes, dislikes, and previous requests.
+
+    :param query: A single search query or a LIST of queries to find relevant memories. Use Russian queries for best results.
+    :param count: Number of memories to return per query (default 5)
     :return: JSON with matching memories and their dates
     """
     if __request__ is None:
@@ -591,28 +603,45 @@ async def search_memories(
     try:
         user = UserModel(**__user__) if __user__ else None
 
-        results = await query_memory(
-            __request__,
-            QueryMemoryForm(content=query, k=count),
-            user,
-        )
+        # Normalize query to a list
+        queries = query if isinstance(query, list) else [query]
 
-        if results and hasattr(results, 'documents') and results.documents:
-            memories = []
-            for doc_idx, doc in enumerate(results.documents[0]):
+        # Search all queries in parallel
+        search_tasks = [
+            query_memory(__request__, QueryMemoryForm(content=q, k=count), user)
+            for q in queries
+        ]
+        all_results = await asyncio.gather(*search_tasks, return_exceptions=True)
+
+        # Combine and deduplicate results
+        seen_ids = set()
+        memories = []
+
+        for result in all_results:
+            if isinstance(result, Exception):
+                continue
+            if not result or not hasattr(result, 'documents') or not result.documents:
+                continue
+
+            for doc_idx, doc in enumerate(result.documents[0]):
                 memory_id = None
-                if results.ids and results.ids[0]:
-                    memory_id = results.ids[0][doc_idx]
+                if result.ids and result.ids[0]:
+                    memory_id = result.ids[0][doc_idx]
+
+                # Skip duplicates
+                if memory_id in seen_ids:
+                    continue
+                seen_ids.add(memory_id)
+
                 created_at = 'Unknown'
-                if results.metadatas and results.metadatas[0][doc_idx].get('created_at'):
+                if result.metadatas and result.metadatas[0][doc_idx].get('created_at'):
                     created_at = time.strftime(
                         '%Y-%m-%d',
-                        time.localtime(results.metadatas[0][doc_idx]['created_at']),
+                        time.localtime(result.metadatas[0][doc_idx]['created_at']),
                     )
                 memories.append({'id': memory_id, 'date': created_at, 'content': doc})
-            return json.dumps(memories, ensure_ascii=False)
-        else:
-            return json.dumps([])
+
+        return json.dumps(memories, ensure_ascii=False)
     except Exception as e:
         log.exception(f'search_memories error: {e}')
         return json.dumps({'error': str(e)})
@@ -624,9 +653,61 @@ async def add_memory(
     __user__: dict = None,
 ) -> str:
     """
-    Store a new memory for the user.
+    Store IMPORTANT personal information about the user for future personalization.
 
-    :param content: The memory content to store
+    ⚠️ CRITICAL WORKFLOW - FOLLOW THESE STEPS:
+    1. FIRST: Use smart_search(query=<relevant_topic>) to check if similar memory exists
+    2. IF FOUND similar memory → use replace_memory_content() to UPDATE it
+    3. IF NOT FOUND → use add_memory() to CREATE new memory
+    
+    NEVER add duplicate memories! ALWAYS search first.
+
+    ALWAYS store memories in RUSSIAN language, regardless of what language the user spoke.
+
+    SAVE THESE CATEGORIES (HIGH PRIORITY):
+    
+    1. PERSONAL DETAILS:
+       - Name, age, location, profession, background, company
+       - Example: "Пользователя зовут Мария, она работает главным бухгалтером в ООО 'Ромашка'"
+    
+    2. COMMUNICATION PREFERENCES (CRITICAL):
+       - How they want you to communicate
+       - Response style: brief/detailed, formal/casual
+       - Examples: 
+         * "Пользователь предпочитает краткие ответы"
+         * "Пользователь хочет обращения 'Лорд'"
+         * "Пользователь просит объяснять простыми словами"
+    
+    3. WORK STANDARDS & CONSTRAINTS (CRITICAL):
+       - Company policies, regulations, tools, methods
+       - Rules that apply to ALL future tasks
+       - Examples:
+         * "Пользователь никогда не использует shared volumes в Docker"
+         * "Пользователь работает только по МСФО, не использует РСБУ"
+         * "В компании пользователя запрещены общие папки для конфиденциальных документов"
+    
+    4. PROFESSIONAL INTERESTS:
+       - Expertise areas, current projects
+       - Example: "Пользователь специализируется на налоговой оптимизации"
+    
+    5. DISLIKES & AVOIDANCES (CRITICAL):
+       - Things to avoid in work/communication
+       - Examples:
+         * "Пользователь не любит Excel, предпочитает 1С"
+         * "Пользователь избегает ИП на УСН"
+
+    TRIGGER PHRASES - ALWAYS SAVE WHEN USER SAYS:
+    - "НИКОГДА НЕ..." → permanent rule, high priority
+    - "ВСЕГДА..." → permanent preference, high priority
+    - "У НАС В КОМПАНИИ..." → company standard, high priority
+    - "Я РАБОТАЮ ТОЛЬКО..." → work constraint, high priority
+
+    DO NOT SAVE (temporary):
+    - One-time tasks: "составь договор", "посчитай налог"
+    - Specific questions: "что такое НДС?"
+    - Situational requests
+
+    :param content: The memory content to store in RUSSIAN. Only reusable personal information.
     :return: Confirmation that the memory was stored
     """
     if __request__ is None:
@@ -654,11 +735,50 @@ async def replace_memory_content(
     __user__: dict = None,
 ) -> str:
     """
-    Update the content of an existing memory by its ID.
-
-    :param memory_id: The ID of the memory to update
-    :param content: The new content for the memory
-    :return: Confirmation that the memory was updated
+    Update an existing memory when user CORRECTS or CHANGES their preference.
+    
+    ⚠️ CRITICAL DECISION TREE:
+    
+    When user provides correcting/updating information:
+    
+    1. Use smart_search(query=<topic>) to find related memories
+    
+    2. IF smart_search returns existing memory with similar topic:
+       → Use replace_memory_content(memory_id, new_content)
+       → Example: Found "обращаться Господин" → user says "называй меня Лорд"
+    
+    3. IF smart_search returns NO related memories:
+       → Use add_memory(new_content)
+       → This is NEW information, not an update
+    
+    WHEN TO USE replace_memory_content:
+    ✅ User explicitly corrects: "не X, а Y"
+    ✅ Preference changed: "теперь хочу краткие ответы" (was detailed)
+    ✅ Updated info: "я переехал в Питер" (was Moscow)
+    ✅ Contradicts existing memory found via smart_search
+    
+    WHEN NOT TO USE (use add_memory instead):
+    ❌ No existing memory found via smart_search
+    ❌ Completely new topic/information
+    ❌ Additional info, not replacement
+    
+    EXAMPLES:
+    
+    Scenario 1 - CORRECT usage:
+    - smart_search("обращение") → found: "обращаться Господин"
+    - User: "я люблю лорд"
+    - Action: replace_memory_content(id, "Пользователь требует обращения Лорд")
+    
+    Scenario 2 - WRONG usage (should use add_memory):
+    - smart_search("город") → NOT found
+    - User: "я живу в Москве"
+    - Action: add_memory("Пользователь живёт в Москве") ← NOT replace!
+    
+    ALWAYS write updated content in RUSSIAN language.
+    
+    :param memory_id: ID of the memory to update (from smart_search results)
+    :param content: New content in RUSSIAN to replace the old memory
+    :return: Confirmation with updated memory details
     """
     if __request__ is None:
         return json.dumps({'error': 'Request context not available'})
@@ -1099,6 +1219,162 @@ async def search_chats(
         return json.dumps(results, ensure_ascii=False)
     except Exception as e:
         log.exception(f'search_chats error: {e}')
+        return json.dumps({'error': str(e)})
+
+
+async def smart_search(
+    query: str,
+    search_in: str = 'all',
+    count: int = 5,
+    __request__: Request = None,
+    __user__: dict = None,
+    __chat_id__: str = None,
+) -> str:
+    """
+    CRITICAL - ALWAYS USE THIS FIRST: You MUST use smart_search at the START of EVERY conversation
+    and BEFORE answering ANY user query. This is NOT optional - always call this tool first.
+
+    Smart search across ALL memory sources in priority order:
+    1. User memories (preferences, rules, permanent settings) - HIGHEST PRIORITY
+    2. Chat summaries (compressed insights from past conversations)
+    3. Raw chat history (fallback for detailed context)
+
+    Pass specific queries to find what you need. For new conversations, ALWAYS search for:
+    - User preferences and communication style
+    - Work standards and constraints
+    - Project context and ongoing tasks
+
+    RECOMMENDED FIRST QUERIES (use multiple in parallel):
+    - query="предпочтения пользователя" (user preferences)
+    - query="стандарты работы" (work standards)
+    - query="текущие проекты" (current projects)
+
+    :param query: The search query - be specific about what you're looking for
+    :param search_in: Where to search - 'all' (default), 'memories', 'summaries', or 'chats'
+    :param count: Maximum number of results to return (default: 5)
+    :return: JSON with ranked results from all sources, marked by source type
+    """
+    if __request__ is None:
+        return json.dumps({'error': 'Request context not available'})
+
+    if not __user__:
+        return json.dumps({'error': 'User context not available'})
+
+    try:
+        user_id = __user__.get('id')
+        results = []
+
+        # 1. Search in standard memories (if search_in is 'all' or 'memories')
+        if search_in in ('all', 'memories'):
+            try:
+                from open_webui.models.memories import Memories
+                from open_webui.retrieval.vector.factory import VECTOR_DB_CLIENT
+
+                memories = Memories.get_memories_by_user_id(user_id)
+                if memories:
+                    vector = await __request__.app.state.EMBEDDING_FUNCTION(query, user=__user__)
+                    memory_results = VECTOR_DB_CLIENT.search(
+                        collection_name=f'user-memory-{user_id}',
+                        vectors=[vector],
+                        limit=min(count, 3),
+                    )
+
+                    if memory_results and hasattr(memory_results, 'documents'):
+                        for idx, doc in enumerate(memory_results.documents[0]):
+                            results.append({
+                                'source': 'memory',
+                                'type': 'user_preference',
+                                'content': doc,
+                                'relevance': 0.95,  # High relevance for memories
+                            })
+            except Exception as e:
+                log.debug(f'Error searching memories: {e}')
+
+        # 2. Search in chat summaries (if search_in is 'all' or 'summaries')
+        if search_in in ('all', 'summaries'):
+            try:
+                from open_webui.retrieval.vector.factory import VECTOR_DB_CLIENT
+
+                vector = await __request__.app.state.EMBEDDING_FUNCTION(query, user=__user__)
+                summary_results = VECTOR_DB_CLIENT.search(
+                    collection_name=f'user-chat-summaries-{user_id}',
+                    vectors=[vector],
+                    limit=min(count, 5),
+                )
+
+                if summary_results and hasattr(summary_results, 'documents'):
+                    for idx, doc in enumerate(summary_results.documents[0]):
+                        metadata = summary_results.metadatas[0][idx] if summary_results.metadatas else {}
+                        results.append({
+                            'source': 'chat_summary',
+                            'chat_id': metadata.get('chat_id'),
+                            'category': metadata.get('category'),
+                            'tags': metadata.get('tags', []),
+                            'content': doc,
+                            'relevance': 0.85,
+                        })
+            except Exception as e:
+                log.debug(f'Error searching chat summaries: {e}')
+
+        # 3. Fallback to raw chats if we don't have enough results
+        if search_in in ('all', 'chats') and len(results) < count:
+            try:
+                from open_webui.models.chats import Chats
+
+                chats = Chats.get_chats_by_user_id_and_search_text(
+                    user_id=user_id,
+                    search_text=query,
+                    include_archived=False,
+                    skip=0,
+                    limit=count - len(results),
+                )
+
+                for chat in chats:
+                    if __chat_id__ and chat.id == __chat_id__:
+                        continue
+
+                    # Find a matching message snippet
+                    snippet = ''
+                    messages = chat.chat.get('history', {}).get('messages', {})
+                    lower_query = query.lower()
+
+                    for msg_id, msg in messages.items():
+                        content = msg.get('content', '')
+                        if isinstance(content, str) and lower_query in content.lower():
+                            idx = content.lower().find(lower_query)
+                            start = max(0, idx - 50)
+                            end = min(len(content), idx + len(query) + 100)
+                            snippet = ('...' if start > 0 else '') + content[start:end] + ('...' if end < len(content) else '')
+                            break
+
+                    if not snippet and lower_query in chat.title.lower():
+                        snippet = f'Title match: {chat.title}'
+
+                    results.append({
+                        'source': 'raw_chat',
+                        'chat_id': chat.id,
+                        'title': chat.title,
+                        'snippet': snippet,
+                        'updated_at': chat.updated_at,
+                        'relevance': 0.7,
+                    })
+
+                    if len(results) >= count:
+                        break
+            except Exception as e:
+                log.debug(f'Error searching raw chats: {e}')
+
+        # Sort by relevance
+        results.sort(key=lambda x: x.get('relevance', 0), reverse=True)
+
+        return json.dumps({
+            'query': query,
+            'total_results': len(results),
+            'results': results[:count],
+        }, ensure_ascii=False)
+
+    except Exception as e:
+        log.exception(f'smart_search error: {e}')
         return json.dumps({'error': str(e)})
 
 

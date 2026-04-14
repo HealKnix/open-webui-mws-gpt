@@ -186,7 +186,9 @@
     />
 
     <div class="space-y-1 px-1">
-      <div class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+      <div
+        class="my-2 mb-4 border-b border-gray-300 pb-1 text-base font-medium dark:border-gray-800"
+      >
         {$i18n.t('Chats')}
       </div>
 
@@ -265,7 +267,7 @@
       </SettingItem>
     </div>
 
-    <div class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+    <div class="my-2 mb-4 border-b border-gray-300 pb-1 text-base font-medium dark:border-gray-800">
       {$i18n.t('Files')}
     </div>
 

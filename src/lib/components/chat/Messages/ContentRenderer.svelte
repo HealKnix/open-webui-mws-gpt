@@ -38,6 +38,7 @@
   export let onSourceClick = (e) => {};
   export let onTaskClick = (e) => {};
   export let onAddMessages = (e) => {};
+  export let onAgentAction = (payload) => {};
 
   let contentContainerElement;
   let floatingButtonsElement;
@@ -170,6 +171,7 @@
     {sourceIds}
     {onSourceClick}
     {onTaskClick}
+    {onAgentAction}
     {onSave}
     onUpdate={async (token) => {
       const { lang, text: code } = token;

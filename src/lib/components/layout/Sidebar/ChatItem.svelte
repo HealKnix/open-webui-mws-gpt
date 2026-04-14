@@ -44,6 +44,8 @@
   import Sparkles from '$lib/components/icons/Sparkles.svelte';
   import Spinner from '$lib/components/common/Spinner.svelte';
   import { generateTitle } from '$lib/apis';
+  import Button from '$lib/components/common/Button.svelte';
+  import { cn } from '$lib/utils';
 
   export let className = '';
 
@@ -387,7 +389,7 @@
         ? 'selected bg-card-hover'
         : selected
           ? 'selected bg-card-hover'
-          : 'group-hover:bg-bg-card-hover'}  relative text-ellipsis whitespace-nowrap {generating
+          : 'group-hover:bg-card-hover'}  relative text-ellipsis whitespace-nowrap {generating
         ? 'cursor-not-allowed'
         : ''}"
     >
@@ -416,14 +418,16 @@
       />
     </div>
   {:else}
-    <a
+    <Button
       id="sidebar-chat-item"
-      class=" flex w-full justify-between rounded-xl px-[11px] py-[6px] {id === $chatId ||
-      confirmEdit
-        ? 'selected bg-card-hover'
-        : selected
-          ? 'selected bg-card-hover'
-          : ' group-hover:bg-card-hover'}  text-ellipsis whitespace-nowrap"
+      variant="ghost"
+      size="sm"
+      color="secondary"
+      className={cn(
+        'flex w-full justify-between px-[11px] py-[6px] text-sm font-normal group-hover:bg-card-hover hover:bg-card-hover text-ellipsis whitespace-nowrap',
+        id === ($chatId || confirmEdit || selected) &&
+          'selected bg-primary text-primary-foreground group-hover:bg-primary-hover!',
+      )}
       href="/c/{id}"
       on:click={() => {
         dispatch('select');
@@ -471,7 +475,7 @@
           {formatTimeAgo(createdAt)}
         </div>
       {/if}
-    </a>
+    </Button>
   {/if}
 
   <!-- svelte-ignore a11y-no-static-element-interactions -->
@@ -479,15 +483,13 @@
     id="sidebar-chat-item-menu"
     class="
         {id === $chatId || confirmEdit
-      ? 'selected from-card-hover'
+      ? 'selected from-primary group-hover:from-primary-hover text-primary-foreground transition'
       : selected
-        ? 'selected from-card-hover'
-        : 'from-card-hover invisible group-hover:visible'}
+        ? 'selected text-primary-foreground'
+        : 'group-hover:from-card-hover invisible group-hover:visible'}
             absolute {className === 'pr-2'
       ? 'right-[8px]'
-      : 'right-1'} top-[4px] mr-1.5 bg-linear-to-l from-80% to-transparent py-1 pr-0.5
-
-              pl-5"
+      : 'right-1'} top-[4px] mr-1.5 bg-linear-to-l from-80% to-transparent py-1 pr-0.5 pl-5"
     on:mouseenter={(e) => {
       mouseOver = true;
     }}
@@ -516,7 +518,7 @@
       <div class=" flex items-center space-x-1.5 self-center">
         <Tooltip content={$i18n.t('Archive')} className="flex items-center">
           <button
-            class=" self-center transition dark:hover:text-white"
+            class=" self-center dark:hover:text-white"
             on:click={() => {
               archiveChatHandler(id);
             }}
@@ -528,7 +530,7 @@
 
         <Tooltip content={$i18n.t('Delete')}>
           <button
-            class=" self-center transition dark:hover:text-white"
+            class=" self-center dark:hover:text-white"
             on:click={() => {
               deleteChatHandler(id);
             }}
@@ -565,7 +567,7 @@
         >
           <button
             aria-label="Chat Menu"
-            class=" m-0 self-center transition dark:hover:text-white"
+            class=" m-0 self-center dark:hover:text-white"
             on:click={() => {
               dispatch('select');
             }}

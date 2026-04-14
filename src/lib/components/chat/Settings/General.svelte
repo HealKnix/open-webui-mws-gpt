@@ -12,6 +12,7 @@
   import Textarea from '$lib/components/common/Textarea.svelte';
   import Button from '$lib/components/common/Button.svelte';
   import SettingItem from '$lib/components/common/SettingItem.svelte';
+  import RichSelector from '$lib/components/common/RichSelector.svelte';
   export let saveSettings: Function;
   export let getModels: Function;
 
@@ -197,50 +198,41 @@
 </script>
 
 <div class="flex h-full flex-col justify-between text-sm" id="tab-general">
-  <div class="  max-h-[28rem] overflow-y-scroll md:max-h-full">
+  <div class="max-h-[28rem] overflow-y-scroll p-1 md:max-h-full">
     <div class="">
-      <div class=" my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+      <div
+        class="my-2 mb-4 border-b border-gray-300 pb-1 text-base font-medium dark:border-gray-800"
+      >
         {$i18n.t('WebUI Settings')}
       </div>
 
       <SettingItem label={$i18n.t('Theme')} labelId="theme-label">
-        <div class="relative flex items-center">
-          <select
-            class="w-fit rounded-sm bg-transparent px-2 py-2 pr-8 text-right text-xs {$settings.highContrastMode
-              ? ''
-              : 'outline-hidden'}"
-            bind:value={selectedTheme}
-            placeholder={$i18n.t('Select a theme')}
-            on:change={() => themeChangeHandler(selectedTheme)}
-          >
-            <option value="system">⚙️ {$i18n.t('System')}</option>
-            <option value="dark">🌑 {$i18n.t('Dark')}</option>
-            <option value="oled-dark">🌃 {$i18n.t('OLED Dark')}</option>
-            <option value="light">☀️ {$i18n.t('Light')}</option>
-            {#if $config?.features?.enable_easter_eggs}
-              <option value="her">🌷 Her</option>
-            {/if}
-          </select>
-        </div>
+        <RichSelector
+          bind:value={selectedTheme}
+          align="end"
+          items={[
+            { value: 'system', label: $i18n.t('System'), icon: '⚙️' },
+            { value: 'dark', label: $i18n.t('Dark'), icon: '🌑' },
+            { value: 'oled-dark', label: $i18n.t('OLED Dark'), icon: '🌃' },
+            { value: 'light', label: $i18n.t('Light'), icon: '☀️' },
+            ...(config?.features?.enable_easter_eggs
+              ? [{ value: 'her', label: $i18n.t('Her'), icon: '🌷' }]
+              : []),
+          ]}
+          onChange={themeChangeHandler}
+        />
       </SettingItem>
 
       <SettingItem label={$i18n.t('Language')} labelId="language-label">
-        <div class="relative flex items-center">
-          <select
-            class="w-fit rounded-sm bg-transparent px-2 py-2 pr-8 text-right text-xs {$settings.highContrastMode
-              ? ''
-              : 'outline-hidden'}"
-            bind:value={lang}
-            placeholder={$i18n.t('Select a language')}
-            on:change={(e) => {
-              changeLanguage(lang);
-            }}
-          >
-            {#each languages as language}
-              <option value={language['code']}>{language['title']}</option>
-            {/each}
-          </select>
-        </div>
+        <RichSelector
+          bind:value={lang}
+          align="end"
+          items={languages.map((language) => {
+            return { value: language['code'], label: language['title'], icon: ' ' };
+          })}
+          onChange={changeLanguage}
+          search
+        />
       </SettingItem>
       {#if $i18n.language === 'en-US' && !($config?.license_metadata ?? false)}
         <div
@@ -317,7 +309,13 @@
   </div>
 
   <div class="flex justify-end p-2">
-    <Button type="submit" radius="xl">
+    <Button
+      type="submit"
+      radius="xl"
+      on:click={() => {
+        saveHandler();
+      }}
+    >
       {$i18n.t('Save')}
     </Button>
   </div>

@@ -27,30 +27,24 @@
 
 <div>
   <div class="mb-1 flex w-full justify-between">
-    <div class=" self-center text-xs font-medium text-gray-500">{$i18n.t('Skills')}</div>
+    <div class="mb-1 text-xs font-medium">{$i18n.t('Skills')}</div>
   </div>
 
   <div class="mb-1 flex flex-col">
     {#if Object.keys(_skills).length > 0}
-      <div class=" flex flex-wrap items-center">
+      <div class="flex flex-wrap items-center gap-2">
         {#each Object.keys(_skills) as skill, skillIdx}
-          <div class=" mr-3 flex items-center gap-2">
-            <div class="flex items-center self-center">
-              <Checkbox
-                state={_skills[skill].selected ? 'checked' : 'unchecked'}
-                on:change={(e) => {
-                  _skills[skill].selected = e.detail === 'checked';
-                  selectedSkillIds = Object.keys(_skills).filter((s) => _skills[s].selected);
-                }}
-              />
-            </div>
-
-            <Tooltip content={_skills[skill]?.description ?? _skills[skill].id}>
-              <div class=" w-full py-0.5 text-sm font-medium capitalize">
-                {_skills[skill].name}
-              </div>
-            </Tooltip>
-          </div>
+          <Checkbox
+            state={_skills[skill].selected ? 'checked' : 'unchecked'}
+            on:change={(e) => {
+              _skills[skill].selected = e.detail === 'checked';
+              selectedSkillIds = Object.keys(_skills).filter((s) => _skills[s].selected);
+            }}
+            tooltip={{
+              label: _skills[skill].name,
+              description: _skills[skill].description,
+            }}
+          />
         {/each}
       </div>
     {/if}

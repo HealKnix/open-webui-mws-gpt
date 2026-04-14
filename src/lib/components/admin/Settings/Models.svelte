@@ -47,6 +47,8 @@
   import Dropdown from '$lib/components/common/Dropdown.svelte';
   import AdminViewSelector from './Models/AdminViewSelector.svelte';
   import Pagination from '$lib/components/common/Pagination.svelte';
+  import Input from '$lib/components/common/Input.svelte';
+  import Button from '$lib/components/common/Button.svelte';
 
   let shiftKey = false;
 
@@ -414,8 +416,11 @@
               }}
             />
 
-            <button
-              class="dark:bg-gray-850 flex items-center space-x-1 rounded-xl bg-gray-50 px-3 py-1.5 text-xs transition hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+            <Button
+              variant="flat"
+              color="secondary"
+              size="xs"
+              radius="xl"
               disabled={modelsImportInProgress}
               on:click={() => {
                 modelsImportInputElement.click();
@@ -427,10 +432,13 @@
               <div class=" line-clamp-1 self-center font-medium">
                 {$i18n.t('Import')}
               </div>
-            </button>
+            </Button>
 
-            <button
-              class="dark:bg-gray-850 flex items-center space-x-1 rounded-xl bg-gray-50 px-3 py-1.5 text-xs transition hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+            <Button
+              variant="flat"
+              color="secondary"
+              size="xs"
+              radius="xl"
               on:click={async () => {
                 downloadModels(models);
               }}
@@ -438,12 +446,14 @@
               <div class=" line-clamp-1 self-center font-medium">
                 {$i18n.t('Export')}
               </div>
-            </button>
+            </Button>
           {/if}
 
-          <button
-            class="dark:bg-gray-850 flex items-center space-x-1 rounded-xl bg-gray-50 px-3 py-1.5 text-xs transition hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
-            type="button"
+          <Button
+            variant="flat"
+            color="secondary"
+            size="xs"
+            radius="xl"
             on:click={() => {
               showManageModal = true;
             }}
@@ -451,11 +461,11 @@
             <div class=" line-clamp-1 self-center font-medium">
               {$i18n.t('Manage')}
             </div>
-          </button>
+          </Button>
 
-          <button
-            class="flex items-center space-x-1 rounded-xl bg-black px-3 py-1.5 text-xs font-medium text-white transition hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100"
-            type="button"
+          <Button
+            size="xs"
+            radius="xl"
             on:click={() => {
               showConfigModal = true;
             }}
@@ -463,7 +473,7 @@
             <div class=" line-clamp-1 self-center font-medium">
               {$i18n.t('Settings')}
             </div>
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -473,13 +483,11 @@
     >
       <div class="flex w-full flex-1 items-center space-x-2 px-3.5 py-0.5 pb-2">
         <div class="flex flex-1 items-center">
-          <div class=" mr-3 ml-1 self-center">
-            <Search className="size-3.5" />
-          </div>
-          <input
-            class=" w-full rounded-r-xl bg-transparent py-1 text-sm outline-hidden"
+          <Input
             bind:value={searchValue}
             placeholder={$i18n.t('Search Models')}
+            iconLeft={Search}
+            radius="full"
           />
           {#if searchValue}
             <div class="translate-y-[0.5px] self-center rounded-l-xl bg-transparent pl-1.5">
@@ -498,7 +506,7 @@
 
       <div class="scrollbar-none flex w-full items-center overflow-x-auto bg-transparent px-3">
         <div
-          class="flex w-fit gap-0.5 rounded-full bg-transparent text-center text-sm whitespace-nowrap"
+          class="flex w-fit gap-0.5 rounded-full bg-transparent p-1 text-center text-sm whitespace-nowrap"
         >
           <AdminViewSelector bind:value={viewOption} />
         </div>
@@ -762,10 +770,11 @@
       edit
       model={models.find((m) => m.id === selectedModelId)}
       preset={false}
-      onSubmit={(model) => {
+      onSubmit={async (model) => {
         console.log(model);
-        upsertModelHandler(model);
+        await upsertModelHandler(model);
         selectedModelId = null;
+        await init();
       }}
       onBack={async () => {
         selectedModelId = null;

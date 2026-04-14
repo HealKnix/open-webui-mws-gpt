@@ -3319,6 +3319,117 @@ async def streaming_chat_response_handler(response, ctx):
         '__model__': model,
     }
 
+    # ---- External agent backend (AG UI) -------------------------------
+    # If the model is configured with ``params.agent_backend`` (e.g.
+    # ``langgraph``), skip the built-in tool-calling loop entirely and
+    # delegate to that backend. The agent streams AG UI events over
+    # Socket.IO via ``event_emitter``; this handler only needs to keep
+    # the SSE pipe alive until the agent is done and then emit a stub
+    # ``[DONE]`` marker so the frontend HTTP fetch closes cleanly.
+    try:
+        from open_webui.utils.agents import is_agent_backend_enabled, run_agent_backend
+
+        _agent_backend = is_agent_backend_enabled(model, metadata)
+    except Exception as _debug_exc:
+        _agent_backend = None
+        print(f'>>> AGENT_BACKEND_DEBUG import/check error: {_debug_exc!r}', flush=True)
+
+    print(
+        f'>>> AGENT_BACKEND_DEBUG backend={_agent_backend!r} '
+        f'model_id={(model or {}).get("id")!r} '
+        f'model_keys={list((model or {}).keys()) if isinstance(model, dict) else type(model).__name__} '
+        f'params={(model or {}).get("params")!r} '
+        f'info_params={((model or {}).get("info") or {}).get("params")!r}',
+        flush=True,
+    )
+    log.warning(
+        'AGENT_BACKEND_DEBUG backend=%r model_id=%s params=%r info_params=%r',
+        _agent_backend,
+        (model or {}).get('id'),
+        (model or {}).get('params'),
+        ((model or {}).get('info') or {}).get('params'),
+    )
+
+    if _agent_backend and event_emitter and event_caller:
+        # NOTE: the SSE StreamingResponse returned by this handler is
+        # discarded by main.chat_completion (process_chat runs as a
+        # background task and only Socket.IO events reach the client),
+        # so we must run the agent inline here rather than from inside a
+        # generator that would never be iterated.
+        print(
+            f'>>> AGENT_BACKEND_DEBUG running agent inline '
+            f'backend={_agent_backend!r} '
+            f'tools_count={len(metadata.get("tools") or {})} '
+            f'messages_count={len(form_data.get("messages") or [])}',
+            flush=True,
+        )
+        # Close the unused upstream response so aiohttp doesn't leak
+        # an open TLS connection (source of the SSL bad-record-mac errors).
+        try:
+            if hasattr(response, 'aclose'):
+                await response.aclose()
+            elif hasattr(response, 'close'):
+                maybe = response.close()
+                if asyncio.iscoroutine(maybe):
+                    await maybe
+        except Exception:
+            pass
+
+        try:
+            await run_agent_backend(
+                _agent_backend,
+                request=request,
+                form_data=form_data,
+                tools_dict=metadata.get('tools') or {},
+                event_emitter=event_emitter,
+                event_caller=event_caller,
+                metadata=metadata,
+                model=model,
+                user=user,
+            )
+            print('>>> AGENT_BACKEND_DEBUG agent finished cleanly', flush=True)
+        except Exception as _exc:
+            import traceback as _tb
+
+            print(
+                f'>>> AGENT_BACKEND_DEBUG agent raised {type(_exc).__name__}: {_exc}',
+                flush=True,
+            )
+            print(_tb.format_exc(), flush=True)
+            log.exception('Agent backend %r failed: %s', _agent_backend, _exc)
+            try:
+                await event_emitter(
+                    {
+                        'type': 'chat:message:error',
+                        'data': {'error': {'content': str(_exc)}},
+                    }
+                )
+            except Exception:
+                pass
+
+        async def _agent_stub_stream():
+            stub = {
+                'id': f'chatcmpl-{uuid4()}',
+                'object': 'chat.completion.chunk',
+                'created': int(time.time()),
+                'model': form_data.get('model', ''),
+                'choices': [
+                    {
+                        'index': 0,
+                        'delta': {},
+                        'finish_reason': 'stop',
+                    }
+                ],
+            }
+            yield f'data: {json.dumps(stub)}\n\n'
+            yield 'data: [DONE]\n\n'
+
+        return StreamingResponse(
+            _agent_stub_stream(),
+            media_type='text/event-stream',
+        )
+    # -------------------------------------------------------------------
+
     filter_functions = [
         Functions.get_function_by_id(filter_id)
         for filter_id in get_sorted_filter_ids(request, model, metadata.get('filter_ids', []))

@@ -1,5 +1,5 @@
 <script context="module" lang="ts">
-  let savedTab: 'controls' | 'files' | 'overview' = 'controls';
+	let savedTab: 'controls' | 'files' | 'overview' | 'compression' = 'controls';
 </script>
 
 <script lang="ts">
@@ -34,6 +34,7 @@
   import FileNav from './FileNav.svelte';
   import PyodideFileNav from './PyodideFileNav.svelte';
   import Overview from './Overview.svelte';
+  import ContextCompressionPanel from './ContextCompressionPanel.svelte';
 
   const i18n = getContext('i18n');
 
@@ -75,17 +76,20 @@
     !!$selectedTerminalId ||
     (codeInterpreterEnabled && $config?.code?.interpreter_engine !== 'jupyter');
   $: showOverviewTab = hasMessages;
+  $: showCompressionTab = $user?.role === 'admin' || ($user?.permissions?.chat?.compression ?? true);
 
   // Tab fallback: if active tab becomes hidden, switch to next available
   $: if (!showOverviewTab && activeTab === 'overview') activeTab = 'controls';
   $: if (!showFilesTab && activeTab === 'files') activeTab = 'controls';
+  $: if (!showCompressionTab && activeTab === 'compression') activeTab = 'controls';
   $: if (!showControlsTab && activeTab === 'controls') {
     if (showFilesTab) activeTab = 'files';
     else if (showOverviewTab) activeTab = 'overview';
+    else if (showCompressionTab) activeTab = 'compression';
   }
 
   // Auto-close if there are no visible tabs
-  $: if (!showControlsTab && !showFilesTab && !showOverviewTab) {
+  $: if (!showControlsTab && !showFilesTab && !showOverviewTab && !showCompressionTab) {
     showControls.set(false);
   }
 
@@ -326,6 +330,17 @@
                     {$i18n.t('Overview')}
                   </button>
                 {/if}
+                {#if showCompressionTab}
+									<button
+										class="px-2.5 py-1 text-sm rounded-lg transition whitespace-nowrap {activeTab ===
+										'compression'
+											? 'bg-gray-100 dark:bg-gray-800 font-medium text-gray-900 dark:text-white'
+											: 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}"
+										on:click={() => (activeTab = 'compression')}
+									>
+										{$i18n.t('Compression')}
+									</button>
+								{/if}
               </div>
               <button
                 class="rounded-lg p-1 text-gray-500 transition hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
@@ -365,6 +380,8 @@
                 <FileNav onAttach={handleTerminalAttach} />
               {:else if activeTab === 'files' && codeInterpreterEnabled}
                 <PyodideFileNav />
+              {:else if activeTab === 'compression'}
+							  <ContextCompressionPanel {chatId} />
               {:else}
                 <Controls embed={true} {models} bind:chatFiles bind:params />
               {/if}
@@ -469,6 +486,17 @@
                         {$i18n.t('Overview')}
                       </button>
                     {/if}
+                    {#if showCompressionTab}
+                      <button
+                        class="px-2.5 py-1 text-sm rounded-lg transition whitespace-nowrap {activeTab ===
+                        'compression'
+                          ? 'bg-gray-100 dark:bg-gray-800 font-medium text-gray-900 dark:text-white'
+                          : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}"
+                        on:click={() => (activeTab = 'compression')}
+                      >
+                        {$i18n.t('Compression')}
+                      </button>
+                    {/if}
                   </div>
                   <button
                     class="rounded-lg p-1 text-gray-500 transition hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
@@ -517,6 +545,8 @@
                     <FileNav onAttach={handleTerminalAttach} overlay={dragged} />
                   {:else if activeTab === 'files' && codeInterpreterEnabled}
                     <PyodideFileNav overlay={dragged} />
+                  {:else if activeTab === 'compression'}
+								    <ContextCompressionPanel {chatId} />
                   {:else}
                     <Controls embed={true} {models} bind:chatFiles bind:params />
                   {/if}

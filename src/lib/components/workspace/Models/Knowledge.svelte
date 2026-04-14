@@ -11,6 +11,7 @@
   import { toast } from 'svelte-sonner';
   import { v4 as uuidv4 } from 'uuid';
   import { WEBUI_API_BASE_URL } from '$lib/constants';
+  import Button from '$lib/components/common/Button.svelte';
 
   export let selectedItems = [];
   const i18n = getContext('i18n');
@@ -158,9 +159,7 @@
   <slot name="label">
     <div class="mb-2">
       <div class="mb-1 flex w-full justify-between">
-        <div class=" self-center text-xs font-medium text-gray-500">
-          {$i18n.t('Knowledge')}
-        </div>
+        <div class="mb-1 text-xs font-medium">{$i18n.t('Knowledge')}</div>
       </div>
     </div>
   </slot>
@@ -205,20 +204,19 @@
             }
           }}
         >
-          <div
-            class=" dark:outline-gray-850 rounded-3xl px-3.5 py-1.5 font-medium outline outline-1 outline-gray-100 hover:bg-black/5 dark:hover:bg-white/5"
-          >
+          <Button color="secondary" size="sm" radius="xl">
             {$i18n.t('Select Knowledge')}
-          </div>
+          </Button>
         </KnowledgeSelector>
 
         {#if $user?.role === 'admin' || $user?.permissions?.chat?.file_upload}
-          <button
-            class=" dark:outline-gray-850 rounded-3xl px-3.5 py-1.5 font-medium outline outline-1 outline-gray-100 hover:bg-black/5 dark:hover:bg-white/5"
-            type="button"
+          <Button
+            variant="ghost"
+            size="sm"
+            radius="xl"
             on:click={() => {
               filesInputElement.click();
-            }}>{$i18n.t('Upload Files')}</button
+            }}>{$i18n.t('Upload Files')}</Button
           >
         {/if}
       </div>

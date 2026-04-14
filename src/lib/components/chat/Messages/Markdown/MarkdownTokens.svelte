@@ -25,6 +25,9 @@
   import HtmlToken from './HTMLToken.svelte';
   import Clipboard from '$lib/components/icons/Clipboard.svelte';
   import ColonFenceBlock from './ColonFenceBlock.svelte';
+  import AgentUIRenderer from '$lib/components/common/agentui/AgentUIRenderer.svelte';
+  import WidgetMapper from '$lib/components/common/agentui/WidgetMapper.svelte';
+  import WidgetTemplateResolver from '$lib/components/common/agentui/WidgetTemplateResolver.svelte';
 
   export let id: string;
   export let tokens: Token[];
@@ -48,6 +51,7 @@
 
   export let onTaskClick: Function = () => {};
   export let onSourceClick: Function = () => {};
+  export let onAgentAction: Function = () => {};
 
   const headerComponent = (depth: number) => {
     return 'h' + depth;
@@ -276,6 +280,7 @@
           {done}
           {editCodeBlock}
           {onTaskClick}
+          {onAgentAction}
           {sourceIds}
           {onSourceClick}
         />
@@ -311,6 +316,7 @@
               {done}
               {editCodeBlock}
               {onTaskClick}
+              {onAgentAction}
               {sourceIds}
               {onSourceClick}
             />
@@ -346,6 +352,7 @@
                   {done}
                   {editCodeBlock}
                   {onTaskClick}
+                  {onAgentAction}
                   {sourceIds}
                   {onSourceClick}
                 />
@@ -358,6 +365,7 @@
                 {done}
                 {editCodeBlock}
                 {onTaskClick}
+                {onAgentAction}
                 {sourceIds}
                 {onSourceClick}
               />
@@ -401,6 +409,7 @@
                   {done}
                   {editCodeBlock}
                   {onTaskClick}
+                  {onAgentAction}
                   {sourceIds}
                   {onSourceClick}
                 />
@@ -448,6 +457,7 @@
             {done}
             {editCodeBlock}
             {onTaskClick}
+            {onAgentAction}
             {sourceIds}
             {onSourceClick}
           />
@@ -546,6 +556,24 @@
       {onTaskClick}
       {onSourceClick}
     />
+  {:else if token.type === 'agentUI'}
+    <AgentUIRenderer
+      component={token.component}
+      data={token.data}
+      onAction={(payload) => onAgentAction(payload)}
+    />
+  {:else if token.type === 'widgetUI'}
+    <div class="my-2">
+      {#if token.widget}
+        <WidgetTemplateResolver
+          widgetId={token.widget}
+          data={token.data}
+          onAction={(payload) => onAgentAction(payload)}
+        />
+      {:else}
+        <WidgetMapper content={token.data} onAction={(payload) => onAgentAction(payload)} />
+      {/if}
+    </div>
   {:else if token.type === 'space'}
     <div class="my-2" />
   {:else}

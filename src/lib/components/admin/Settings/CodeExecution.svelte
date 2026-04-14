@@ -44,7 +44,7 @@
       <div>
         <div class="space-y-1">
           <div
-            class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800"
+            class="my-2 mb-4 border-b border-gray-300 pb-1 text-base font-medium dark:border-gray-800"
           >
             {$i18n.t('General')}
           </div>
@@ -146,7 +146,7 @@
 
         <div class="space-y-1">
           <div
-            class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800"
+            class="my-2 mb-4 border-b border-gray-300 pb-1 text-base font-medium dark:border-gray-800"
           >
             {$i18n.t('Code Interpreter')}
           </div>

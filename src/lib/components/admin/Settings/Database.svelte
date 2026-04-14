@@ -79,7 +79,9 @@
     />
 
     <div class="space-y-1">
-      <div class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+      <div
+        class="my-2 mb-4 border-b border-gray-300 pb-1 text-base font-medium dark:border-gray-800"
+      >
         {$i18n.t('Config')}
       </div>
 
@@ -118,7 +120,9 @@
 
     {#if $config?.features.enable_admin_export ?? true}
       <div class="space-y-1">
-        <div class="my-2 border-b border-gray-300 pb-2 text-base font-medium dark:border-gray-800">
+        <div
+          class="my-2 mb-4 border-b border-gray-300 pb-1 text-base font-medium dark:border-gray-800"
+        >
           {$i18n.t('Database')}
         </div>
 

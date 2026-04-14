@@ -1295,7 +1295,7 @@
             <div
               id="message-input-container"
               class={cn(
-                'border-border bg-secondary ring-primary ring-offset-background relative flex w-full flex-1 flex-col rounded-3xl border px-1 shadow-lg ring-0 ring-offset-0 transition-all focus-within:ring-2 focus-within:ring-offset-2',
+                'border-border bg-secondary ring-primary ring-offset-background focus-within:shadow-primary/25 relative flex w-full flex-1 flex-col rounded-3xl border px-1 ring-0 ring-offset-0 transition-all focus-within:shadow-[0_0_24px_12px_var(--color-primary)]/25 focus-within:ring-2 focus-within:ring-offset-2 dark:focus-within:shadow-[0_0_24px_12px_var(--color-primary)]/50',
                 $temporaryChatEnabled && 'bg-card',
               )}
               dir={$settings?.chatDirection ?? 'auto'}

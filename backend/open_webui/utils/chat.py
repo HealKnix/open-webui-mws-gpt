@@ -387,6 +387,66 @@ async def generate_chat_completion(
                 **request.state.metadata,
             }
 
+    # Apply context compression if enabled
+    try:
+        from open_webui.utils.context_builder import build_chat_context
+        from open_webui.models.chat_context_state import ChatContextStates
+
+        metadata = form_data.get('metadata', {})
+        chat_id = metadata.get('chat_id')
+
+        if chat_id and user and hasattr(user, 'id'):
+            state = ChatContextStates.get_state_by_chat_id(chat_id)
+            if state and state.enabled and state.active_segment_id:
+                # Build compressed context
+                compressed_context = build_chat_context(
+                    chat_id=chat_id,
+                    user_id=user.id,
+                    system_prompt=None,  # Will handle separately
+                    include_summary=True,
+                    include_tool_digest=state.include_tool_data,
+                )
+
+                if compressed_context:
+                    # Get original messages
+                    original_messages = form_data.get('messages', [])
+
+                    # Find system prompt if any
+                    system_prompt = None
+                    other_messages = []
+                    for msg in original_messages:
+                        if msg.get('role') == 'system':
+                            system_prompt = msg.get('content', '')
+                        else:
+                            other_messages.append(msg)
+
+                    # Keep only last N messages based on state.keep_last_messages
+                    keep_last = state.keep_last_messages or 5
+                    recent_messages = other_messages[-keep_last:] if len(other_messages) > keep_last else other_messages
+
+                    # Build new message list: system prompt + compressed summary + recent messages
+                    new_messages = []
+
+                    # Add system prompt if exists
+                    if system_prompt:
+                        new_messages.append({
+                            'role': 'system',
+                            'content': system_prompt,
+                        })
+
+                    # Add compressed context (which includes its own system message)
+                    new_messages.extend(compressed_context)
+
+                    # Add recent messages
+                    new_messages.extend(recent_messages)
+
+                    # Replace messages in form_data
+                    form_data['messages'] = new_messages
+
+                    log.info(f"Applied context compression for chat {chat_id}: {len(original_messages)} -> {len(new_messages)} messages")
+    except Exception as e:
+        log.warning(f"Failed to apply context compression: {e}")
+
     if getattr(request.state, 'direct', False) and hasattr(request.state, 'model'):
         models = {
             request.state.model['id']: request.state.model,
@@ -584,6 +644,29 @@ async def chat_completed(request: Request, form_data: dict, user: Any):
             form_data=data,
             extra_params=extra_params,
         )
+
+        # Trigger context compression after successful chat completion
+        # This runs in the background and doesn't block the response
+        try:
+            chat_id = data.get('chat_id')
+            if chat_id and not chat_id.startswith('local:'):
+                from open_webui.utils.context_compactor import get_context_compactor
+
+                # Run compaction in background task with user object
+                compactor = get_context_compactor()
+                asyncio.create_task(
+                    compactor.compact_chat_context(
+                        request=request,
+                        chat_id=chat_id,
+                        user_id=user.id,
+                        force=False,  # Only compact if thresholds are met
+                        user=user,  # Pass user object for background task
+                    )
+                )
+        except Exception as e:
+            # Log but don't fail the chat completion
+            log.warning(f'Error triggering context compression: {e}')
+
         return result
     except Exception as e:
         raise Exception(f'Error: {e}')

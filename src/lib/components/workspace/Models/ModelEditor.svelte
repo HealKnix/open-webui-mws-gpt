@@ -14,6 +14,7 @@
   import Knowledge from '$lib/components/workspace/Models/Knowledge.svelte';
   import ToolsSelector from '$lib/components/workspace/Models/ToolsSelector.svelte';
   import SkillsSelector from '$lib/components/workspace/Models/SkillsSelector.svelte';
+  import WidgetsSelector from '$lib/components/workspace/Models/WidgetsSelector.svelte';
   import FiltersSelector from '$lib/components/workspace/Models/FiltersSelector.svelte';
   import ActionsSelector from '$lib/components/workspace/Models/ActionsSelector.svelte';
   import Capabilities from '$lib/components/workspace/Models/Capabilities.svelte';
@@ -28,6 +29,10 @@
   import AccessControlModal from '../common/AccessControlModal.svelte';
   import LockClosed from '$lib/components/icons/LockClosed.svelte';
   import { updateModelAccessGrants } from '$lib/apis/models';
+  import Button from '$lib/components/common/Button.svelte';
+  import Input from '$lib/components/common/Input.svelte';
+  import EditPencil from '$lib/components/icons/EditPencil.svelte';
+  import RichSelector from '$lib/components/common/RichSelector.svelte';
 
   const i18n = getContext('i18n');
 
@@ -75,7 +80,7 @@
     base_model_id: null,
     name: '',
     meta: {
-      profile_image_url: `${WEBUI_BASE_URL}/static/favicon.png`,
+      profile_image_url: `/favicon.png`,
       description: '',
       suggestion_prompts: null,
       tags: [],
@@ -91,7 +96,10 @@
 
   let knowledge = [];
   let toolIds = [];
+  let toolApprovalIds = [];
+  let availableApprovalTools = [];
   let skillIds = [];
+  let widgetIds = [];
 
   let filterIds = [];
   let defaultFilterIds = [];
@@ -103,6 +111,26 @@
   let actionIds = [];
   let accessGrants = [];
   let tts = { voice: '' };
+
+  // Agent backend: when set, the model bypasses the built-in tool-calling
+  // loop and is driven by an external agent framework that streams
+  // AG UI events over Socket.IO.
+  let agentBackend: string = '';
+
+  $: availableApprovalTools = ($tools ?? []).filter((tool) => toolIds.includes(tool.id));
+  $: {
+    const filteredToolApprovalIds =
+      agentBackend === 'langgraph'
+        ? toolApprovalIds.filter((toolId) => toolIds.includes(toolId))
+        : [];
+
+    if (
+      filteredToolApprovalIds.length !== toolApprovalIds.length ||
+      filteredToolApprovalIds.some((toolId, idx) => toolId !== toolApprovalIds[idx])
+    ) {
+      toolApprovalIds = filteredToolApprovalIds;
+    }
+  }
 
   const submitHandler = async () => {
     loading = true;
@@ -158,11 +186,31 @@
       }
     }
 
+    const nextToolApprovalIds =
+      agentBackend === 'langgraph'
+        ? toolApprovalIds.filter((toolId) => toolIds.includes(toolId))
+        : [];
+    toolApprovalIds = nextToolApprovalIds;
+
+    if (nextToolApprovalIds.length > 0) {
+      info.meta.toolApprovalIds = nextToolApprovalIds;
+    } else if (info.meta.toolApprovalIds) {
+      delete info.meta.toolApprovalIds;
+    }
+
     if (skillIds.length > 0) {
       info.meta.skillIds = skillIds;
     } else {
       if (info.meta.skillIds) {
         delete info.meta.skillIds;
+      }
+    }
+
+    if (widgetIds.length > 0) {
+      info.meta.widgetIds = widgetIds;
+    } else {
+      if (info.meta.widgetIds) {
+        delete info.meta.widgetIds;
       }
     }
 
@@ -216,6 +264,12 @@
           delete info.meta.tts;
         }
       }
+    }
+
+    if (agentBackend) {
+      info.params.agent_backend = agentBackend;
+    } else if (info.params?.agent_backend !== undefined) {
+      delete info.params.agent_backend;
     }
 
     info.params.system = system.trim() === '' ? null : system;
@@ -306,8 +360,12 @@
         }
       });
 
+      agentBackend = model?.params?.agent_backend ?? '';
+
       toolIds = model?.meta?.toolIds ?? [];
+      toolApprovalIds = model?.meta?.toolApprovalIds ?? [];
       skillIds = model?.meta?.skillIds ?? [];
+      widgetIds = model?.meta?.widgetIds ?? [];
       filterIds = model?.meta?.filterIds ?? [];
       defaultFilterIds = model?.meta?.defaultFilterIds ?? [];
       actionIds = model?.meta?.actionIds ?? [];
@@ -339,6 +397,20 @@
 
     loaded = true;
   });
+
+  $: baseModelItems = $models
+    .filter(
+      (m) =>
+        (model ? m.id !== model.id : true) &&
+        !m?.preset &&
+        m?.owned_by !== 'arena' &&
+        !(m?.direct ?? false),
+    )
+    .map((m) => ({
+      value: m.id,
+      label: m.name,
+      description: m.id,
+    }));
 </script>
 
 {#if loaded}
@@ -480,11 +552,11 @@
           <div class="flex w-full flex-row gap-4 md:gap-6">
             <div class="my-2 flex shrink-0 justify-center self-start">
               <div class="self-center">
-                <button
-                  class="flex shrink-0 items-center rounded-2xl {info.meta.profile_image_url !==
-                  `${WEBUI_BASE_URL}/static/favicon.png`
-                    ? 'bg-transparent'
-                    : 'bg-white'} group relative shadow-xl"
+                <Button
+                  color="secondary"
+                  variant="flat"
+                  radius="3xl"
+                  className="h-fit size-20 md:size-48 p-1"
                   type="button"
                   aria-label={$i18n.t('Upload profile image')}
                   on:click={() => {
@@ -495,13 +567,13 @@
                     <img
                       src={info.meta.profile_image_url}
                       alt="model profile"
-                      class="size-20 shrink-0 rounded-xl object-cover md:size-48"
+                      class="shrink-0 rounded-[22px] object-cover"
                     />
                   {:else}
                     <img
                       src="/favicon.png"
                       alt="model profile"
-                      class=" size-20 shrink-0 rounded-xl object-cover md:size-48"
+                      class="shrink-0 rounded-[22px] object-cover"
                     />
                   {/if}
 
@@ -529,28 +601,29 @@
                   <div
                     class="absolute top-0 right-0 bottom-0 left-0 rounded-lg bg-white opacity-0 transition group-hover:opacity-20 dark:bg-black"
                   ></div>
-                </button>
+                </Button>
 
                 <div class="mt-1 flex w-full justify-end">
-                  <button
-                    class="rounded-lg px-2 py-1 text-xs text-gray-500"
+                  <Button
+                    variant="ghost"
+                    size="2xs"
                     on:click={() => {
-                      info.meta.profile_image_url = `${WEBUI_BASE_URL}/static/favicon.png`;
+                      info.meta.profile_image_url = `/favicon.png`;
                     }}
                     type="button"
                   >
-                    {$i18n.t('Reset Image')}</button
+                    {$i18n.t('Reset Image')}</Button
                   >
                 </div>
               </div>
             </div>
 
             <div class="flex w-full flex-1 flex-col">
-              <div class="my-2 flex items-start justify-between">
-                <div class=" flex w-full flex-col">
+              <div class="my-2 flex items-start justify-between gap-2">
+                <div class="flex w-full flex-col gap-2">
                   <div class="w-full flex-1">
-                    <input
-                      class="w-full bg-transparent text-3xl outline-hidden"
+                    <Input
+                      size="2xl"
                       placeholder={$i18n.t('Model Name')}
                       bind:value={name}
                       required
@@ -559,8 +632,7 @@
 
                   <div class="w-full flex-1">
                     <div>
-                      <input
-                        class="w-full bg-transparent text-xs outline-hidden"
+                      <Input
                         placeholder={$i18n.t('Model ID')}
                         bind:value={id}
                         disabled={edit}
@@ -570,10 +642,11 @@
                   </div>
                 </div>
 
-                <div class="shrink-0">
-                  <button
-                    class="dark:bg-gray-850 flex shrink-0 items-center gap-1 rounded-full bg-gray-50 px-2 py-1 text-black transition hover:bg-gray-100 dark:text-white dark:hover:bg-gray-800"
-                    type="button"
+                <div class="mt-1.5 shrink-0">
+                  <Button
+                    size="sm"
+                    variant="flat"
+                    radius="full"
                     on:click={() => {
                       showAccessControlModal = true;
                     }}
@@ -583,7 +656,7 @@
                     <div class="shrink-0 text-sm font-medium">
                       {$i18n.t('Access')}
                     </div>
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -593,33 +666,25 @@
                     {$i18n.t('Base Model (From)')}
                   </div>
 
-                  <div>
-                    <select
-                      class="w-full bg-transparent text-sm outline-hidden"
-                      placeholder={$i18n.t('Select a base model (e.g. llama3, gpt-4o)')}
-                      bind:value={info.base_model_id}
-                      required
-                    >
-                      <option value={null} class=" text-gray-900"
-                        >{$i18n.t('Select a base model')}</option
-                      >
-                      {#each $models.filter((m) => (model ? m.id !== model.id : true) && !m?.preset && m?.owned_by !== 'arena' && !(m?.direct ?? false)) as model}
-                        <option value={model.id} class=" text-gray-900">{model.name}</option>
-                      {/each}
-                    </select>
-                  </div>
+                  <RichSelector
+                    bind:value={info.base_model_id}
+                    items={baseModelItems}
+                    placeholder={$i18n.t('Select a base model')}
+                    triggerClass="max-w-fit"
+                    search={true}
+                  />
                 </div>
               {/if}
 
               <div class="mb-1">
-                <div class="mb-1 flex w-full items-center justify-between">
-                  <div class=" self-center text-xs font-medium text-gray-500">
+                <div class="mb-1 flex w-full items-center gap-2">
+                  <div class="text-xs font-medium">
                     {$i18n.t('Description')}
                   </div>
 
-                  <button
-                    class="flex rounded-sm p-1 text-xs transition"
-                    type="button"
+                  <Button
+                    variant="ghost"
+                    size="xs"
                     aria-pressed={enableDescription ? 'true' : 'false'}
                     aria-label={enableDescription
                       ? $i18n.t('Custom description enabled')
@@ -629,11 +694,11 @@
                     }}
                   >
                     {#if !enableDescription}
-                      <span class="ml-2 self-center">{$i18n.t('Default')}</span>
+                      <span class="self-center">{$i18n.t('Default')}</span>
                     {:else}
-                      <span class="ml-2 self-center">{$i18n.t('Custom')}</span>
+                      <span class="self-center">{$i18n.t('Custom')}</span>
                     {/if}
-                  </button>
+                  </Button>
                 </div>
 
                 {#if enableDescription}
@@ -668,45 +733,44 @@
           </div>
 
           <div class="my-2">
-            <div class="flex w-full justify-between">
-              <div class=" self-center text-xs font-medium text-gray-500">
-                {$i18n.t('Model Params')}
-              </div>
+            <div
+              class="my-2 mb-4 border-b border-gray-300 pb-1 text-base font-medium dark:border-gray-800"
+            >
+              {$i18n.t('Model Params')}
             </div>
 
             <div class="mt-2">
               <div class="my-1">
-                <div class=" mb-2 text-xs font-medium">{$i18n.t('System Prompt')}</div>
+                <div class="mb-1 text-xs font-medium">{$i18n.t('System Prompt')}</div>
                 <div>
                   <Textarea
-                    className=" text-sm w-full bg-transparent outline-hidden resize-none overflow-y-hidden "
                     placeholder={$i18n.t(
                       'Write your model system prompt content here\ne.g.) You are Mario from Super Mario Bros, acting as an assistant.',
                     )}
-                    rows={4}
+                    rows="4"
                     bind:value={system}
                   />
                 </div>
               </div>
 
-              <div class="flex w-full justify-between">
+              <div class="flex w-full gap-4">
                 <div class=" self-center text-xs font-medium">
                   {$i18n.t('Advanced Params')}
                 </div>
 
-                <button
-                  class="flex rounded-sm p-1 px-3 text-xs transition"
-                  type="button"
+                <Button
+                  size="xs"
+                  variant="ghost"
                   on:click={() => {
                     showAdvanced = !showAdvanced;
                   }}
                 >
                   {#if showAdvanced}
-                    <span class="ml-2 self-center">{$i18n.t('Hide')}</span>
+                    <span class="self-center">{$i18n.t('Hide')}</span>
                   {:else}
-                    <span class="ml-2 self-center">{$i18n.t('Show')}</span>
+                    <span class="self-center">{$i18n.t('Show')}</span>
                   {/if}
-                </button>
+                </Button>
               </div>
 
               {#if showAdvanced}
@@ -717,18 +781,18 @@
             </div>
           </div>
 
-          <hr class=" dark:border-gray-850/30 my-2 border-gray-100/30" />
+          <hr class="border-border/70 dark:border-border/50" />
 
           <div class="my-2">
             <div class="flex w-full items-center justify-between">
-              <div class="flex w-full items-center justify-between">
-                <div class=" self-center text-xs font-medium text-gray-500">
+              <div class="mb-1 flex w-full items-center gap-2">
+                <div class="text-xs font-medium">
                   {$i18n.t('Prompts')}
                 </div>
 
-                <button
-                  class="flex rounded-sm p-1 text-xs transition"
-                  type="button"
+                <Button
+                  size="xs"
+                  variant="ghost"
                   on:click={() => {
                     if ((info?.meta?.suggestion_prompts ?? null) === null) {
                       info.meta.suggestion_prompts = [{ content: '', title: ['', ''] }];
@@ -738,11 +802,11 @@
                   }}
                 >
                   {#if (info?.meta?.suggestion_prompts ?? null) === null}
-                    <span class="ml-2 self-center">{$i18n.t('Default')}</span>
+                    <span class="self-center">{$i18n.t('Default')}</span>
                   {:else}
-                    <span class="ml-2 self-center">{$i18n.t('Custom')}</span>
+                    <span class="self-center">{$i18n.t('Custom')}</span>
                   {/if}
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -751,20 +815,63 @@
             {/if}
           </div>
 
+          <hr class="border-border/70 dark:border-border/50" />
+
           <div class="my-4">
             <Knowledge bind:selectedItems={knowledge} />
           </div>
 
           <div class="my-4">
+            <div class="mb-1 flex w-full items-center justify-between">
+              <div class="self-center text-xs font-medium text-gray-500">
+                {$i18n.t('Agent Backend')}
+              </div>
+            </div>
+            <select
+              class="w-full rounded-lg bg-transparent px-3 py-2 text-sm outline-hidden dark:bg-gray-900"
+              bind:value={agentBackend}
+            >
+              <option value="">{$i18n.t('Built-in (default)')}</option>
+              <option value="langgraph">{$i18n.t('LangGraph (AG UI)')}</option>
+            </select>
+            <div class="mt-1 text-xs text-gray-500">
+              {$i18n.t(
+                'When set, this model bypasses the built-in tool-calling loop and is driven by an external agent that streams AG UI events.',
+              )}
+            </div>
+          </div>
+
+          <hr class="border-border/70 dark:border-border/50" />
+
+          <div class="my-4">
             <ToolsSelector bind:selectedToolIds={toolIds} tools={$tools ?? []} />
           </div>
+
+          {#if agentBackend === 'langgraph'}
+            <div class="my-4">
+              <ToolsSelector
+                bind:selectedToolIds={toolApprovalIds}
+                tools={availableApprovalTools}
+                title="Tools Requiring Approval"
+                helperText="Only tools selected above can require approval before execution."
+              />
+            </div>
+          {/if}
+
+          <hr class="border-border/70 dark:border-border/50" />
 
           <div class="my-4">
             <SkillsSelector bind:selectedSkillIds={skillIds} />
           </div>
 
+          <hr class="border-border/70 dark:border-border/50" />
+
+          <div class="my-4">
+            <WidgetsSelector bind:selectedWidgetIds={widgetIds} />
+          </div>
+
           {#if ($functions ?? []).filter((func) => func.type === 'filter').length > 0 || ($functions ?? []).filter((func) => func.type === 'action').length > 0}
-            <hr class=" dark:border-gray-850/30 my-4 border-gray-100/30" />
+            <hr class="border-border/70 dark:border-border/50" />
 
             {#if ($functions ?? []).filter((func) => func.type === 'filter').length > 0}
               <div class="my-4">
@@ -801,7 +908,7 @@
             {/if}
           {/if}
 
-          <hr class=" dark:border-gray-850/30 my-4 border-gray-100/30" />
+          <hr class="border-border/70 dark:border-border/50" />
 
           <div class="my-4">
             <Capabilities bind:capabilities />
@@ -829,29 +936,45 @@
           {/if}
 
           <div class="my-4">
-            <div class="mb-1 flex w-full justify-between">
-              <div class="self-center text-xs font-medium text-gray-500">
-                {$i18n.t('TTS Voice')}
-              </div>
-            </div>
-            <input
-              class="w-full bg-transparent text-sm outline-hidden"
+            <div class="mb-1 text-xs font-medium">{$i18n.t('TTS Voice')}</div>
+            <Input
               type="text"
               bind:value={tts.voice}
               placeholder={$i18n.t('e.g. alloy, echo, shimmer')}
             />
           </div>
 
-          <hr class=" dark:border-gray-850/30 my-4 border-gray-100/30" />
+          <div class="my-2 mb-4">
+            <div class="mb-2 flex w-full items-center gap-4">
+              <div class="text-xs font-medium">{$i18n.t('JSON Preview')}</div>
 
-          <div class="my-2 flex justify-end">
-            <button
-              class=" rounded-lg px-3 py-2 text-sm transition {loading
-                ? ' cursor-not-allowed bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100'
-                : 'bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100'} flex w-full justify-center"
-              type="submit"
-              disabled={loading}
-            >
+              <Button
+                variant="ghost"
+                size="xs"
+                on:click={() => {
+                  showPreview = !showPreview;
+                }}
+              >
+                {#if showPreview}
+                  <span class="self-center">{$i18n.t('Hide')}</span>
+                {:else}
+                  <span class="self-center">{$i18n.t('Show')}</span>
+                {/if}
+              </Button>
+            </div>
+
+            {#if showPreview}
+              <Textarea
+                color="secondary"
+                rows="20"
+                value={JSON.stringify(info, null, 2)}
+                readonly
+              />
+            {/if}
+          </div>
+
+          <div class="my-2 flex justify-end pb-4">
+            <Button radius="xl" className="w-full" type="submit" disabled={loading} {loading}>
               <div class=" self-center font-medium">
                 {#if edit}
                   {$i18n.t('Save & Update')}
@@ -865,39 +988,7 @@
                   <Spinner />
                 </div>
               {/if}
-            </button>
-          </div>
-
-          <div class="my-2 pb-20 text-gray-300 dark:text-gray-700">
-            <div class="mb-2 flex w-full justify-between">
-              <div class=" self-center text-sm font-medium">{$i18n.t('JSON Preview')}</div>
-
-              <button
-                class="flex rounded-sm p-1 px-3 text-xs transition"
-                type="button"
-                on:click={() => {
-                  showPreview = !showPreview;
-                }}
-              >
-                {#if showPreview}
-                  <span class="ml-2 self-center">{$i18n.t('Hide')}</span>
-                {:else}
-                  <span class="ml-2 self-center">{$i18n.t('Show')}</span>
-                {/if}
-              </button>
-            </div>
-
-            {#if showPreview}
-              <div>
-                <textarea
-                  class="w-full resize-none bg-transparent text-sm outline-hidden"
-                  rows="10"
-                  value={JSON.stringify(info, null, 2)}
-                  disabled
-                  readonly
-                />
-              </div>
-            {/if}
+            </Button>
           </div>
         </div>
       </form>

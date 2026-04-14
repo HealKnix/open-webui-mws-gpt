@@ -39,6 +39,8 @@
   import ChatCheck from '../icons/ChatCheck.svelte';
   import Knobs from '../icons/Knobs.svelte';
   import { WEBUI_API_BASE_URL } from '$lib/constants';
+  import { cn } from '$lib/utils';
+  import Button from '../common/Button.svelte';
 
   const i18n = getContext('i18n');
 
@@ -78,12 +80,22 @@
     : 'pt-1 pb-1'} drag-region -mb-12 flex flex-col items-center"
 >
   <div class="flex w-full items-center pr-1 pl-1.5">
-    <div
+    <!-- <div
       id="navbar-bg-gradient-to-b"
       class="{chat?.id
         ? 'visible'
-        : 'invisible'} pointer-events-none absolute inset-0 -bottom-10 z-[-1] bg-linear-to-b from-white/90 via-white/50 via-40% to-transparent to-97% dark:from-gray-900/90 dark:via-gray-900/50 dark:to-transparent"
-    ></div>
+        : 'invisible'} pointer-events-none absolute inset-0 -bottom-10 z-[-1] bg-linear-to-b from-white/90 via-white/50 via-40% to-transparent to-97% backdrop-blur dark:from-gray-900/90 dark:via-gray-900/50 dark:to-transparent"
+    ></div> -->
+    {#each new Array(50) as _, i}
+      <div
+        class="{chat?.id
+          ? 'visible'
+          : 'invisible'} bg-background/5 pointer-events-none absolute top-0 right-0 left-0 z-[-1]"
+        style="height: {i}px; backdrop-filter: blur({(i * Math.E) / 180}px); filter: blur({(i *
+          Math.E) /
+          180}px);"
+      ></div>
+    {/each}
 
     <div class=" mx-auto flex w-full max-w-full bg-transparent px-1.5 pt-0.5 md:px-2">
       <div class="flex w-full max-w-full items-center">
@@ -116,7 +128,7 @@
           {/if}
         </div>
 
-        <div class="flex flex-none items-center self-start text-gray-600 dark:text-gray-400">
+        <div class="flex flex-none items-center gap-2 self-start text-gray-600 dark:text-gray-400">
           <!-- <div class="md:hidden flex self-center w-[1px] h-5 mx-2 bg-gray-300 dark:bg-stone-700" /> -->
 
           {#if $user?.role === 'user' ? ($user?.permissions?.chat?.temporary ?? true) && !($user?.permissions?.chat?.temporary_enforced ?? false) : true}
@@ -214,8 +226,14 @@
 
           {#if $user?.role === 'admin' || ($user?.permissions.chat?.controls ?? true)}
             <Tooltip content={$i18n.t('Controls')}>
-              <button
-                class=" dark:hover:bg-gray-850 flex cursor-pointer rounded-xl px-2 py-2 transition hover:bg-gray-50"
+              <Button
+                isIconOnly
+                size="sm"
+                variant="ghost"
+                color="foreground"
+                className={cn(
+                  $showControls && 'bg-primary text-primary-foreground hover:bg-primary-hover',
+                )}
                 on:click={async () => {
                   await showControls.set(!$showControls);
                 }}
@@ -224,7 +242,7 @@
                 <div class=" m-auto self-center">
                   <Knobs className=" size-5" strokeWidth="1" />
                 </div>
-              </button>
+              </Button>
             </Tooltip>
           {/if}
 

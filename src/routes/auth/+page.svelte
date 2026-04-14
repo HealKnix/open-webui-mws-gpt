@@ -26,6 +26,8 @@
   import OnBoarding from '$lib/components/OnBoarding.svelte';
   import SensitiveInput from '$lib/components/common/SensitiveInput.svelte';
   import { redirect } from '@sveltejs/kit';
+  import Input from '$lib/components/common/Input.svelte';
+  import Button from '$lib/components/common/Button.svelte';
 
   const i18n = getContext('i18n');
 
@@ -317,11 +319,10 @@
                         <label for="email" class="mb-1 block text-left text-sm font-medium"
                           >{$i18n.t('Email')}</label
                         >
-                        <input
+                        <Input
                           bind:value={email}
                           type="email"
                           id="email"
-                          class="my-0.5 w-full bg-transparent text-sm outline-hidden placeholder:text-gray-300 dark:placeholder:text-gray-600"
                           autocomplete="email"
                           name="email"
                           placeholder={$i18n.t('Enter Your Email')}
@@ -372,23 +373,17 @@
                 <div class="mt-5">
                   {#if $config?.features.enable_login_form || $config?.features.enable_ldap || form}
                     {#if mode === 'ldap'}
-                      <button
-                        class="w-full rounded-full bg-gray-700/5 py-2.5 text-sm font-medium transition hover:bg-gray-700/10 dark:bg-gray-100/5 dark:text-gray-300 dark:hover:bg-gray-100/10 dark:hover:text-white"
-                        type="submit"
-                      >
+                      <Button radius="full" className="w-full" type="submit">
                         {$i18n.t('Authenticate')}
-                      </button>
+                      </Button>
                     {:else}
-                      <button
-                        class="w-full rounded-full bg-gray-700/5 py-2.5 text-sm font-medium transition hover:bg-gray-700/10 dark:bg-gray-100/5 dark:text-gray-300 dark:hover:bg-gray-100/10 dark:hover:text-white"
-                        type="submit"
-                      >
+                      <Button radius="full" className="w-full" type="submit">
                         {mode === 'signin'
                           ? $i18n.t('Sign in')
                           : ($config?.onboarding ?? false)
                             ? $i18n.t('Create Admin Account')
                             : $i18n.t('Create Account')}
-                      </button>
+                      </Button>
 
                       {#if $config?.features.enable_signup && !($config?.onboarding ?? false)}
                         <div class=" mt-4 text-center text-sm">

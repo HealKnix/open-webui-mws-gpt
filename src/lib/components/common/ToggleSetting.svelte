@@ -5,12 +5,14 @@
   export let state: boolean;
   export let tooltip: string | boolean = false;
   export let labelId = '';
+  export let className = '';
 </script>
 
 <label
   class={cn(
     'hover:bg-border/35 flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl px-3 py-1.5 text-sm',
     state && '**:text-accent-active bg-accent-active/5 hover:bg-accent-active/10',
+    className,
   )}
 >
   <div class="flex-1 truncate">

@@ -1410,6 +1410,8 @@ USER_PERMISSIONS_CHAT_TEMPORARY_ENFORCED = (
     os.environ.get('USER_PERMISSIONS_CHAT_TEMPORARY_ENFORCED', 'False').lower() == 'true'
 )
 
+USER_PERMISSIONS_CHAT_COMPRESSION = os.environ.get('USER_PERMISSIONS_CHAT_COMPRESSION', 'True').lower() == 'true'
+
 
 USER_PERMISSIONS_FEATURES_DIRECT_TOOL_SERVERS = (
     os.environ.get('USER_PERMISSIONS_FEATURES_DIRECT_TOOL_SERVERS', 'False').lower() == 'true'
@@ -1491,6 +1493,7 @@ DEFAULT_USER_PERMISSIONS = {
         'multiple_models': USER_PERMISSIONS_CHAT_MULTIPLE_MODELS,
         'temporary': USER_PERMISSIONS_CHAT_TEMPORARY,
         'temporary_enforced': USER_PERMISSIONS_CHAT_TEMPORARY_ENFORCED,
+        'compression': USER_PERMISSIONS_CHAT_COMPRESSION,
     },
     'features': {
         # General features

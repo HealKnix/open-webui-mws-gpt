@@ -27,28 +27,24 @@
 
 <div>
   <div class="mb-1 flex w-full justify-between">
-    <div class=" self-center text-xs font-medium text-gray-500">{$i18n.t('Default Features')}</div>
+    <div class="mb-1 text-xs font-medium">{$i18n.t('Default Features')}</div>
   </div>
-  <div class="mt-2 flex flex-wrap items-center">
+  <div class="mt-2 flex flex-wrap items-center gap-2">
     {#each availableFeatures as feature}
-      <div class=" mr-3 flex items-center gap-2">
-        <Checkbox
-          state={featureIds.includes(feature) ? 'checked' : 'unchecked'}
-          on:change={(e) => {
-            if (e.detail === 'checked') {
-              featureIds = [...featureIds, feature];
-            } else {
-              featureIds = featureIds.filter((id) => id !== feature);
-            }
-          }}
-        />
-
-        <div class=" py-0.5 text-sm capitalize">
-          <Tooltip content={marked.parse(featureLabels[feature].description)}>
-            {$i18n.t(featureLabels[feature].label)}
-          </Tooltip>
-        </div>
-      </div>
+      <Checkbox
+        state={featureIds.includes(feature) ? 'checked' : 'unchecked'}
+        on:change={(e) => {
+          if (e.detail === 'checked') {
+            featureIds = [...featureIds, feature];
+          } else {
+            featureIds = featureIds.filter((id) => id !== feature);
+          }
+        }}
+        tooltip={{
+          label: $i18n.t(featureLabels[feature].label),
+          description: marked.parse(featureLabels[feature].description),
+        }}
+      />
     {/each}
   </div>
 </div>
