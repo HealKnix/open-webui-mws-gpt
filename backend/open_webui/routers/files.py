@@ -463,6 +463,17 @@ async def get_file_process_status(
                             event = {'status': status}
                             if status == 'failed':
                                 event['error'] = data.get('error')
+                            elif status == 'completed':
+                                meta = file_item.model_dump().get('meta', {}) if file_item else {}
+                                event['meta'] = {
+                                    'collection_name': meta.get('collection_name'),
+                                    'context': meta.get('context'),
+                                    'auto_full_context': meta.get('auto_full_context'),
+                                    'token_count': meta.get('token_count'),
+                                    'full_context_max_tokens': meta.get('full_context_max_tokens'),
+                                }
+                                event['processing_mode'] = data.get('processing_mode')
+                                event['token_count'] = data.get('token_count')
 
                             yield f'data: {json.dumps(event)}\n\n'
                             if status in ('completed', 'failed'):

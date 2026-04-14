@@ -92,6 +92,7 @@ from open_webui.routers import (
     models,
     knowledge,
     prompts,
+    orchestrator,
     evaluations,
     skills,
     widgets,
@@ -843,6 +844,7 @@ app.state.config.ENABLE_OPENAI_API = ENABLE_OPENAI_API
 app.state.config.OPENAI_API_BASE_URLS = OPENAI_API_BASE_URLS
 app.state.config.OPENAI_API_KEYS = OPENAI_API_KEYS
 app.state.config.OPENAI_API_CONFIGS = OPENAI_API_CONFIGS
+app.state.MTS_ROUTER_DEFAULT_POLICY_MODE = 'balanced'
 
 app.state.OPENAI_MODELS = {}
 
@@ -1559,6 +1561,7 @@ app.include_router(openai.router, prefix='/openai', tags=['openai'])
 app.include_router(pipelines.router, prefix='/api/v1/pipelines', tags=['pipelines'])
 app.include_router(tasks.router, prefix='/api/v1/tasks', tags=['tasks'])
 app.include_router(images.router, prefix='/api/v1/images', tags=['images'])
+app.include_router(orchestrator.router, prefix='/api/v1/orchestrator', tags=['orchestrator'])
 
 app.include_router(audio.router, prefix='/api/v1/audio', tags=['audio'])
 app.include_router(retrieval.router, prefix='/api/v1/retrieval', tags=['retrieval'])

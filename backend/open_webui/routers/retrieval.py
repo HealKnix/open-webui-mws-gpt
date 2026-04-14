@@ -124,6 +124,8 @@ from open_webui.constants import ERROR_MESSAGES
 
 log = logging.getLogger(__name__)
 
+AUTO_FULL_CONTEXT_MAX_TOKENS = 1_000_000
+
 ##########################################
 #
 # Utility functions
@@ -131,6 +133,23 @@ log = logging.getLogger(__name__)
 # not into hallucination, but deliver us from noise.
 #
 ##########################################
+
+
+def count_text_tokens(request: Request, text: str) -> int:
+    """Count tokens using configured tiktoken encoding with a safe fallback."""
+    if not text:
+        return 0
+
+    encoding_name = str(getattr(request.app.state.config, 'TIKTOKEN_ENCODING_NAME', 'cl100k_base'))
+    try:
+        encoding = tiktoken.get_encoding(encoding_name)
+        return len(encoding.encode(text))
+    except Exception as e:
+        # Fallback is intentionally conservative (chars) to avoid undercounting.
+        log.warning(
+            f'Failed to count tokens with encoding {encoding_name}: {e}. Falling back to character count.'
+        )
+        return len(text)
 
 
 def get_ef(
@@ -1679,10 +1698,72 @@ def process_file(
                 {'content': text_content},
                 db=db,
             )
+            token_count = count_text_tokens(request, text_content)
             hash = calculate_sha256_string(text_content)
+            should_use_full_context = (
+                not request.app.state.config.BYPASS_EMBEDDING_AND_RETRIEVAL
+                and token_count <= AUTO_FULL_CONTEXT_MAX_TOKENS
+            )
+
+            if should_use_full_context:
+                # If this file was previously indexed, remove stale vectors for this file.
+                try:
+                    if form_data.collection_name:
+                        VECTOR_DB_CLIENT.delete(collection_name=collection_name, filter={'file_id': file.id})
+                    else:
+                        VECTOR_DB_CLIENT.delete_collection(collection_name=collection_name)
+                except Exception:
+                    pass
+
+                Files.update_file_metadata_by_id(
+                    file.id,
+                    {
+                        'collection_name': None,
+                        'context': 'full',
+                        'auto_full_context': True,
+                        'token_count': token_count,
+                        'full_context_max_tokens': AUTO_FULL_CONTEXT_MAX_TOKENS,
+                    },
+                    db=db,
+                )
+                Files.update_file_data_by_id(
+                    file.id,
+                    {
+                        'status': 'completed',
+                        'processing_mode': 'full_context',
+                        'token_count': token_count,
+                    },
+                    db=db,
+                )
+                Files.update_file_hash_by_id(file.id, hash, db=db)
+                return {
+                    'status': True,
+                    'collection_name': None,
+                    'filename': file.filename,
+                    'content': text_content,
+                }
 
             if request.app.state.config.BYPASS_EMBEDDING_AND_RETRIEVAL:
-                Files.update_file_data_by_id(file.id, {'status': 'completed'}, db=db)
+                Files.update_file_metadata_by_id(
+                    file.id,
+                    {
+                        'collection_name': None,
+                        'context': 'full',
+                        'auto_full_context': True,
+                        'token_count': token_count,
+                        'full_context_max_tokens': AUTO_FULL_CONTEXT_MAX_TOKENS,
+                    },
+                    db=db,
+                )
+                Files.update_file_data_by_id(
+                    file.id,
+                    {
+                        'status': 'completed',
+                        'processing_mode': 'bypass',
+                        'token_count': token_count,
+                    },
+                    db=db,
+                )
                 Files.update_file_hash_by_id(file.id, hash, db=db)
                 return {
                     'status': True,
@@ -1719,13 +1800,21 @@ def process_file(
                                 file.id,
                                 {
                                     'collection_name': collection_name,
+                                    'context': None,
+                                    'auto_full_context': False,
+                                    'token_count': token_count,
+                                    'full_context_max_tokens': AUTO_FULL_CONTEXT_MAX_TOKENS,
                                 },
                                 db=session,
                             )
 
                             Files.update_file_data_by_id(
                                 file.id,
-                                {'status': 'completed'},
+                                {
+                                    'status': 'completed',
+                                    'processing_mode': 'vector_db',
+                                    'token_count': token_count,
+                                },
                                 db=session,
                             )
                             Files.update_file_hash_by_id(file.id, hash, db=session)

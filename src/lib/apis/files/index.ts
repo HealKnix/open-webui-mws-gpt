@@ -74,8 +74,18 @@ export const uploadFile = async (
                   res.error = data.error;
                 }
 
-                if (res?.data) {
+                if (res) {
                   res.data = data;
+                  if (data?.meta) {
+                    res.meta = {
+                      ...(res.meta ?? {}),
+                      ...data.meta,
+                    };
+
+                    if (data.meta.collection_name !== undefined) {
+                      res.collection_name = data.meta.collection_name;
+                    }
+                  }
                 }
               }
             }

@@ -165,20 +165,68 @@ async def search_web(
         return json.dumps({'error': 'Request context not available'})
 
     try:
-        engine = __request__.app.state.config.WEB_SEARCH_ENGINE
+        configured_engine = str(getattr(__request__.app.state.config, 'WEB_SEARCH_ENGINE', '') or '').strip()
+        # Provide a robust zero-config fallback so web search still works when engine is not set.
+        preferred_engine = configured_engine or 'duckduckgo'
         user = UserModel(**__user__) if __user__ else None
 
-        # Enforce maximum result count from config to prevent abuse
-        count = (
-            count
-            if count < __request__.app.state.config.WEB_SEARCH_RESULT_COUNT
-            else __request__.app.state.config.WEB_SEARCH_RESULT_COUNT
-        )
+        # Function-calling arguments may arrive as strings (e.g. "5"), so normalize first.
+        try:
+            normalized_count = int(count)
+        except (TypeError, ValueError):
+            normalized_count = 5
 
-        results = await asyncio.to_thread(_search_web, __request__, engine, query, user)
+        max_count = int(getattr(__request__.app.state.config, 'WEB_SEARCH_RESULT_COUNT', 5) or 5)
+        if max_count <= 0:
+            max_count = 5
+        if normalized_count <= 0:
+            normalized_count = 1
+
+        # Enforce maximum result count from config to prevent abuse
+        count = normalized_count if normalized_count < max_count else max_count
+
+        engines_tried: list[str] = []
+        errors: list[dict[str, str]] = []
+        results = []
+
+        def _append_error(engine_name: str, error: Exception):
+            errors.append({'engine': engine_name, 'error': str(error)})
+
+        def _should_try_fallback(engine_name: str) -> bool:
+            return engine_name.lower() != 'duckduckgo'
+
+        try:
+            engines_tried.append(preferred_engine)
+            results = await asyncio.to_thread(_search_web, __request__, preferred_engine, query, user)
+        except Exception as e:
+            log.warning(f'search_web primary engine failed ({preferred_engine}): {e}')
+            _append_error(preferred_engine, e)
+            results = []
+
+        # If configured provider fails/returns empty, try DuckDuckGo as fallback.
+        if (not results) and _should_try_fallback(preferred_engine):
+            fallback_engine = 'duckduckgo'
+            try:
+                engines_tried.append(fallback_engine)
+                results = await asyncio.to_thread(_search_web, __request__, fallback_engine, query, user)
+            except Exception as e:
+                log.warning(f'search_web fallback engine failed ({fallback_engine}): {e}')
+                _append_error(fallback_engine, e)
+                results = []
 
         # Limit results
         results = results[:count] if results else []
+
+        if not results:
+            return json.dumps(
+                {
+                    'error': 'No web results found',
+                    'query': query,
+                    'engines_tried': engines_tried,
+                    'details': errors,
+                },
+                ensure_ascii=False,
+            )
 
         return json.dumps(
             [{'title': r.title, 'link': r.link, 'snippet': r.snippet} for r in results],

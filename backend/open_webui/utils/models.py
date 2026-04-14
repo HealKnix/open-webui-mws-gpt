@@ -10,6 +10,7 @@ from fastapi import Request
 from open_webui.socket.utils import RedisDict
 from open_webui.routers import openai, ollama
 from open_webui.functions import get_function_models
+from open_webui.orchestration.registry import MTS_ROUTER_MODEL_ID, build_router_virtual_model, has_mws_models
 
 
 from open_webui.models.functions import Functions
@@ -91,9 +92,10 @@ async def get_all_models(request, refresh: bool = False, user: UserModel = None)
     # deep copy the base models to avoid modifying the original list
     models = [model.copy() for model in base_models]
 
-    # If there are no models, return an empty list
-    if len(models) == 0:
-        return []
+    # Keep building the resulting list even when base providers returned
+    # nothing in this cycle. This allows custom preset models (including
+    # MTS Router derivatives) to stay visible in the UI instead of ending
+    # up with "No models available".
 
     # Add arena models
     if request.app.state.config.ENABLE_EVALUATION_ARENA_MODELS:
@@ -200,6 +202,10 @@ async def get_all_models(request, refresh: bool = False, user: UserModel = None)
                 'preset': True,
                 **({'pipe': pipe} if pipe is not None else {}),
             }
+            if custom_model.base_model_id == MTS_ROUTER_MODEL_ID or (base_model and base_model.get('orchestrator')):
+                model['orchestrator'] = True
+                model['owned_by'] = 'orchestrator'
+                model['connection_type'] = 'external'
 
             info = custom_model.model_dump()
             if 'params' in info:
@@ -207,6 +213,42 @@ async def get_all_models(request, refresh: bool = False, user: UserModel = None)
                 del info['params']
 
             model['info'] = info
+
+            # Inherit base model metadata/capabilities for custom presets so
+            # chat feature toggles (web search/deep research, etc.) stay visible.
+            base_meta = {}
+            if base_model:
+                base_meta = (base_model.get('info') or {}).get('meta') or {}
+
+            if base_meta:
+                info_meta = model['info'].setdefault('meta', {})
+
+                base_capabilities = dict(base_meta.get('capabilities') or {})
+                custom_capabilities = dict(info_meta.get('capabilities') or {})
+                if base_capabilities:
+                    info_meta['capabilities'] = {**base_capabilities, **custom_capabilities}
+
+                if info_meta.get('defaultFeatureIds') is None and base_meta.get('defaultFeatureIds') is not None:
+                    info_meta['defaultFeatureIds'] = copy.deepcopy(base_meta.get('defaultFeatureIds'))
+
+            if model.get('orchestrator'):
+                info_meta = model['info'].setdefault('meta', {})
+                capabilities = dict(info_meta.get('capabilities') or {})
+                capabilities.update(
+                    {
+                        'web_search': True,
+                        'deep_research': True,
+                        'presentation_generation': True,
+                        'builtin_tools': True,
+                    }
+                )
+                info_meta['capabilities'] = capabilities
+
+                default_feature_ids = list(info_meta.get('defaultFeatureIds') or [])
+                for feature_id in ('web_search', 'deep_research'):
+                    if feature_id not in default_feature_ids:
+                        default_feature_ids.append(feature_id)
+                info_meta['defaultFeatureIds'] = default_feature_ids
 
             action_ids = []
             filter_ids = []
@@ -224,6 +266,12 @@ async def get_all_models(request, refresh: bool = False, user: UserModel = None)
             model['filter_ids'] = filter_ids
 
             models.append(model)
+
+    if has_mws_models(request, models=models):
+        router_model = build_router_virtual_model()
+        existing_ids = {model['id'] for model in models}
+        if router_model['id'] not in existing_ids:
+            models.append(router_model)
 
     # Process action_ids to get the actions
     def get_action_items_from_module(function, module):
@@ -378,6 +426,11 @@ async def get_all_models(request, refresh: bool = False, user: UserModel = None)
 
 
 def check_model_access(user, model, db=None):
+    if model.get('orchestrator'):
+        if user.role == 'admin':
+            return
+        raise Exception('Model not found')
+
     if model.get('arena'):
         meta = model.get('info', {}).get('meta', {})
         access_grants = meta.get('access_grants', [])
@@ -446,11 +499,10 @@ def get_filtered_models(models, user, db=None):
 
             model_info = model_infos.get(model['id'])
             if model_info:
-                if (
-                    (user.role == 'admin' and BYPASS_ADMIN_ACCESS_CONTROL)
-                    or user.id == model_info.get('user_id')
-                    or model['id'] in accessible_model_ids
-                ):
+                if user.role == 'admin':
+                    # Admin should always see configured models in selector.
+                    filtered_models.append(model)
+                elif user.id == model_info.get('user_id') or model['id'] in accessible_model_ids:
                     filtered_models.append(model)
             elif user.role == 'admin':
                 # No DB entry means no access control configured yet;

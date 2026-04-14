@@ -158,6 +158,8 @@
 
   let imageGenerationEnabled = false;
   let webSearchEnabled = false;
+  let deepResearchEnabled = false;
+  let presentationEnabled = false;
   let codeInterpreterEnabled = false;
 
   let showCommands = false;
@@ -197,6 +199,8 @@
     selectedFilterIds = [];
     selectedWidgetIds = [];
     webSearchEnabled = false;
+    deepResearchEnabled = false;
+    presentationEnabled = false;
     imageGenerationEnabled = false;
 
     const storageChatInput = sessionStorage.getItem(
@@ -228,6 +232,8 @@
             selectedFilterIds = input.selectedFilterIds;
             selectedWidgetIds = input.selectedWidgetIds ?? [];
             webSearchEnabled = input.webSearchEnabled;
+            deepResearchEnabled = input.deepResearchEnabled ?? false;
+            presentationEnabled = input.presentationEnabled ?? false;
             imageGenerationEnabled = input.imageGenerationEnabled;
             codeInterpreterEnabled = input.codeInterpreterEnabled;
           }
@@ -290,6 +296,8 @@
     selectedWidgetIds = [];
     pendingOAuthTools = [];
     webSearchEnabled = false;
+    deepResearchEnabled = false;
+    presentationEnabled = false;
     imageGenerationEnabled = false;
     codeInterpreterEnabled = false;
 
@@ -370,6 +378,36 @@
           ($user?.role === 'admin' || $user?.permissions?.features?.web_search)
         ) {
           webSearchEnabled = model.info.meta.defaultFeatureIds.includes('web_search');
+        }
+
+        if (
+          (model.info?.meta?.capabilities?.['deep_research'] ||
+            model?.orchestrator ||
+            String(model?.id ?? '')
+              .toLowerCase()
+              .startsWith('mts-router') ||
+            String(model?.base_model_id ?? '')
+              .toLowerCase()
+              .startsWith('mts-router')) &&
+          $config?.features?.enable_web_search &&
+          ($user?.role === 'admin' || $user?.permissions?.features?.web_search)
+        ) {
+          deepResearchEnabled = model.info.meta.defaultFeatureIds.includes('deep_research');
+        }
+
+        if (
+          (model.info?.meta?.capabilities?.['presentation_generation'] ||
+            model?.orchestrator ||
+            String(model?.id ?? '')
+              .toLowerCase()
+              .startsWith('mts-router') ||
+            String(model?.base_model_id ?? '')
+              .toLowerCase()
+              .startsWith('mts-router')) &&
+          $config?.features?.enable_web_search &&
+          ($user?.role === 'admin' || $user?.permissions?.features?.web_search)
+        ) {
+          presentationEnabled = model.info.meta.defaultFeatureIds.includes('presentation_generation');
         }
 
         if (
@@ -806,6 +844,8 @@
         selectedToolIds = [];
         selectedFilterIds = [];
         webSearchEnabled = false;
+        deepResearchEnabled = false;
+        presentationEnabled = false;
         imageGenerationEnabled = false;
         codeInterpreterEnabled = false;
 
@@ -818,6 +858,8 @@
             selectedToolIds = input.selectedToolIds;
             selectedFilterIds = input.selectedFilterIds;
             webSearchEnabled = input.webSearchEnabled;
+            deepResearchEnabled = input.deepResearchEnabled ?? false;
+            presentationEnabled = input.presentationEnabled ?? false;
             imageGenerationEnabled = input.imageGenerationEnabled;
             codeInterpreterEnabled = input.codeInterpreterEnabled;
           }
@@ -1234,6 +1276,14 @@
 
     if ($page.url.searchParams.get('web-search') === 'true') {
       webSearchEnabled = true;
+    }
+
+    if ($page.url.searchParams.get('deep-research') === 'true') {
+      deepResearchEnabled = true;
+    }
+
+    if ($page.url.searchParams.get('presentation-generation') === 'true') {
+      presentationEnabled = true;
     }
 
     if ($page.url.searchParams.get('image-generation') === 'true') {
@@ -2216,6 +2266,33 @@
 
   const getFeatures = () => {
     let features = {};
+    const currentModels = atSelectedModel?.id ? [atSelectedModel.id] : selectedModels;
+    const allDeepResearchCapable =
+      currentModels.filter((modelId) => {
+        const model = $models.find((m) => m.id === modelId);
+        const capabilities = model?.info?.meta?.capabilities ?? {};
+        const currentModelId = String(model?.id ?? '').toLowerCase();
+        const baseModelId = String(model?.base_model_id ?? '').toLowerCase();
+        return Boolean(
+          model?.orchestrator ||
+            capabilities?.deep_research ||
+            currentModelId.startsWith('mts-router') ||
+            baseModelId.startsWith('mts-router'),
+        );
+      }).length === currentModels.length;
+    const allPresentationCapable =
+      currentModels.filter((modelId) => {
+        const model = $models.find((m) => m.id === modelId);
+        const capabilities = model?.info?.meta?.capabilities ?? {};
+        const currentModelId = String(model?.id ?? '').toLowerCase();
+        const baseModelId = String(model?.base_model_id ?? '').toLowerCase();
+        return Boolean(
+          model?.orchestrator ||
+            capabilities?.presentation_generation ||
+            currentModelId.startsWith('mts-router') ||
+            baseModelId.startsWith('mts-router'),
+        );
+      }).length === currentModels.length;
 
     if ($config?.features)
       features = {
@@ -2235,9 +2312,20 @@
           ($user?.role === 'admin' || $user?.permissions?.features?.web_search)
             ? webSearchEnabled
             : false,
+        deep_research:
+          allDeepResearchCapable &&
+          $config?.features?.enable_web_search &&
+          ($user?.role === 'admin' || $user?.permissions?.features?.web_search)
+            ? deepResearchEnabled
+            : false,
+        presentation_generation:
+          allPresentationCapable &&
+          $config?.features?.enable_web_search &&
+          ($user?.role === 'admin' || $user?.permissions?.features?.web_search)
+            ? presentationEnabled
+            : false,
       };
 
-    const currentModels = atSelectedModel?.id ? [atSelectedModel.id] : selectedModels;
     if (
       currentModels.filter(
         (model) =>
@@ -3095,6 +3183,8 @@ ${widgetContexts.join('\n')}
                   bind:codeInterpreterEnabled
                   {pendingOAuthTools}
                   bind:webSearchEnabled
+                  bind:deepResearchEnabled
+                  bind:presentationEnabled
                   bind:atSelectedModel
                   bind:showCommands
                   bind:dragged
@@ -3178,6 +3268,8 @@ ${widgetContexts.join('\n')}
                   bind:imageGenerationEnabled
                   bind:codeInterpreterEnabled
                   bind:webSearchEnabled
+                  bind:deepResearchEnabled
+                  bind:presentationEnabled
                   bind:atSelectedModel
                   bind:showCommands
                   bind:dragged
