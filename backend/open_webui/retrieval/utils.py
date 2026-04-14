@@ -9,6 +9,7 @@ import hashlib
 from concurrent.futures import ThreadPoolExecutor
 import time
 import re
+import tiktoken
 
 from urllib.parse import quote
 from huggingface_hub import snapshot_download
@@ -59,6 +60,43 @@ from typing import Any
 
 from langchain_core.callbacks import CallbackManagerForRetrieverRun
 from langchain_core.retrievers import BaseRetriever
+
+AUTO_FULL_CONTEXT_MAX_TOKENS = 1_000_000
+
+
+def _count_text_tokens(request, text: str) -> int:
+    if not text:
+        return 0
+
+    encoding_name = str(getattr(request.app.state.config, 'TIKTOKEN_ENCODING_NAME', 'cl100k_base'))
+    try:
+        encoding = tiktoken.get_encoding(encoding_name)
+        return len(encoding.encode(text))
+    except Exception:
+        # Conservative fallback
+        return len(text)
+
+
+def _is_auto_full_context_file(request, file_object) -> bool:
+    if not file_object:
+        return False
+
+    file_meta = file_object.meta or {}
+    if file_meta.get('context') == 'full' or bool(file_meta.get('auto_full_context')):
+        return True
+
+    token_count = file_meta.get('token_count')
+    if token_count is None:
+        token_count = (file_object.data or {}).get('token_count')
+    if token_count is None:
+        token_count = _count_text_tokens(request, (file_object.data or {}).get('content', ''))
+
+    try:
+        token_count = int(token_count)
+    except Exception:
+        return False
+
+    return token_count <= AUTO_FULL_CONTEXT_MAX_TOKENS
 
 
 def is_youtube_url(url: str) -> bool:
@@ -1025,7 +1063,27 @@ async def get_sources_from_items(
                     'metadatas': [[{'url': item.get('url'), 'name': item.get('url')}]],
                 }
         elif item.get('type') == 'file':
-            if item.get('context') == 'full' or request.app.state.config.BYPASS_EMBEDDING_AND_RETRIEVAL:
+            file_object = None
+            has_file_access = False
+            if item.get('id'):
+                file_object = Files.get_file_by_id(item.get('id'))
+                if file_object:
+                    has_file_access = (
+                        user.role == 'admin'
+                        or file_object.user_id == user.id
+                        or has_access_to_file(item.get('id'), 'read', user)
+                    )
+
+            item_full_context = (
+                item.get('context') == 'full'
+                or full_context
+                or request.app.state.config.BYPASS_EMBEDDING_AND_RETRIEVAL
+            )
+
+            if not item_full_context and file_object and has_file_access:
+                item_full_context = _is_auto_full_context_file(request, file_object)
+
+            if item_full_context:
                 if item.get('file', {}).get('data', {}).get('content', ''):
                     # Manual Full Mode Toggle
                     # Used from chat file modal, we can assume that the file content will be available from item.get("file").get("data", {}).get("content")
@@ -1041,25 +1099,19 @@ async def get_sources_from_items(
                             ]
                         ],
                     }
-                elif item.get('id'):
-                    file_object = Files.get_file_by_id(item.get('id'))
-                    if file_object and (
-                        user.role == 'admin'
-                        or file_object.user_id == user.id
-                        or has_access_to_file(item.get('id'), 'read', user)
-                    ):
-                        query_result = {
-                            'documents': [[file_object.data.get('content', '')]],
-                            'metadatas': [
-                                [
-                                    {
-                                        'file_id': item.get('id'),
-                                        'name': file_object.filename,
-                                        'source': file_object.filename,
-                                    }
-                                ]
-                            ],
-                        }
+                elif file_object and has_file_access:
+                    query_result = {
+                        'documents': [[file_object.data.get('content', '')]],
+                        'metadatas': [
+                            [
+                                {
+                                    'file_id': item.get('id'),
+                                    'name': file_object.filename,
+                                    'source': file_object.filename,
+                                }
+                            ]
+                        ],
+                    }
             else:
                 # Fallback to collection names
                 if item.get('legacy'):
@@ -1081,35 +1133,35 @@ async def get_sources_from_items(
                     permission='read',
                 )
             ):
-                if item.get('context') == 'full' or request.app.state.config.BYPASS_EMBEDDING_AND_RETRIEVAL:
-                    if knowledge_base and (
-                        user.role == 'admin'
-                        or knowledge_base.user_id == user.id
-                        or AccessGrants.has_access(
-                            user_id=user.id,
-                            resource_type='knowledge',
-                            resource_id=knowledge_base.id,
-                            permission='read',
+                collection_files = Knowledges.get_files_by_id(knowledge_base.id)
+                collection_full_context = (
+                    item.get('context') == 'full'
+                    or full_context
+                    or request.app.state.config.BYPASS_EMBEDDING_AND_RETRIEVAL
+                )
+                if not collection_full_context and collection_files:
+                    collection_full_context = all(
+                        _is_auto_full_context_file(request, f)
+                        for f in collection_files
+                    )
+
+                if collection_full_context:
+                    documents = []
+                    metadatas = []
+                    for file in collection_files:
+                        documents.append(file.data.get('content', ''))
+                        metadatas.append(
+                            {
+                                'file_id': file.id,
+                                'name': file.filename,
+                                'source': file.filename,
+                            }
                         )
-                    ):
-                        files = Knowledges.get_files_by_id(knowledge_base.id)
 
-                        documents = []
-                        metadatas = []
-                        for file in files:
-                            documents.append(file.data.get('content', ''))
-                            metadatas.append(
-                                {
-                                    'file_id': file.id,
-                                    'name': file.filename,
-                                    'source': file.filename,
-                                }
-                            )
-
-                        query_result = {
-                            'documents': [documents],
-                            'metadatas': [metadatas],
-                        }
+                    query_result = {
+                        'documents': [documents],
+                        'metadatas': [metadatas],
+                    }
                 else:
                     # Fallback to collection names
                     if item.get('legacy'):

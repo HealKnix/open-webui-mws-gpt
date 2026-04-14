@@ -669,7 +669,7 @@
               <StatusHistory statusHistory={message?.statusHistory} />
             {/if}
 
-            {#if message?.files && message.files?.filter((f) => f.type === 'image').length > 0}
+            {#if message?.files && message.files.length > 0}
               <div
                 class="my-1 flex w-full flex-wrap gap-2 overflow-x-auto"
                 dir={$settings?.chatDirection ?? 'auto'}

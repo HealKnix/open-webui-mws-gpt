@@ -16,12 +16,30 @@ services:
     container_name: open-webui
     volumes:
       - open-webui:/app/backend/data
+      - ./backend/open_webui:/app/backend/open_webui
     depends_on:
       - ollama
     ports:
       - ${OPEN_WEBUI_PORT-3000}:8080
     environment:
       - 'OLLAMA_BASE_URL=http://ollama:11434'
+      - 'OPENAI_API_BASE_URL=${OPENAI_API_BASE_URL-https://api.gpt.mws.ru/v1}'
+      - 'OPENAI_API_KEY=${OPENAI_API_KEY}'
+      - 'RAG_EMBEDDING_ENGINE=openai'
+      - 'RAG_EMBEDDING_MODEL=bge-m3'
+      - 'RAG_OPENAI_API_BASE_URL=${OPENAI_API_BASE_URL-https://api.gpt.mws.ru/v1}'
+      - 'RAG_OPENAI_API_KEY=${OPENAI_API_KEY}'
+      - 'RAG_TEXT_SPLITTER=character'
+      - 'ENABLE_MARKDOWN_HEADER_TEXT_SPLITTER=True'
+      - 'CHUNK_SIZE=1200'
+      - 'CHUNK_OVERLAP=150'
+      - 'CHUNK_MIN_SIZE_TARGET=450'
+      - 'ENABLE_WEB_SEARCH=True'
+      - 'WEB_SEARCH_ENGINE=duckduckgo'
+      - 'WEB_SEARCH_RESULT_COUNT=8'
+      - 'WEB_SEARCH_CONCURRENT_REQUESTS=4'
+      - 'MTS_ROUTER_PPTX_RENDERER=auto'
+      - 'MTS_ROUTER_PPTX_SKILL_PATH=/app/backend/open_webui/orchestration/skills/pptx'
       - 'WEBUI_SECRET_KEY='
     extra_hosts:
       - host.docker.internal:host-gateway
