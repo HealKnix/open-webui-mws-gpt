@@ -872,6 +872,50 @@ async def get_terminal_system_prompt(
     return None
 
 
+async def get_orchestrator_skills(
+    base_url: str,
+    headers: dict,
+) -> Optional[str]:
+    """Fetch the skills manifest from an orchestrator and render a system-prompt snippet."""
+    base = base_url.rstrip('/')
+    try:
+        async with aiohttp.ClientSession(
+            timeout=aiohttp.ClientTimeout(total=3),
+            trust_env=True,
+        ) as session:
+            async with session.get(f'{base}/api/v1/skills', headers=headers) as resp:
+                if resp.status != 200:
+                    return None
+                data = await resp.json()
+    except Exception as e:
+        log.debug(f'Failed to fetch orchestrator skills: {e}')
+        return None
+
+    skills = data.get('skills') or []
+    if not skills:
+        return None
+    mount = data.get('mount') or '/skills'
+
+    lines = [
+        f'Pre-built skills are available inside the terminal workspace at `{mount}/`. Each skill is a directory with a `SKILL.md` file (usage instructions) and optional `scripts/` you can run directly.',
+        '',
+        'Available skills:',
+    ]
+    for skill in skills:
+        name = skill.get('name') or ''
+        description = (skill.get('description') or '').strip()
+        path = skill.get('path') or f'{mount}/{name}/SKILL.md'
+        if description:
+            lines.append(f'- **{name}** ({path}) — {description}')
+        else:
+            lines.append(f'- **{name}** ({path})')
+    lines.append('')
+    lines.append(
+        f'Before acting on a file that matches a skill, read the relevant `SKILL.md` (e.g. `cat {mount}/<name>/SKILL.md`) and follow its instructions. Scripts under `{mount}/<name>/scripts/` are executable helpers you may call from the shell.'
+    )
+    return '\n'.join(lines)
+
+
 async def set_terminal_servers(request: Request):
     """Load and cache OpenAPI specs from all TERMINAL_SERVER_CONNECTIONS."""
     connections = request.app.state.config.TERMINAL_SERVER_CONNECTIONS or []
@@ -925,8 +969,21 @@ async def set_terminal_servers(request: Request):
         if prompt:
             server['system_prompt'] = prompt
 
+    async def _fetch_skills(server):
+        connection = connections_by_id.get(server.get('id'))
+        if not connection or connection.get('server_type') != 'orchestrator':
+            return
+        headers = {}
+        if connection.get('auth_type', 'bearer') == 'bearer':
+            headers['Authorization'] = f'Bearer {connection.get("key", "")}'
+        orch_base = connection.get('url', '').rstrip('/')
+        skills_prompt = await get_orchestrator_skills(orch_base, headers)
+        if skills_prompt:
+            server['skills_prompt'] = skills_prompt
+
     await asyncio.gather(
         *[_fetch_system_prompt(s) for s in request.app.state.TERMINAL_SERVERS],
+        *[_fetch_skills(s) for s in request.app.state.TERMINAL_SERVERS],
         return_exceptions=True,
     )
 
@@ -1005,6 +1062,20 @@ async def get_terminal_tools(
     # auth_type == "none": no Authorization header
 
     system_prompt = server_data.get('system_prompt')
+    skills_prompt = server_data.get('skills_prompt')
+    workspace_prompt = (
+        'You have a persistent per-user workspace mounted at `/workspace` inside the terminal. '
+        'Any file you create or modify under `/workspace/` (e.g. `/workspace/report.xlsx`) is downloadable by the user. '
+        'To deliver a file back to the user, write it into `/workspace/` and reference it in your reply as a Markdown link: '
+        '`[label](/workspace/<name>)` — the UI rewrites this link to a download endpoint automatically.\n\n'
+        'Execution rules (IMPORTANT, avoid polling loops):\n'
+        '- `run_command` accepts a `wait` parameter (seconds, max 300). ALWAYS pass `wait` for commands you expect to finish quickly — this returns stdout/stderr inline in a single call, no polling needed.\n'
+        '- Only call `get_process_status` when you intentionally started a long-running background job AND `run_command` returned before completion. Do not poll more than 2-3 times; if a job is still running after that, either wait longer with a larger `wait`, or re-think the approach.\n'
+        '- Prefer one self-contained script (`python -c "..."`, `bash -c "..."`, or `python script.py`) over many small commands. Fewer round-trips = faster and more reliable.\n'
+        '- Batch multi-step work: write a python/bash script into `/workspace/_tmp.py`, then `run_command("python /workspace/_tmp.py", wait=60)`.'
+    )
+    parts = [p for p in (system_prompt, workspace_prompt, skills_prompt) if p]
+    system_prompt = '\n\n'.join(parts) if parts else None
     terminal_cwd = await get_terminal_cwd(connection.get('url', ''), headers, cookies)
 
     tools_dict = {}

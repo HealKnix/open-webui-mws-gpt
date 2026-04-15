@@ -1,5 +1,5 @@
 <script context="module" lang="ts">
-	let savedTab: 'controls' | 'files' | 'overview' | 'compression' = 'controls';
+  let savedTab: 'controls' | 'files' | 'overview' | 'compression' = 'controls';
 </script>
 
 <script lang="ts">
@@ -76,7 +76,8 @@
     !!$selectedTerminalId ||
     (codeInterpreterEnabled && $config?.code?.interpreter_engine !== 'jupyter');
   $: showOverviewTab = hasMessages;
-  $: showCompressionTab = $user?.role === 'admin' || ($user?.permissions?.chat?.compression ?? true);
+  $: showCompressionTab =
+    $user?.role === 'admin' || ($user?.permissions?.chat?.compression ?? true);
 
   // Tab fallback: if active tab becomes hidden, switch to next available
   $: if (!showOverviewTab && activeTab === 'overview') activeTab = 'controls';
@@ -331,16 +332,16 @@
                   </button>
                 {/if}
                 {#if showCompressionTab}
-									<button
-										class="px-2.5 py-1 text-sm rounded-lg transition whitespace-nowrap {activeTab ===
-										'compression'
-											? 'bg-gray-100 dark:bg-gray-800 font-medium text-gray-900 dark:text-white'
-											: 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}"
-										on:click={() => (activeTab = 'compression')}
-									>
-										{$i18n.t('Compression')}
-									</button>
-								{/if}
+                  <button
+                    class="rounded-lg px-2.5 py-1 text-sm whitespace-nowrap transition {activeTab ===
+                    'compression'
+                      ? 'bg-gray-100 font-medium text-gray-900 dark:bg-gray-800 dark:text-white'
+                      : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}"
+                    on:click={() => (activeTab = 'compression')}
+                  >
+                    {$i18n.t('Compression')}
+                  </button>
+                {/if}
               </div>
               <button
                 class="rounded-lg p-1 text-gray-500 transition hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
@@ -381,7 +382,7 @@
               {:else if activeTab === 'files' && codeInterpreterEnabled}
                 <PyodideFileNav />
               {:else if activeTab === 'compression'}
-							  <ContextCompressionPanel {chatId} />
+                <ContextCompressionPanel {chatId} />
               {:else}
                 <Controls embed={true} {models} bind:chatFiles bind:params />
               {/if}
@@ -488,10 +489,10 @@
                     {/if}
                     {#if showCompressionTab}
                       <button
-                        class="px-2.5 py-1 text-sm rounded-lg transition whitespace-nowrap {activeTab ===
+                        class="rounded-lg px-2.5 py-1 text-sm whitespace-nowrap transition {activeTab ===
                         'compression'
-                          ? 'bg-gray-100 dark:bg-gray-800 font-medium text-gray-900 dark:text-white'
-                          : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}"
+                          ? 'bg-gray-100 font-medium text-gray-900 dark:bg-gray-800 dark:text-white'
+                          : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}"
                         on:click={() => (activeTab = 'compression')}
                       >
                         {$i18n.t('Compression')}
@@ -546,7 +547,7 @@
                   {:else if activeTab === 'files' && codeInterpreterEnabled}
                     <PyodideFileNav overlay={dragged} />
                   {:else if activeTab === 'compression'}
-								    <ContextCompressionPanel {chatId} />
+                    <ContextCompressionPanel {chatId} />
                   {:else}
                     <Controls embed={true} {models} bind:chatFiles bind:params />
                   {/if}

@@ -51,6 +51,12 @@ from open_webui.storage.provider import Storage
 from open_webui.config import BYPASS_ADMIN_ACCESS_CONTROL
 from open_webui.utils.auth import get_admin_user, get_verified_user
 from open_webui.utils.misc import strict_match_mime_type
+from open_webui.utils.terminal_files import (
+    fetch_workspace_file,
+    get_active_orchestrator,
+    list_workspace,
+    push_file_to_workspace,
+)
 from pydantic import BaseModel
 
 log = logging.getLogger(__name__)
@@ -262,6 +268,37 @@ def upload_file_handler(
             if channel:
                 Channels.add_file_to_channel_by_id(channel.id, file_item.id, user.id, db=db)
 
+        orchestrator = get_active_orchestrator(request)
+        if orchestrator is not None:
+            try:
+                push_result = push_file_to_workspace(
+                    orchestrator,
+                    user_id=user.id,
+                    contents=contents,
+                    filename=name,
+                )
+                Files.update_file_metadata_by_id(
+                    file_item.id,
+                    {
+                        'workspace_path': push_result.get('path'),
+                        'processing_mode': 'terminal',
+                        'terminal_server_id': orchestrator.get('id'),
+                    },
+                    db=db,
+                )
+                Files.update_file_data_by_id(
+                    file_item.id,
+                    {'status': 'completed', 'processing_mode': 'terminal'},
+                    db=db,
+                )
+                refreshed = Files.get_file_by_id(file_item.id)
+                return {'status': True, **(refreshed or file_item).model_dump()}
+            except Exception as exc:
+                log.warning(
+                    f'Workspace push failed for file {file_item.id}; '
+                    f'falling back to RAG processing: {exc}'
+                )
+
         if process:
             if background_tasks and process_in_background:
                 background_tasks.add_task(
@@ -335,6 +372,72 @@ async def list_files(
 ############################
 # Search Files
 ############################
+
+
+############################
+# Terminal workspace proxy
+############################
+
+
+def _validate_workspace_path(path: str) -> str:
+    if not path or '\x00' in path or '\\' in path:
+        raise HTTPException(status_code=400, detail='Invalid workspace path')
+    if not path.startswith('/workspace/'):
+        raise HTTPException(status_code=400, detail='Path must start with /workspace/')
+    if '..' in path.split('/'):
+        raise HTTPException(status_code=400, detail='Invalid workspace path')
+    return path
+
+
+@router.get('/workspace/list')
+def list_workspace_files(request: Request, user=Depends(get_verified_user)):
+    orchestrator = get_active_orchestrator(request)
+    if orchestrator is None:
+        return {'files': []}
+    try:
+        return list_workspace(orchestrator, user_id=user.id)
+    except Exception as exc:
+        log.warning(f'Workspace list failed: {exc}')
+        return {'files': []}
+
+
+@router.get('/workspace/download')
+def download_workspace_file(
+    request: Request,
+    path: str = Query(...),
+    user=Depends(get_verified_user),
+):
+    orchestrator = get_active_orchestrator(request)
+    if orchestrator is None:
+        raise HTTPException(status_code=404, detail='No terminal orchestrator configured')
+    safe_path = _validate_workspace_path(path)
+
+    resp = fetch_workspace_file(orchestrator, user_id=user.id, path=safe_path)
+    if resp.status_code == 404:
+        resp.close()
+        raise HTTPException(status_code=404, detail='File not found')
+    if not resp.ok:
+        body = resp.text
+        resp.close()
+        raise HTTPException(status_code=502, detail=f'Orchestrator error: {body}')
+
+    filename = os.path.basename(safe_path)
+    headers = {
+        'Content-Disposition': f'attachment; filename="{filename}"',
+    }
+    content_length = resp.headers.get('Content-Length')
+    if content_length:
+        headers['Content-Length'] = content_length
+
+    def _iter():
+        try:
+            for chunk in resp.iter_content(chunk_size=64 * 1024):
+                if chunk:
+                    yield chunk
+        finally:
+            resp.close()
+
+    return StreamingResponse(_iter(), media_type='application/octet-stream', headers=headers)
 
 
 @router.get('/search', response_model=list[FileModelResponse])

@@ -34,6 +34,7 @@ try:
         ToolCallStartEvent,
         ToolCallArgsEvent,
         ToolCallEndEvent,
+        ToolCallResultEvent,
         StateSnapshotEvent,
         StateDeltaEvent,
     )
@@ -89,6 +90,7 @@ class AGUITranslator:
             'ToolCallStartEvent': 'TOOL_CALL_START',
             'ToolCallArgsEvent': 'TOOL_CALL_ARGS',
             'ToolCallEndEvent': 'TOOL_CALL_END',
+            'ToolCallResultEvent': 'TOOL_CALL_RESULT',
             'StateSnapshotEvent': 'STATE_SNAPSHOT',
             'StateDeltaEvent': 'STATE_DELTA',
         }
@@ -136,33 +138,12 @@ class AGUITranslator:
                         delta=delta,
                     )
                 )
-            # Tool call fragments inside the stream (OpenAI-style)
-            for tc in _extract_tool_call_chunks(chunk):
-                lg_call_id = tc.get('id') or tc.get('index')
-                name = tc.get('name')
-                args_delta = tc.get('args') or ''
-                if lg_call_id is None:
-                    continue
-                key = str(lg_call_id)
-                if key not in self._open_tool_calls and name:
-                    tc_id = tc.get('id') or _new_id('tc')
-                    self._open_tool_calls[key] = tc_id
-                    out.append(
-                        self._mk(
-                            'ToolCallStartEvent',
-                            toolCallId=tc_id,
-                            toolCallName=name,
-                            parentMessageId=self._current_message_id,
-                        )
-                    )
-                if args_delta and key in self._open_tool_calls:
-                    out.append(
-                        self._mk(
-                            'ToolCallArgsEvent',
-                            toolCallId=self._open_tool_calls[key],
-                            delta=args_delta,
-                        )
-                    )
+            # Tool call fragments from the model stream are intentionally
+            # NOT translated into AG UI tool-call events. ``on_tool_start`` /
+            # ``on_tool_end`` are the single source of truth — they carry the
+            # full input and are reliably paired. Emitting from both paths
+            # produced duplicate ToolCallStart events with different ids,
+            # the first of which never received a matching End.
 
         elif kind == 'on_chat_model_end':
             if self._current_message_id:
@@ -204,6 +185,16 @@ class AGUITranslator:
             run_id = lg_event.get('run_id')
             tc_id = self._open_tool_calls.pop(str(run_id), None)
             if tc_id:
+                content_str = _extract_tool_output(data.get('output'))
+                if content_str:
+                    out.append(
+                        self._mk(
+                            'ToolCallResultEvent',
+                            messageId=self._current_message_id or _new_id('msg'),
+                            toolCallId=tc_id,
+                            content=content_str,
+                        )
+                    )
                 out.append(
                     self._mk(
                         'ToolCallEndEvent',
@@ -263,22 +254,41 @@ def _extract_text_delta(chunk: Any) -> str:
     return ''
 
 
-def _extract_tool_call_chunks(chunk: Any) -> list[dict]:
-    if chunk is None:
-        return []
-    # LangChain AIMessageChunk exposes ``tool_call_chunks`` for streamed
-    # tool calls. Each entry has name/args/id/index.
-    tc_chunks = getattr(chunk, 'tool_call_chunks', None)
-    if not tc_chunks:
-        return []
-    out = []
-    for tc in tc_chunks:
-        out.append(
-            {
-                'id': tc.get('id'),
-                'index': tc.get('index'),
-                'name': tc.get('name'),
-                'args': tc.get('args'),
-            }
-        )
-    return out
+def _extract_tool_output(output: Any) -> str:
+    """Best-effort stringification of a LangGraph ``on_tool_end`` output.
+
+    LangChain tools usually produce ``ToolMessage`` objects with a ``content``
+    attribute; custom tool functions may return raw strings, dicts, or lists.
+    We want a short textual representation for the UI — nothing fancy.
+    """
+    if output is None:
+        return ''
+    # ToolMessage / BaseMessage
+    content = getattr(output, 'content', None)
+    if content is not None:
+        output = content
+    if isinstance(output, str):
+        return output
+    if isinstance(output, (list, tuple)):
+        parts: list[str] = []
+        for item in output:
+            if isinstance(item, str):
+                parts.append(item)
+            elif isinstance(item, dict):
+                t = item.get('text')
+                if isinstance(t, str):
+                    parts.append(t)
+                else:
+                    try:
+                        parts.append(json.dumps(item, ensure_ascii=False))
+                    except Exception:
+                        parts.append(str(item))
+            else:
+                parts.append(str(item))
+        return '\n'.join(parts)
+    if isinstance(output, dict):
+        try:
+            return json.dumps(output, ensure_ascii=False)
+        except Exception:
+            return str(output)
+    return str(output)

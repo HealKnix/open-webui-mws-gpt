@@ -630,7 +630,7 @@ async def run_langgraph_agent(
         )
 
         messages = _messages_from_form_data(form_data)
-        config = {'configurable': {'thread_id': chat_id}}
+        config = {'configurable': {'thread_id': chat_id}, 'recursion_limit': 75}
 
         async for lg_event in app.astream_events(
             {'messages': messages},

@@ -23,13 +23,15 @@
   export let modal = false;
   export let loading = false;
 
-  export let item = null;
+  export let item: any = null;
   export let edit = false;
   export let small = false;
 
   export let name: string;
   export let type: string;
   export let size: number;
+
+  $: workspacePath = item?.file?.meta?.workspace_path ?? item?.meta?.workspace_path ?? null;
 
   import DocumentPage from '../icons/DocumentPage.svelte';
   import Database from '../icons/Database.svelte';
@@ -145,7 +147,9 @@
           ? 'text-gray-800 dark:text-gray-100'
           : 'text-gray-500'}"
       >
-        {#if type === 'file'}
+        {#if workspacePath}
+          <span class="font-mono text-[10px]">{workspacePath}</span>
+        {:else if type === 'file'}
           {$i18n.t('File')}
         {:else if type === 'note'}
           {$i18n.t('Note')}

@@ -49,6 +49,7 @@
     chatRequestQueues,
     widgets as widgetStore,
     activeMcpApp,
+    mcpApps,
   } from '$lib/stores';
 
   import { WEBUI_API_BASE_URL } from '$lib/constants';
@@ -90,7 +91,12 @@
     getTaskIdsByChatId,
   } from '$lib/apis';
   import { getTools } from '$lib/apis/tools';
-  import { uploadFile } from '$lib/apis/files';
+  import {
+    uploadFile,
+    listWorkspaceFiles,
+    getWorkspaceDownloadUrl,
+    type WorkspaceFile,
+  } from '$lib/apis/files';
   import { createOpenAITextStream } from '$lib/apis/streaming';
   import { getFunctions } from '$lib/apis/functions';
   import { updateFolderById } from '$lib/apis/folders';
@@ -115,6 +121,7 @@
     isToolApprovalRequestEvent,
     toToolApprovalResponse,
   } from '$lib/utils/agui';
+  import { extractArgPreview, resolveToolName } from '$lib/utils/tool-call-preview';
 
   export let chatIdProp = '';
 
@@ -408,7 +415,8 @@
           $config?.features?.enable_web_search &&
           ($user?.role === 'admin' || $user?.permissions?.features?.web_search)
         ) {
-          presentationEnabled = model.info.meta.defaultFeatureIds.includes('presentation_generation');
+          presentationEnabled =
+            model.info.meta.defaultFeatureIds.includes('presentation_generation');
         }
 
         if (
@@ -1090,6 +1098,26 @@
   };
 
   $: onHistoryChange(history);
+
+  // Late-resolve MCP app display names for tool_call status entries that
+  // were created before the mcpApps store finished loading.
+  $: if ($mcpApps && $mcpApps.length && history?.messages) {
+    for (const mid of Object.keys(history.messages)) {
+      const m = history.messages[mid];
+      if (!m?.statusHistory) continue;
+      let changed = false;
+      for (const s of m.statusHistory) {
+        if (s?.action === 'tool_call' && s.mcpAppId && !s.appName) {
+          const app = $mcpApps.find((a) => a?.id === s.mcpAppId);
+          if (app) {
+            s.appName = app.name;
+            changed = true;
+          }
+        }
+      }
+      if (changed) m.statusHistory = m.statusHistory;
+    }
+  }
 
   const getContents = () => {
     const messages = history ? createMessagesList(history, history.currentId) : [];
@@ -1789,29 +1817,95 @@
       // no-op
     } else if (evType === 'TOOL_CALL_START' || evType === 'ToolCallStartEvent') {
       const tcId = data.toolCallId;
-      const name = data.toolCallName ?? 'tool';
-      message.toolCalls[tcId] = { name, args: '', done: false };
-      message.statusHistory.push({
-        action: 'tool_call',
-        description: name,
-        tool_call_id: tcId,
-        done: false,
-      });
+      const rawName = data.toolCallName ?? 'tool';
+      message.toolCalls[tcId] = { name: rawName, args: '', done: false };
+
+      // Guard against duplicate START for the same tcId (resume/retry).
+      const alreadyTracked = message.statusHistory.some(
+        (s) => s.action === 'tool_call' && s.invocations?.some((x) => x.tool_call_id === tcId),
+      );
+      if (!alreadyTracked) {
+        const resolved = resolveToolName(rawName, get(mcpApps));
+        const last = message.statusHistory[message.statusHistory.length - 1];
+        const sameGroup =
+          last?.action === 'tool_call' &&
+          last.displayName === resolved.displayName &&
+          last.mcpAppId === resolved.mcpAppId;
+        if (sameGroup) {
+          last.invocations.push({
+            tool_call_id: tcId,
+            args: '',
+            preview: '',
+            done: false,
+          });
+          last.done = false;
+        } else {
+          message.statusHistory.push({
+            action: 'tool_call',
+            rawName,
+            displayName: resolved.displayName,
+            appName: resolved.appName,
+            mcpAppId: resolved.mcpAppId,
+            invocations: [{ tool_call_id: tcId, args: '', preview: '', done: false }],
+            done: false,
+            // Back-compat fields for older renderers / persisted messages.
+            description: resolved.displayName,
+            tool_call_id: tcId,
+          });
+        }
+      }
     } else if (evType === 'TOOL_CALL_ARGS' || evType === 'ToolCallArgsEvent') {
       const tcId = data.toolCallId;
+      const delta = data.delta ?? '';
       if (tcId && message.toolCalls[tcId]) {
-        message.toolCalls[tcId].args += data.delta ?? '';
+        message.toolCalls[tcId].args += delta;
+      }
+      for (let i = message.statusHistory.length - 1; i >= 0; i--) {
+        const s = message.statusHistory[i];
+        if (s.action !== 'tool_call' || !s.invocations) continue;
+        const inv = s.invocations.find((x) => x.tool_call_id === tcId);
+        if (inv) {
+          inv.args = (inv.args ?? '') + delta;
+          inv.preview = extractArgPreview(s.displayName, inv.args);
+          break;
+        }
+      }
+    } else if (evType === 'TOOL_CALL_RESULT' || evType === 'ToolCallResultEvent') {
+      const tcId = data.toolCallId;
+      const content = typeof data.content === 'string' ? data.content : '';
+      if (tcId && message.toolCalls[tcId]) {
+        message.toolCalls[tcId].result = content;
+      }
+      for (let i = message.statusHistory.length - 1; i >= 0; i--) {
+        const s = message.statusHistory[i];
+        if (s.action !== 'tool_call' || !s.invocations) continue;
+        const inv = s.invocations.find((x) => x.tool_call_id === tcId);
+        if (inv) {
+          inv.result = content;
+          break;
+        }
       }
     } else if (evType === 'TOOL_CALL_END' || evType === 'ToolCallEndEvent') {
       const tcId = data.toolCallId;
       if (tcId && message.toolCalls[tcId]) {
         message.toolCalls[tcId].done = true;
       }
-      const entry = message.statusHistory
-        .slice()
-        .reverse()
-        .find((s) => s.tool_call_id === tcId);
-      if (entry) entry.done = true;
+      for (let i = message.statusHistory.length - 1; i >= 0; i--) {
+        const s = message.statusHistory[i];
+        if (s.action !== 'tool_call') continue;
+        if (s.invocations) {
+          const inv = s.invocations.find((x) => x.tool_call_id === tcId);
+          if (inv) {
+            inv.done = true;
+            s.done = s.invocations.every((x) => x.done);
+            break;
+          }
+        } else if (s.tool_call_id === tcId) {
+          // Legacy entry from older messages.
+          s.done = true;
+          break;
+        }
+      }
     } else if (evType === 'STATE_SNAPSHOT' || evType === 'StateSnapshotEvent') {
       message.agentState = data.snapshot ?? data.state ?? null;
     } else if (evType === 'STATE_DELTA' || evType === 'StateDeltaEvent') {
@@ -2028,6 +2122,62 @@
   // Chat functions
   //////////////////////////
 
+  const runWorkspaceDiff = async (before: WorkspaceFile[], assistantContent: string) => {
+    const after = await listWorkspaceFiles(localStorage.token);
+    const beforeMap = new Map(before.map((f) => [f.path, f]));
+
+    const changed: WorkspaceFile[] = [];
+    for (const file of after) {
+      const prev = beforeMap.get(file.path);
+      if (!prev || prev.size !== file.size || prev.mtime !== file.mtime) {
+        changed.push(file);
+      }
+    }
+
+    const referenced = new Set<string>();
+    if (typeof assistantContent === 'string') {
+      const re = /\(\s*(\/workspace\/[^\s)]+)\s*\)/g;
+      let match;
+      while ((match = re.exec(assistantContent)) !== null) {
+        referenced.add(match[1]);
+      }
+    }
+
+    const emitted = new Map<string, WorkspaceFile>();
+    for (const file of changed) {
+      emitted.set(file.path, file);
+    }
+    for (const path of referenced) {
+      if (!emitted.has(path)) {
+        const match = after.find((f) => f.path === path);
+        if (match) emitted.set(path, match);
+      }
+    }
+    return [...emitted.values()];
+  };
+
+  const attachWorkspaceFilesToMessage = (messageId: string, files: WorkspaceFile[]) => {
+    const message = history.messages[messageId];
+    if (!message || files.length === 0) return;
+    const existing = Array.isArray(message.files) ? [...message.files] : [];
+    const existingIds = new Set(existing.map((f: any) => f?.id));
+    for (const file of files) {
+      const id = `workspace:${file.path}`;
+      if (existingIds.has(id)) continue;
+      existing.push({
+        id,
+        type: 'workspace_file',
+        name: file.name || file.path.replace(/^\/workspace\//, ''),
+        size: file.size,
+        url: getWorkspaceDownloadUrl(file.path),
+        meta: { workspace_path: file.path },
+      });
+    }
+    message.files = existing;
+    history.messages[messageId] = message;
+    history = history;
+  };
+
   const submitPrompt = async (userPrompt, { _raw = false } = {}) => {
     console.log('submitPrompt', userPrompt, $chatId);
 
@@ -2158,6 +2308,21 @@
     chatInput?.focus();
 
     saveSessionSelectedModels();
+
+    const workspaceBefore = await listWorkspaceFiles(localStorage.token);
+    const onChatFinish = async (ev: Event) => {
+      const detail = (ev as CustomEvent).detail;
+      const assistantId = detail?.id;
+      if (!assistantId || !history.messages[assistantId]) return;
+      eventTarget.removeEventListener('chat:finish', onChatFinish);
+      try {
+        const changed = await runWorkspaceDiff(workspaceBefore, detail.content ?? '');
+        attachWorkspaceFilesToMessage(assistantId, changed);
+      } catch (err) {
+        console.warn('workspace diff failed', err);
+      }
+    };
+    eventTarget.addEventListener('chat:finish', onChatFinish);
 
     await sendMessage(history, userMessageId, { newChat: true });
   };
@@ -2299,9 +2464,9 @@
         const baseModelId = String(model?.base_model_id ?? '').toLowerCase();
         return Boolean(
           model?.orchestrator ||
-            capabilities?.deep_research ||
-            currentModelId.startsWith('mts-router') ||
-            baseModelId.startsWith('mts-router'),
+          capabilities?.deep_research ||
+          currentModelId.startsWith('mts-router') ||
+          baseModelId.startsWith('mts-router'),
         );
       }).length === currentModels.length;
     const allPresentationCapable =
@@ -2312,9 +2477,9 @@
         const baseModelId = String(model?.base_model_id ?? '').toLowerCase();
         return Boolean(
           model?.orchestrator ||
-            capabilities?.presentation_generation ||
-            currentModelId.startsWith('mts-router') ||
-            baseModelId.startsWith('mts-router'),
+          capabilities?.presentation_generation ||
+          currentModelId.startsWith('mts-router') ||
+          baseModelId.startsWith('mts-router'),
         );
       }).length === currentModels.length;
 
