@@ -24,7 +24,9 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./services/terminal-orchestrator/policies.yaml:/etc/orchestrator/policies.yaml:ro
+      - ./skills:/opt/skills:ro
       - terminal-orchestrator-state:/etc/orchestrator/state
+      - terminal-skills:/var/lib/terminal-skills
     networks:
       - default
       - terminal-internal
@@ -46,3 +48,5 @@ networks:
 
 volumes:
   terminal-orchestrator-state: {}
+  terminal-skills:
+    name: terminal-skills

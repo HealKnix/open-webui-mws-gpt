@@ -10,6 +10,7 @@
 
   import { WEBUI_BASE_URL } from '$lib/constants';
   import { copyToClipboard, unescapeHtml } from '$lib/utils';
+  import { getWorkspaceDownloadUrl } from '$lib/apis/files';
 
   import Image from '$lib/components/common/Image.svelte';
   import KatexRenderer from './KatexRenderer.svelte';
@@ -46,6 +47,18 @@
   };
 
   /**
+   * Rewrite bare `/workspace/...` paths to the backend download endpoint so
+   * clicking a file the agent produced actually downloads it instead of
+   * 404-ing against the frontend dev server.
+   */
+  const resolveHref = (href: string): string => {
+    if (typeof href === 'string' && href.startsWith('/workspace/')) {
+      return getWorkspaceDownloadUrl(href);
+    }
+    return href;
+  };
+
+  /**
    * Handle link clicks - intercept same-origin app URLs for in-app navigation
    */
   const handleLinkClick = (e: MouseEvent, href: string) => {
@@ -77,22 +90,24 @@
     {#if noteId}
       <NoteLinkToken {noteId} href={token.href} />
     {:else if token.tokens}
+      {@const resolvedHref = resolveHref(token.href)}
       <a
-        href={token.href}
+        href={resolvedHref}
         target="_blank"
         rel="nofollow"
         title={token.title}
-        on:click={(e) => handleLinkClick(e, token.href)}
+        on:click={(e) => handleLinkClick(e, resolvedHref)}
       >
         <svelte:self id={`${id}-a`} tokens={token.tokens} {onSourceClick} {done} />
       </a>
     {:else}
+      {@const resolvedHref = resolveHref(token.href)}
       <a
-        href={token.href}
+        href={resolvedHref}
         target="_blank"
         rel="nofollow"
         title={token.title}
-        on:click={(e) => handleLinkClick(e, token.href)}>{token.text}</a
+        on:click={(e) => handleLinkClick(e, resolvedHref)}>{token.text}</a
       >
     {/if}
   {:else if token.type === 'image'}

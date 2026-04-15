@@ -1940,6 +1940,85 @@ async def chat_completion_files_handler(
     sources = []
 
     if files := body.get('metadata', {}).get('files', None):
+        # Partition off files that were pushed into the terminal /workspace;
+        # they are not embedded/retrieved — the model accesses them via its
+        # terminal tool. A synthetic source describes their availability.
+        workspace_items = []
+        rag_items = []
+        for item in files:
+            meta = (item.get('file') or {}).get('meta') or {}
+            if meta.get('workspace_path'):
+                workspace_items.append(item)
+            else:
+                rag_items.append(item)
+
+        if workspace_items:
+            lines = []
+            for item in workspace_items:
+                meta = (item.get('file') or {}).get('meta') or {}
+                path = meta.get('workspace_path')
+                size = meta.get('size')
+                if isinstance(size, int):
+                    lines.append(f'- {path} ({size} bytes)')
+                else:
+                    lines.append(f'- {path}')
+            ws_text = (
+                'CRITICAL: The user uploaded the files listed below. They are '
+                'NOT in a knowledge base and NOT attached to your context — '
+                'they live on disk inside the terminal sandbox. You MUST read '
+                'them via the terminal tool, NEVER via view_knowledge_file, '
+                'view_file, or query_knowledge_files (those will return '
+                'nothing for these paths).\n\n'
+                'Required workflow when the user refers to one of these files:\n'
+                '  1. Call read_file with the exact path to inspect contents '
+                '(or list_files / grep_search / glob_search for navigation).\n'
+                '  2. Use run_command for shell operations (pandas, awk, '
+                'conversion, etc.).\n'
+                '  3. Use write_file or replace_file_content to produce '
+                'modified files back into /workspace/.\n'
+                '  4. NEVER fabricate file contents. If read_file fails, '
+                'report the error instead of guessing.\n\n'
+                'Workspace files:\n' + '\n'.join(lines)
+            )
+            sources.append(
+                {
+                    'source': {
+                        'id': 'terminal-workspace',
+                        'name': 'Terminal Workspace',
+                        'type': 'workspace',
+                    },
+                    'document': [ws_text],
+                    'metadata': [{'source': 'terminal-workspace', 'name': 'Terminal Workspace'}],
+                }
+            )
+
+            _KNOWLEDGE_TOOL_NAMES = {
+                'view_knowledge_file',
+                'view_file',
+                'query_knowledge_files',
+                'search_knowledge_files',
+                'list_knowledge',
+                'list_knowledge_bases',
+                'search_knowledge_bases',
+                'query_knowledge_bases',
+            }
+            meta_ctx = body.get('metadata') or {}
+            tools_dict = meta_ctx.get('tools')
+            if isinstance(tools_dict, dict):
+                for name in list(tools_dict.keys()):
+                    if name in _KNOWLEDGE_TOOL_NAMES:
+                        tools_dict.pop(name, None)
+            form_tools = body.get('tools')
+            if isinstance(form_tools, list):
+                body['tools'] = [
+                    t for t in form_tools
+                    if (t.get('function') or {}).get('name') not in _KNOWLEDGE_TOOL_NAMES
+                ]
+
+        files = rag_items
+        if not files:
+            return body, {'sources': sources}
+
         # Check if all files are in full context mode
         all_full_context = all(item.get('context') == 'full' for item in files)
 
@@ -1993,7 +2072,7 @@ async def chat_completion_files_handler(
 
         try:
             # Directly await async get_sources_from_items (no thread needed - fully async now)
-            sources = await get_sources_from_items(
+            rag_sources = await get_sources_from_items(
                 request=request,
                 items=files,
                 queries=queries,
@@ -2013,6 +2092,8 @@ async def chat_completion_files_handler(
                 full_context=all_full_context or request.app.state.config.RAG_FULL_CONTEXT,
                 user=user,
             )
+            if rag_sources:
+                sources.extend(rag_sources)
         except Exception as e:
             log.exception(e)
 
@@ -3670,6 +3751,11 @@ async def streaming_chat_response_handler(response, ctx):
                 )
             except Exception:
                 pass
+
+        try:
+            await background_tasks_handler(ctx)
+        except Exception as _bg_exc:
+            log.exception('background_tasks_handler failed for agent backend %r: %s', _agent_backend, _bg_exc)
 
         async def _agent_stub_stream():
             stub = {

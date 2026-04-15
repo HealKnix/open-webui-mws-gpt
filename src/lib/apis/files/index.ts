@@ -128,6 +128,39 @@ export const getFileProcessStatus = async (token: string, id: string) => {
   return res;
 };
 
+export type WorkspaceFile = {
+  name: string;
+  path: string;
+  size: number;
+  mtime: number;
+};
+
+export const listWorkspaceFiles = async (token: string): Promise<WorkspaceFile[]> => {
+  const res = await fetch(`${WEBUI_API_BASE_URL}/files/workspace/list`, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+      authorization: `Bearer ${token}`,
+    },
+  }).catch(() => null);
+  if (!res || !res.ok) return [];
+  const json = await res.json().catch(() => null);
+  return (json && json.files) || [];
+};
+
+export const getWorkspaceDownloadUrl = (path: string): string => {
+  return `${WEBUI_API_BASE_URL}/files/workspace/download?path=${encodeURIComponent(path)}`;
+};
+
+export const downloadWorkspaceFile = async (token: string, path: string): Promise<Blob | null> => {
+  const res = await fetch(getWorkspaceDownloadUrl(path), {
+    method: 'GET',
+    headers: { authorization: `Bearer ${token}` },
+  }).catch(() => null);
+  if (!res || !res.ok) return null;
+  return await res.blob();
+};
+
 export const uploadDir = async (token: string) => {
   let error = null;
 

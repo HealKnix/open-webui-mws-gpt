@@ -46,6 +46,13 @@ class Settings(BaseSettings):
 
     user_id_pattern: str = r"^[A-Za-z0-9._-]{1,64}$"
 
+    file_max_bytes: int = 256 * 1024 * 1024
+
+    skills_source_dir: Path = Path("/opt/skills")
+    skills_mount: str = "/skills"
+    skills_volume_name: str = "terminal-skills"
+    skills_volume_target: Path = Path("/var/lib/terminal-skills")
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
