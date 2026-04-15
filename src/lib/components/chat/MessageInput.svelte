@@ -479,30 +479,34 @@
   );
 
   let deepResearchCapableModels = [];
-  $: deepResearchCapableModels = (atSelectedModel?.id ? [atSelectedModel.id] : selectedModels).filter((modelId) => {
+  $: deepResearchCapableModels = (
+    atSelectedModel?.id ? [atSelectedModel.id] : selectedModels
+  ).filter((modelId) => {
     const model = $models.find((m) => m.id === modelId);
     const capabilities = model?.info?.meta?.capabilities ?? {};
     const currentModelId = String(model?.id ?? '').toLowerCase();
     const baseModelId = String(model?.base_model_id ?? '').toLowerCase();
     return Boolean(
       model?.orchestrator ||
-        capabilities?.deep_research ||
-        currentModelId.startsWith('mts-router') ||
-        baseModelId.startsWith('mts-router'),
+      capabilities?.deep_research ||
+      currentModelId.startsWith('mts-router') ||
+      baseModelId.startsWith('mts-router'),
     );
   });
 
   let presentationCapableModels = [];
-  $: presentationCapableModels = (atSelectedModel?.id ? [atSelectedModel.id] : selectedModels).filter((modelId) => {
+  $: presentationCapableModels = (
+    atSelectedModel?.id ? [atSelectedModel.id] : selectedModels
+  ).filter((modelId) => {
     const model = $models.find((m) => m.id === modelId);
     const capabilities = model?.info?.meta?.capabilities ?? {};
     const currentModelId = String(model?.id ?? '').toLowerCase();
     const baseModelId = String(model?.base_model_id ?? '').toLowerCase();
     return Boolean(
       model?.orchestrator ||
-        capabilities?.presentation_generation ||
-        currentModelId.startsWith('mts-router') ||
-        baseModelId.startsWith('mts-router'),
+      capabilities?.presentation_generation ||
+      currentModelId.startsWith('mts-router') ||
+      baseModelId.startsWith('mts-router'),
     );
   });
 
@@ -1848,7 +1852,8 @@
                     {#if deepResearchEnabled}
                       <Tooltip content={$i18n.t('Deep Research')} placement="top">
                         <button
-                          on:click|preventDefault={() => (deepResearchEnabled = !deepResearchEnabled)}
+                          on:click|preventDefault={() =>
+                            (deepResearchEnabled = !deepResearchEnabled)}
                           type="button"
                           class="group flex max-w-full items-center gap-1.5 overflow-hidden rounded-full p-[7px] text-sm transition-colors duration-300 focus:outline-hidden {deepResearchEnabled
                             ? ' border border-sky-200/40 bg-sky-50 text-sky-500 hover:bg-sky-100 dark:border-sky-500/20 dark:bg-sky-400/10 dark:text-sky-300 dark:hover:bg-sky-600/10'
@@ -1865,7 +1870,8 @@
                     {#if presentationEnabled}
                       <Tooltip content={$i18n.t('Presentation')} placement="top">
                         <button
-                          on:click|preventDefault={() => (presentationEnabled = !presentationEnabled)}
+                          on:click|preventDefault={() =>
+                            (presentationEnabled = !presentationEnabled)}
                           type="button"
                           class="group flex max-w-full items-center gap-1.5 overflow-hidden rounded-full p-[7px] text-sm transition-colors duration-300 focus:outline-hidden {presentationEnabled
                             ? ' border border-sky-200/40 bg-sky-50 text-sky-500 hover:bg-sky-100 dark:border-sky-500/20 dark:bg-sky-400/10 dark:text-sky-300 dark:hover:bg-sky-600/10'
