@@ -26,7 +26,7 @@
   import { getGroups } from '$lib/apis/groups';
   import { updateUserSettings } from '$lib/apis/users';
 
-  import { capitalizeFirstLetter, copyToClipboard } from '$lib/utils';
+  import { capitalizeFirstLetter, cn, copyToClipboard } from '$lib/utils';
 
   import EllipsisHorizontal from '../icons/EllipsisHorizontal.svelte';
   import CheckCircle from '../icons/CheckCircle.svelte';
@@ -580,9 +580,12 @@
             <!-- svelte-ignore a11y_no_static_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <div
-              class="flex w-full rounded-2xl p-2.5 transition {model.write_access
-                ? 'dark:hover:bg-gray-850/50 cursor-pointer hover:bg-gray-50'
-                : 'dark:hover:bg-gray-850/50 hover:bg-gray-50'}"
+              class={cn(
+                'flex w-full rounded-2xl p-2.5 transition',
+                model.write_access
+                  ? 'dark:hover:bg-gray-850/50 cursor-pointer hover:bg-gray-50'
+                  : 'dark:hover:bg-gray-850/50 hover:bg-gray-50',
+              )}
               id="model-item-{model.id}"
               on:click={() => {
                 if (model.write_access) {
@@ -592,12 +595,8 @@
             >
               <div class="group/item flex w-full gap-3.5">
                 <div class="self-center pl-0.5">
-                  <div class="flex rounded-2xl bg-white">
-                    <div
-                      class="{model.is_active
-                        ? ''
-                        : 'opacity-50 dark:opacity-50'} rounded-2xl bg-transparent"
-                    >
+                  <div class="flex rounded-2xl">
+                    <div class="{model.is_active ? '' : 'opacity-25'} rounded-2xl bg-transparent">
                       <img
                         src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${model.id}&lang=${$i18n.language}`}
                         alt="modelfile profile"
@@ -616,7 +615,10 @@
                       <div class="flex w-full items-center justify-between">
                         <Tooltip content={model.name} className=" w-fit" placement="top-start">
                           <a
-                            class=" line-clamp-1 font-medium capitalize hover:underline"
+                            class={cn(
+                              'line-clamp-1 font-medium capitalize hover:underline',
+                              !model.is_active && 'opacity-60',
+                            )}
                             href={`/?models=${encodeURIComponent(model.id)}`}
                           >
                             {model.name}

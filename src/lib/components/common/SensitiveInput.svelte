@@ -6,7 +6,7 @@
   export let id = 'password-input';
   export let value: string = '';
   export let placeholder = '';
-  export let type = 'text';
+  export let type = 'password';
   export let required = true;
   export let readOnly = false;
   export let outerClassName = 'flex flex-1 bg-transparent';

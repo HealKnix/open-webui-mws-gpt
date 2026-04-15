@@ -53,6 +53,7 @@
   import Error from './Error.svelte';
   import Citations from './Citations.svelte';
   import CodeExecutions from './CodeExecutions.svelte';
+  import FileReferences from './FileReferences.svelte';
   import ContentRenderer from './ContentRenderer.svelte';
   import { KokoroWorker } from '$lib/workers/KokoroWorker';
   import FileItem from '$lib/components/common/FileItem.svelte';
@@ -964,6 +965,10 @@
 
               {#if message.code_executions}
                 <CodeExecutions codeExecutions={message.code_executions} />
+              {/if}
+
+              {#if message?.done && message?.content}
+                <FileReferences content={message.content} />
               {/if}
             </div>
           </div>
