@@ -25,7 +25,7 @@
     config,
   } from '$lib/stores';
   import { toast } from 'svelte-sonner';
-  import { capitalizeFirstLetter, sanitizeResponseContent, splitStream } from '$lib/utils';
+  import { capitalizeFirstLetter, cn, sanitizeResponseContent, splitStream } from '$lib/utils';
   import { getModels } from '$lib/apis';
 
   import ChevronDown from '$lib/components/icons/ChevronDown.svelte';
@@ -64,8 +64,23 @@
   let show = false;
   let tags = [];
 
+  const PINNED_MODEL_LABEL = 'MTS Router (Preview)';
+  const PINNED_MODEL_DISPLAY_LABEL = 'Автоматический подбор модели';
+
+  $: pinnedItem = (() => {
+    const found = items.find((item) => item.label === PINNED_MODEL_LABEL);
+    return found ? { ...found, label: PINNED_MODEL_DISPLAY_LABEL } : null;
+  })();
+
   let selectedModel = '';
-  $: selectedModel = items.find((item) => item.value === value) ?? '';
+  $: selectedModel = (() => {
+    const found = items.find((item) => item.value === value);
+    if (!found) return '';
+    if (found.label === PINNED_MODEL_LABEL) {
+      return { ...found, label: PINNED_MODEL_DISPLAY_LABEL };
+    }
+    return found;
+  })();
 
   let searchValue = '';
 
@@ -158,7 +173,9 @@
               return item.model?.direct;
             }
           })
-  ).filter((item) => !(item.model?.info?.meta?.hidden ?? false));
+  )
+    .filter((item) => !(item.model?.info?.meta?.hidden ?? false))
+    .filter((item) => item.label !== PINNED_MODEL_LABEL);
 
   $: if (
     selectedTag !== undefined ||
@@ -414,10 +431,14 @@
     id="model-selector-{id}-button"
   >
     <div
-      class="flex w-full truncate bg-transparent px-0.5 text-left {triggerClassName} justify-between {($settings?.highContrastMode ??
-      false)
-        ? 'placeholder-gray-800 dark:placeholder-gray-100'
-        : 'placeholder-gray-400'}"
+      class={cn(
+        'flex w-full justify-between truncate bg-transparent px-2 text-left',
+        triggerClassName,
+        ($settings?.highContrastMode ?? false)
+          ? 'placeholder-gray-800 dark:placeholder-gray-100'
+          : 'placeholder-gray-400',
+        pinnedItem?.value === value && 'bg-primary text-primary-foreground rounded-xl',
+      )}
       on:mouseenter={async () => {
         models.set(
           await getModels(
@@ -427,6 +448,26 @@
         );
       }}
     >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class={cn(
+          'lucide lucide-git-fork-icon lucide-git-fork translate-y-0.5 p-0.5 pr-1',
+          pinnedItem?.value !== value && 'hidden',
+        )}
+        ><circle cx="12" cy="18" r="3" /><circle cx="6" cy="6" r="3" /><circle
+          cx="18"
+          cy="6"
+          r="3"
+        /><path d="M18 9v2c0 .6-.4 1-1 1H7c-.6 0-1-.4-1-1V9" /><path d="M12 12v3" /></svg
+      >
       {#if selectedModel}
         {selectedModel.label}
       {:else}
@@ -599,7 +640,23 @@
                 </div>
 
                 <div class="group relative px-2.5">
-                  {#if filteredItems.length === 0}
+                  {#if pinnedItem}
+                    <ModelItem
+                      isSelected={value === pinnedItem.value}
+                      item={pinnedItem}
+                      index={-2}
+                      {value}
+                      {pinModelHandler}
+                      {unloadModelHandler}
+                      onClick={() => {
+                        value = pinnedItem.value;
+                        show = false;
+                      }}
+                    />
+                    <div class="mx-1 my-1 border-t border-gray-100 dark:border-gray-800"></div>
+                  {/if}
+
+                  {#if filteredItems.length === 0 && !pinnedItem}
                     {#if items.length === 0 && $user?.role === 'admin'}
                       <div class="flex flex-col items-start justify-center px-4 py-6 text-start">
                         <div class="mb-1 text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -628,7 +685,7 @@
                   {:else}
                     <!-- svelte-ignore a11y-no-static-element-interactions -->
                     <div
-                      class="max-h-64 overflow-y-auto"
+                      class="max-h-64 space-y-1 overflow-y-auto"
                       role="listbox"
                       aria-label={$i18n.t('Available models')}
                       bind:this={listContainer}
@@ -640,7 +697,7 @@
                       {#each filteredItems.slice(visibleStart, visibleEnd) as item, i (item.value)}
                         {@const index = visibleStart + i}
                         <ModelItem
-                          {selectedModelIdx}
+                          isSelected={value === item.value}
                           {item}
                           {index}
                           {value}

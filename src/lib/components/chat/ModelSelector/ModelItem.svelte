@@ -8,7 +8,7 @@
   import { WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
 
   import Tooltip from '$lib/components/common/Tooltip.svelte';
-  import { copyToClipboard, sanitizeResponseContent } from '$lib/utils';
+  import { cn, copyToClipboard, sanitizeResponseContent } from '$lib/utils';
   import ArrowUpTray from '$lib/components/icons/ArrowUpTray.svelte';
   import Check from '$lib/components/icons/Check.svelte';
   import ModelItemMenu from './ModelItemMenu.svelte';
@@ -16,10 +16,11 @@
   import { toast } from 'svelte-sonner';
   import Tag from '$lib/components/icons/Tag.svelte';
   import Label from '$lib/components/icons/Label.svelte';
+  import Button from '$lib/components/common/Button.svelte';
 
   const i18n = getContext('i18n');
 
-  export let selectedModelIdx: number = -1;
+  export let isSelected: boolean = false;
   export let item: any = {};
   export let index: number = -1;
   export let value: string = '';
@@ -43,15 +44,18 @@
   let showMenu = false;
 </script>
 
-<button
+<Button
   role="option"
+  variant="ghost"
+  color="foreground"
+  size="sm"
   aria-selected={value === item.value}
   aria-label={$i18n.t('Select {{modelName}} model', { modelName: item.label })}
-  class="group/item rounded-button data-highlighted:bg-muted line-clamp-1 flex w-full cursor-pointer items-center rounded-xl py-2 pr-1.5 pl-3 text-left text-sm font-medium text-gray-700 outline-hidden transition-all duration-75 select-none hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800 {index ===
-  selectedModelIdx
-    ? 'bg-gray-100 group-hover:bg-transparent dark:bg-gray-800'
-    : ''}"
-  data-arrow-selected={index === selectedModelIdx}
+  className={cn(
+    'group/item rounded-button data-highlighted:bg-muted line-clamp-1 flex w-full cursor-pointer items-center rounded-xl py-2 pr-1.5 pl-3 text-left text-sm font-medium select-none',
+    isSelected && 'bg-primary hover:bg-primary-hover text-primary-foreground',
+  )}
+  data-arrow-selected={isSelected}
   data-value={item.value}
   on:click={() => {
     onClick();
@@ -278,4 +282,4 @@
       </div>
     {/if}
   </div>
-</button>
+</Button>

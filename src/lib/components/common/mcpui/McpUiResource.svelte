@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { cn } from '$lib/utils';
   import { onDestroy, onMount, createEventDispatcher } from 'svelte';
   import { toast } from 'svelte-sonner';
 
@@ -247,7 +248,10 @@
 </script>
 
 <div
-  class="mcp-ui-wrapper my-2 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800"
+  class={cn(
+    'mcp-ui-wrapper my-2 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800',
+    displayMode === 'fullscreen' && 'pt-10',
+  )}
   class:is-fullscreen={displayMode === 'fullscreen'}
 >
   {#if displayMode === 'fullscreen'}
@@ -301,7 +305,7 @@
   }
   .mcp-ui-exit-fs {
     position: absolute;
-    top: 12px;
+    top: 100px;
     right: 12px;
     z-index: 10000;
     padding: 6px 12px;
